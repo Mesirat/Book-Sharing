@@ -1,6 +1,5 @@
 import React from "react";
 import { FcGoogle } from "react-icons/fc";
-
 const Login = () => {
   return (
     <div className="flex items-center justify-center h-screen bg-gray-200 p-4">
@@ -55,7 +54,6 @@ const Login = () => {
             </div>
           </form>
         </div>
-
         <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-6">
           <img
             src="/assets/lo.png"
@@ -67,5 +65,4 @@ const Login = () => {
     </div>
   );
 };
-
 export default Login;
