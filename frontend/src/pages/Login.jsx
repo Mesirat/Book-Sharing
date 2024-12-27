@@ -1,6 +1,37 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useLoginMutation } from "../slices/usersApiSlice";
+import { setCredentials } from "../slices/authSlice";
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [login, { loading }] = useLoginMutation();
+
+  const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (userInfo) {
+      navigate("/");
+    }
+  }, [navigate, userInfo]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res =await login({email,password}).unwrap();
+      dispatch(setCredentials({...res}))
+      navigate('/')
+    } catch (err) {
+      console.log(err?.data?.message || err.error)
+      
+    }
+  };
   return (
     <div className="flex items-center justify-center h-screen bg-gray-200 p-4">
       <div className="flex flex-col lg:flex-row bg-gray-300 shadow-md shadow-gray-900 rounded-md w-full max-w-5xl mx-4 lg:mx-0">
@@ -8,7 +39,7 @@ const Login = () => {
           <h2 className="text-2xl lg:text-3xl font-bold mb-4 font-serif text-center lg:text-start">
             Welcome Back
           </h2>
-          <form className="w-full max-w-md ">
+          <form onSubmit={handleSubmit} className="w-full max-w-md ">
             <div className="mb-4">
               <label
                 htmlFor="email"
@@ -17,7 +48,9 @@ const Login = () => {
                 Email
               </label>
               <input
-                type="text"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-md p-2 outline-none"
               />
             </div>
@@ -30,6 +63,8 @@ const Login = () => {
               </label>
               <input
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-md p-2 outline-none"
               />
             </div>
