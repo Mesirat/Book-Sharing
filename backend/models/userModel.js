@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
-import { compare } from 'bcrypt';
+import  {compare}  from 'bcrypt';
 const userSchema  = new  mongoose.Schema({
     firstname:{
         type:String,

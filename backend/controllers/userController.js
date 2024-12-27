@@ -1,5 +1,5 @@
-import genereateToken from "../utils/generateToken";
-import { User } from "../models/user_model";
+import genereateToken from "../utils/generateToken.js";
+import { User } from "../models/userModel.js";
 
 export const logIn = async (req, res) => {
     const {email,password} = req.body;
