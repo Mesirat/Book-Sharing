@@ -46,6 +46,12 @@ export const signUp = async (req, res) => {
   }
   res.status(200).json({ message: "Sign Up" });
 };
-export const logOut = async (req, res) => {};
+export const logOut = async (req, res) => {
+  res.cookies('jwt','',{
+    httpOnly:true,
+    expires:new Date(0)
+  })
+  res.status(200).json({message:'User Logged out successfully'})
+};
 export const getProfile = async (req, res) => {};
 export const updateProfile = async (req, res) => {};
