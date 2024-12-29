@@ -12,4 +12,4 @@ router.route('/profile')
 .put(protect,updateProfile)
 
 
-module.exports =router
+export default router;

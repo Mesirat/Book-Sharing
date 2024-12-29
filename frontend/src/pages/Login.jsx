@@ -1,17 +1,21 @@
+
 import { useState, useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
+import { toast } from "react-toastify";
+import {LoaderCircle} from 'lucide-react'
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [login, { loading }] = useLoginMutation();
+  const [login, { isLoading }] = useLoginMutation();
 
   const { userInfo } = useSelector((state) => state.auth);
 
@@ -23,23 +27,31 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+
     try {
-      const res =await login({email,password}).unwrap();
-      dispatch(setCredentials({...res}))
-      navigate('/')
+      setError("");
+      const res = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ ...res }));
+      navigate("/");
     } catch (err) {
-      console.log(err?.data?.message || err.error)
-      
+      toast.error(err?.data?.message || err.error);
+      setError(err?.data?.message || "Login failed. Please try again.");
     }
   };
+
+  const handleGoogleLogin = () => {
+    toast.info("Google login is not implemented yet.");
+  };
+
   return (
     <div className="flex items-center justify-center h-screen bg-gray-200 p-4">
-      <div className="flex flex-col lg:flex-row bg-gray-300 shadow-md shadow-gray-900 rounded-md w-full max-w-5xl mx-4 lg:mx-0">
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
-          <h2 className="text-2xl lg:text-3xl font-bold mb-4 font-serif text-center lg:text-start">
-            Welcome Back
+      <div className="flex lg:w-[35%] lg:px-12 md:[w-70%] sm:[80%] items-center bg-gray-300 shadow-md shadow-gray-900 rounded-md w-full  mx-auto">
+        <div className="w-full  flex flex-col items-center  p-6">
+          <h2 className="text-xl lg:text-3xl font-semibold mb-4 font-serif text-start ">
+            Login
           </h2>
-          <form onSubmit={handleSubmit} className="w-full max-w-md ">
+          <form onSubmit={handleSubmit} className="w-full max-w-md">
             <div className="mb-4">
               <label
                 htmlFor="email"
@@ -51,9 +63,12 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md p-2 outline-none"
+                className="w-full bg-gray-100 rounded-3xl p-2 outline-none px-4"
+                placeholder="Enter your email"
+                required
               />
             </div>
+
             <div className="mb-4">
               <label
                 htmlFor="password"
@@ -65,39 +80,54 @@ const Login = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md p-2 outline-none"
+                className="w-full bg-gray-100 rounded-3xl p-2 px-4 outline-none "
+                placeholder="Enter your password"
+                required
               />
             </div>
-            <div className="text-end text-gray-500 hover:underline text-xs lg:text-sm mb-4">
-              <a href="" className="mr-4">
+
+          
+            <div className=" flex justify-between text-end text-gray-800 text-md lg:text-sm mb-4">
+              <div className=""></div>
+              <a href="#" className="mr-4  hover:underline ">
                 Forget Password?
               </a>
             </div>
-            <div className="text-center mb-4">
-              <button className="w-cover px-20 bg-gray-900 text-white py-2 rounded-md">
-                Login
+            <div className="text-center items-center mb-4 w-full mx-auto">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="font-semibold w-full text-black bg-gray-100 py-2 rounded-3xl  hover:shadow-md hover:shadow-black  text-md"
+              >
+                {isLoading ? <LoaderCircle  className="animate-spin mx-auto"/>: "Login"}
               </button>
             </div>
-            <div className="flex items-center justify-between mb-4">
-              <hr className="flex-grow border-t-2 border-gray-500" />
-              <div className="mx-2 text-gray-500">or</div>
-              <hr className="flex-grow border-t-2 border-gray-500" />
+
+          
+  <div className=" flex justify-between text-sm mb-4 mr-3 ">
+              <div className=""></div>
+              <Link to={"/signup"}>
+                Don't have an account? <span className="font-serif font-semibold">Sign Up</span>
+              </Link>
             </div>
-            <div className="flex justify-center items-center w-cover mx-24 py-2 bg-white hover:shadow-md hover:shadow-black rounded-md cursor-pointer mb-4">
-              <FcGoogle className="w-6 h-6 mr-2" />
-              <h2 className="text-sm lg:text-md">Sign Up With Google</h2>
+            <div
+              onClick={handleGoogleLogin}
+              className="flex justify-center items-center w-full mx-auto  py-2 bg-gray-100 hover:shadow-md hover:shadow-black  rounded-3xl cursor-pointer mb-4"
+            >
+              <FcGoogle className="w-6 h-6 mr-1" />
+              <h2 className="text-md lg:text-md text-gray-700 font-semibold">
+                Continue With Google
+              </h2>
             </div>
+           
+          
           </form>
         </div>
-        <div className="hidden lg:flex w-full lg:w-1/2 justify-center items-center p-6">
-          <img
-            src="/assets/lo.png"
-            alt="Login Illustration"
-            className="w-72 h-72 lg:w-96 lg:h-96 object-contain"
-          />
-        </div>
+
+      
       </div>
     </div>
   );
 };
+
 export default Login;

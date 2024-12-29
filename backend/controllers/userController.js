@@ -2,28 +2,38 @@ import genereateToken from "../utils/generateToken.js";
 import { User } from "../models/userModel.js";
 
 export const logIn = async (req, res) => {
-    const {email,password} = req.body;
-    const user =await User.findOne(email)
-    if (user && (await user.matchPassword(password))) {
-        genereateToken(res,user._id)
-        res.status(201).json({
-          _id: user._id,
-          firstname: user.firstname,
-          lastname: user.lastname,
-          email: user.email,
-        });
-      } else {
-        res.status(404);
-        throw new Error("Invalid Email or Password");
-      }
+  const { email, password } = req.body;
+
+ 
+  const user = await User.findOne({ email });
+
+  
+  if (user && (await user.matchPassword(password))) {
    
+    generateToken(res, user._id);
+
+   
+    res.status(200).json({
+      _id: user._id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+    });
+  } else {
+   
+    res.status(400).json({
+      message: "Invalid Email or Password",
+    });
+  }
 };
+
 export const signUp = async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
+  
+
   const userExists = await User.findOne({ email });
   if (userExists) {
-    res.status(400);
-    throw new Error("User Already Exists");
+    res.status(400).json({message:"User Already Exists"});
   }
 
   const user = await User.create({
@@ -41,8 +51,7 @@ export const signUp = async (req, res) => {
       email: user.email,
     });
   } else {
-    res.status(404);
-    throw new Error("Invalid User Data");
+    res.status(400).json({message:"Invalid User Data"});
   }
   res.status(200).json({ message: "Sign Up" });
 };
