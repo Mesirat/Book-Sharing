@@ -93,6 +93,7 @@ const Login = () => {
                 Forget Password?
               </a>
             </div>
+            {error && <div className="text-red font-semibold">{error}</div>}
             <div className="text-center items-center mb-4 w-full mx-auto">
               <button
                 type="submit"
