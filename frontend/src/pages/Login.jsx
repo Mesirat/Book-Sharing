@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
-import {LoaderCircle} from 'lucide-react'
+import { LoaderCircle } from "lucide-react";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +26,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
 
     try {
       setError("");
@@ -86,7 +84,6 @@ const Login = () => {
               />
             </div>
 
-          
             <div className=" flex justify-between text-end text-gray-800 text-md lg:text-sm mb-4">
               <div className=""></div>
               <a href="#" className="mr-4  hover:underline ">
@@ -100,15 +97,19 @@ const Login = () => {
                 disabled={isLoading}
                 className="font-semibold w-full text-black bg-gray-100 py-2 rounded-3xl  hover:shadow-md hover:shadow-black  text-md"
               >
-                {isLoading ? <LoaderCircle  className="animate-spin mx-auto"/>: "Login"}
+                {isLoading ? (
+                  <LoaderCircle className="animate-spin mx-auto" />
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
 
-          
-  <div className=" flex justify-between text-sm mb-4 mr-3 ">
+            <div className=" flex justify-between text-sm mb-4 mr-3 ">
               <div className=""></div>
               <Link to={"/signup"}>
-                Don't have an account? <span className="font-serif font-semibold">Sign Up</span>
+                Don't have an account?{" "}
+                <span className="font-serif font-semibold">Sign Up</span>
               </Link>
             </div>
             <div
@@ -120,12 +121,8 @@ const Login = () => {
                 Continue With Google
               </h2>
             </div>
-           
-          
           </form>
         </div>
-
-      
       </div>
     </div>
   );
