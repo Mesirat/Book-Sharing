@@ -6,7 +6,7 @@ import { useSignupMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
 import { LoaderCircle } from "lucide-react";
-import NavBar from "../components/NavBar";
+import SideBar from "../components/SideBar";
 const SignUp = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
@@ -41,7 +41,7 @@ const SignUp = () => {
 
   return (
     <>
-      <NavBar />
+      <SideBar />
 
       <div className="reltive flex items-center justify-center h-screen bg-gray-200 p-4">
         <div className="flex lg:w-[35%]  md:w-[70%] sm:[80%] items-center bg-gray-300 shadow-sm shadow-gray-400 rounded-2xl w-full  mx-auto">
