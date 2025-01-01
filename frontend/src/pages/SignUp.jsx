@@ -8,13 +8,12 @@ import { toast } from "react-toastify";
 import { LoaderCircle } from "lucide-react";
 import SideBar from "../components/SideBar";
 const SignUp = () => {
-  const [firstname, setFirstName] = useState("");
-  const [lastname, setLastName] = useState("");
+  const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  console.log(firstname, lastname, email, password);
+  console.log(username,email, password);
   const [signup, { loading }] = useSignupMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
@@ -27,8 +26,7 @@ const SignUp = () => {
     e.preventDefault();
     try {
       const res = await signup({
-        firstname,
-        lastname,
+        username,
         email,
         password,
       }).unwrap();
@@ -55,37 +53,21 @@ const SignUp = () => {
             >
               <div>
                 <label
-                  htmlFor="firstname"
+                  htmlFor="username"
                   className="block text-sm lg:text-md font-semibold text-gray-600 mb-2"
                 >
-                  First Name
+                  User Name
                 </label>
                 <input
                   type="text"
                   className="w-full rounded-md p-2 outline-none mb-4"
                   placeholder="Enter your first name"
-                  value={firstname}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUserName(e.target.value)}
                   required
                 />
               </div>
-              <div>
-                <label
-                  htmlFor="lastname"
-                  className="block text-sm lg:text-md font-semibold text-gray-600 mb-2"
-                >
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-md p-2 outline-none"
-                  placeholder="Enter your last name"
-                  value={lastname}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-
+             
               <div className="mt-4">
                 <label
                   htmlFor="email"

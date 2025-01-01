@@ -28,33 +28,34 @@ export const logIn = async (req, res) => {
 };
 
 export const signUp = async (req, res) => {
-  const { firstname, lastname, email, password } = req.body;
-  
+  const { username,  email, password } = req.body;
+  try {
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    res.status(400).json({message:"User Already Exists"});
+   return res.status(400).json({message:"User Already Exists"});
   }
 
   const user = await User.create({
-    firstname,
-    lastname,
+    username,
     email,
     password,
   });
   if (user) {
-    genereateToken(res,user._id)
-    res.status(201).json({
+    genereateToken(res,user._id);
+    return res.status(201).json({
       _id: user._id,
-      firstname: user.firstname,
-      lastname: user.lastname,
+      username: user.username,
+    
       email: user.email,
     });
   } else {
-    res.status(400).json({message:"Invalid User Data"});
+   return res.status(400).json({message:"Invalid User Data"});
   }
-  res.status(200).json({ message: "Sign Up" });
-};
+} catch (error) {
+  return res.status(500).json({ message: "Server error", error: error.message });
+}};
+
 export const logOut = async (req, res) => {
   res.cookies('jwt','',{
     httpOnly:true,
