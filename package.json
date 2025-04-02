@@ -1,13 +1,10 @@
 {
   "devDependencies": {
-   
+    "concurrently": "^9.1.2"
   },
   "scripts": {
-    "client": "npm start --prefix frontend",
-    "server": "npm start --prefix backend",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
-  },
-  "dependencies": {
-
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && nodemon index.js",
+    "frontend": "cd frontend && npm run dev"
   }
 }

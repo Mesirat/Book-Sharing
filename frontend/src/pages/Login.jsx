@@ -11,7 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -39,10 +39,10 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    setIsGoogleLoading(true);
-    window.location.href = "http://localhost:5000/auth/google";
-  };
+  // const handleGoogleLogin = () => {
+  //   setIsGoogleLoading(true);
+  //   window.location.href = "http://localhost:5000/auth/google";
+  // };
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-200 p-4">
@@ -114,7 +114,7 @@ const Login = () => {
               <span className="font-serif font-semibold">Sign Up</span>
             </Link>
           </div>
-          <div
+          {/* <div
             onClick={handleGoogleLogin}
             className={`flex justify-center items-center w-full py-2 bg-gray-100 hover:shadow-md rounded-3xl cursor-pointer ${
               isGoogleLoading ? "opacity-50 cursor-not-allowed" : ""
@@ -128,7 +128,7 @@ const Login = () => {
             <h2 className="text-md text-gray-700 font-semibold">
               {isGoogleLoading ? "Redirecting..." : "Continue With Google"}
             </h2>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>
