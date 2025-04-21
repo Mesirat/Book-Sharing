@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Mail, Loader, User } from "lucide-react";
-import Input from "./Input.jsx";
-import NavBar from "./NavBar.jsx";
+import Input from "../components/Input";
+// import NavBar from "./NavBar.jsx";
 import toast from "react-hot-toast";
+import SideBar from "../components/SideBar";
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -65,7 +66,7 @@ const Contact = () => {
 
   return (
     <>
-      <NavBar />
+      <SideBar />
       <div className="font-serif text-white flex justify-center items-center w-[100vw] bg-gray">
         <div className="relative mx-auto bg-opacity-90 bg-gray-200 rounded-lg shadow-xl p-8 sm:p-10 md:p-12">
           <h2 className="text-3xl font-extrabold text-center text-black mb-6">

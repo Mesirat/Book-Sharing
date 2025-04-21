@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { Loader } from "lucide-react";
-import { useAuthStore } from "../../store/authStore";
+// import { useAuthStore } from "../../store/authStore";
 
 const GroupList = ({ setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);

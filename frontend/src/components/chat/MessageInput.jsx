@@ -1,56 +1,139 @@
-import React, { useState, useRef } from 'react';
-import { useAuthStore } from '../../store/authStore';
+import React, { useRef, useState } from "react";
+import { Paperclip, SendHorizontal, X } from "lucide-react";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 
-const MessageInput = ({ onSendMessage, username }) => {
-  const [text, setText] = useState('');
-  const maxMessageLength = 500; 
+const MessageInput = ({ onSendMessage }) => {
+  const [text, setText] = useState("");
+  const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const maxMessageLength = 1500;
   const { user } = useAuthStore();
-  const inputRef = useRef(null); // Add reference for focus management
+  const inputRef = useRef(null);
+  const maxFileSize = 5 * 1024 * 1024; // 5MB limit
 
   const handleSend = () => {
-    if (text.trim()) {
-      onSendMessage({ user: user.name || 'Anonymous', text });
-      setText('');
-      if (inputRef.current) {
-        inputRef.current.focus(); // Reset focus after sending the message
+    if (text.trim() || file) {
+      onSendMessage({ text, file });
+      setText("");
+      setFile(null);
+      setPreview(null);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.size > maxFileSize) {
+        alert("File size exceeds the 5MB limit.");
+      } else {
+        setFile(selectedFile);
+        setPreview(URL.createObjectURL(selectedFile)); // Preview the image
       }
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && text.trim()) {
-      // Only send on Enter, not Shift + Enter
-      handleSend();
-    }
+  const handleCancelPreview = () => {
+    setFile(null);
+    setPreview(null);
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setText((prevText) => prevText + emoji.native);
+    setEmojiPickerVisible(false);
   };
 
   return (
-    <div className="p-4 border-t bg-white">
-      <div className="flex">
+    <div className="p-4 border-t bg-white relative">
+      {/* Image Preview Modal */}
+      {preview && (
+        <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-80 flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg max-w-xs relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500"
+              onClick={handleCancelPreview}
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={preview}
+              alt="Preview"
+              className="max-w-full max-h-60 mb-4 rounded"
+            />
+            <button
+              onClick={handleSend}
+              className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+            >
+              Send Image
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Input and Controls */}
+      <div className="flex items-center">
+        <label htmlFor="file-input" className="cursor-pointer mr-2">
+          <Paperclip />
+        </label>
         <input
-          ref={inputRef} // Set focus on the input
+          type="file"
+          className="hidden"
+          onChange={handleFileChange}
+          accept="image/*,application/pdf,.doc,.txt"
+          id="file-input"
+        />
+        <input
+          ref={inputRef}
           type="text"
-          className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder={`Type a message, ${user.name || 'Anonymous'}`}
+          className={`flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            text.length > maxMessageLength ? "border-red-500" : ""
+          }`}
+          placeholder={`Type a message, ${user.name || "Anonymous"}`}
           value={text}
           onChange={(e) => {
             if (e.target.value.length <= maxMessageLength) {
               setText(e.target.value);
             }
           }}
-          onKeyDown={handleKeyPress}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && (text.trim() || file)) {
+              handleSend();
+            }
+          }}
         />
+
+        {/* Emoji Picker */}
+        <div className="relative">
+          <button
+            className="text-xl cursor-pointer"
+            onClick={() => setEmojiPickerVisible((prev) => !prev)}
+            aria-label="Select emoji"
+          >
+            😊
+          </button>
+          {emojiPickerVisible && (
+            <div className="absolute bottom-12 right-[-80px] z-50">
+              <Picker data={data} onEmojiSelect={handleEmojiSelect} previewPosition="none" />
+            </div>
+          )}
+        </div>
+
+        {/* Send Button */}
         <button
           className={`ml-2 px-4 py-2 rounded ${
-            text.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300 cursor-not-allowed'
-          } text-white`}
+            text.trim() || file ? "bg-blue-500 hover:bg-blue-600 text-white" : "hidden"
+          }`}
           onClick={handleSend}
-          disabled={!text.trim()}
+          disabled={!text.trim() && !file}
         >
-          Send
+          <SendHorizontal />
         </button>
       </div>
-      <p className={`text-xs mt-2 ${text.length > 400 ? 'text-red-500' : 'text-gray-500'}`}>
+
+      {/* Character Count */}
+      <p className={`text-xs mt-2 ${text.length > maxMessageLength ? "text-red-500" : "text-gray-500"}`}>
         {text.length}/{maxMessageLength} characters
       </p>
     </div>

@@ -4,15 +4,12 @@
 // export const logIn = async (req, res) => {
 //   const { email, password } = req.body;
 
- 
 //   const user = await User.findOne({ email });
 
-  
 //   if (user && (await user.matchPassword(password))) {
-   
+
 //     generateToken(res, user._id);
 
-   
 //     res.status(200).json({
 //       _id: user._id,
 //       firstname: user.firstname,
@@ -20,7 +17,7 @@
 //       email: user.email,
 //     });
 //   } else {
-   
+
 //     res.status(400).json({
 //       message: "Invalid Email or Password",
 //     });
@@ -46,7 +43,7 @@
 //     return res.status(201).json({
 //       _id: user._id,
 //       username: user.username,
-    
+
 //       email: user.email,
 //     });
 //   } else {
@@ -68,68 +65,423 @@
 
 import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
+import generateToken from "../utils/generateToken.js";
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import generateVerificationToken from "../utils/generateVerificationToken.js";
+import {
+  sendPasswordResetEmail,
+  sendResetSuccessEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../mailtrap/emails.js";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { catchError } from "rxjs";
+import nodemailer from "nodemailer";
+import path from "path";
+import multer from "multer";
+import fs from "fs";
+const validateFields = (fields) => {
+  for (const [key, value] of Object.entries(fields)) {
+    if (!value) {
+      throw new Error(`${key} is required`);
+    }
+  }
+};
 
-export const logIn = async (req, res) => {
-  const { email, password } = req.body;
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = "uploads";
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
 
- 
-  const user = await User.findOne({ email });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${req.user._id}-${Date.now()}${path.extname(file.originalname)}`);
+  },
+});
 
-  
-  if (user && (await user.matchPassword(password))) {
-   
-    generateToken(res, user._id);
+const fileFilter = (req, file, cb) => {
+  const allowedExtensions = /png|jpg|jpeg/;
+  const extname = allowedExtensions.test(
+    path.extname(file.originalname).toLowerCase()
+  ); // Check file extension
 
-   
-    res.status(200).json({
-      _id: user._id,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
-    });
+  if (extname) {
+    cb(null, true);
   } else {
-   
-    res.status(400).json({
-      message: "Invalid Email or Password",
+    cb(
+      new Error(
+        "Invalid file type. Only PNG, JPG, and JPEG files are allowed."
+      ),
+      false
+    ); // Reject the file
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_EXPIRES_IN = "15m";
+const REFRESH_TOKEN_EXPIRES_IN = "7d";
+
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    if (!id) {
+      return res.status(404).json({ message: "User ID is not found" });
+    }
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error. Could not retrieve user." });
+  }
+};
+
+export const signUp = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+  validateFields({ name, email, password });
+
+  // const userExist = await User.findOne({ email });
+  // if (userExist) {
+  //   res.status(400);
+  //   throw new Error("User already exist");
+  // }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationToken = generateVerificationToken();
+
+  const user = new User({
+    name,
+    email,
+    password: hashedPassword,
+    verificationToken,
+    verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
+  });
+
+  try {
+    await user.save();
+    generateToken(res, user._id);
+    await sendVerificationEmail(user.email, verificationToken);
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({ message: `Invalid user data: ${error.message}` });
+  }
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  try {
+    const { code } = req.body;
+    validateFields({ code });
+
+    const user = await User.findOne({
+      verificationToken: code,
+      verificationTokenExpiresAt: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid verification token" });
+    }
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiresAt = undefined;
+    await user.save();
+
+    await sendWelcomeEmail(user.email, user.name);
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+export const logIn = asyncHandler(async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    validateFields({ email, password });
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Please verify your email first" });
+    }
+
+    const token = generateToken(res, user._id);
+    const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
+      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    });
+
+    user.lastLogin = new Date();
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      isLoggedIn: true,
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+      token,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+export const getProfile = asyncHandler(async (req, res) => {
+  const user = {
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+  };
+  res.status(200).json({ user });
+});
+
+export const updateProfile = async (req, res) => {
+  const { userId, name, lastName, phone, email, country } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use." });
+      }
+      user.email = email;
+    }
+
+    if (name && name.trim()) user.name = name.trim();
+    if (lastName && lastName.trim()) user.LastName = lastName.trim();
+    if (phone && phone.trim()) user.phone = phone.trim();
+    if (country && country.trim()) user.country = country.trim();
+
+    await user.save();
+
+    res.status(200).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        lastName: user.LastName,
+        email: user.email,
+        phone: user.phone,
+        country: user.country,
+      },
+      message: "Profile updated successfully!",
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ message: "Failed to update profile", error: err.message });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Refresh token is required" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired refresh token" });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invalid or expired refresh token" });
+    }
+
+    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    const newRefreshToken = jwt.sign(
+      { id: decoded.id },
+      process.env.JWT_REFRESH_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Tokens refreshed successfully",
+      accessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (err) {
+    console.error("Error in refreshToken:", err);
+    res.status(403).json({
+      success: false,
+      message: "Invalid or expired refresh token",
+      error: err.message,
     });
   }
 };
 
-export const signUp = async (req, res) => {
-  const { username,  email, password } = req.body;
-  try {
-
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-   return res.status(400).json({message:"User Already Exists"});
-  }
-
-  const user = await User.create({
-    username,
-    email,
-    password,
-  });
-  if (user) {
-    genereateToken(res,user._id);
-    return res.status(201).json({
-      _id: user._id,
-      username: user.username,
-    
-      email: user.email,
-    });
-  } else {
-   return res.status(400).json({message:"Invalid User Data"});
-  }
-} catch (error) {
-  return res.status(500).json({ message: "Server error", error: error.message });
-}};
-
 export const logOut = async (req, res) => {
-  res.cookies('jwt','',{
-    httpOnly:true,
-    expires:new Date(0)
-  })
-  res.status(200).json({message:'User Logged out successfully'})
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    if (refreshToken) {
+      await invalidateToken(refreshToken);
+    }
+
+    res.clearCookie("refreshToken");
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ success: false, message: "Failed to log out" });
+  }
+};
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+  try {
+    const resetToken = crypto.randomBytes(20).toString("hex");
+
+    const resetTokenExpiresAt = Date.now() + 15 * 60 * 1000;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiresAt = resetTokenExpiresAt;
+
+    await user.save({ validateBeforeSave: false });
+
+    await sendPasswordResetEmail(
+      user.email,
+      `http://localhost:3000/resetPassword/${resetToken}`
+    );
+
+    res.status(200).json({ success: true, message: "Email sent to user" });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiresAt = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid or expired reset token" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiresAt = undefined;
+    await user.save();
+    await sendResetSuccessEmail(user.email);
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+export const checkAuth = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await User.findById(req.user._id).select("-password");
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error in checkAuth:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
 };
 
 export const Contact = asyncHandler(async (req, res) => {

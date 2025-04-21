@@ -1,62 +1,131 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { House, MessageSquareMore, BookMarked, Clock, History, BookHeart, CircleUserRound, BookOpenText } from "lucide-react";
-
+import {
+  LogOut,
+  Menu,
+  MessageSquareMore,
+  CircleUserRound,
+  History,
+  Clock3,
+  BookHeart,
+  BookOpenText,
+} from "lucide-react";
+import { LuLayoutDashboard } from "react-icons/lu";
+import { useSelector } from "react-redux";
 const SideBar = ({ setIsOpen, IsOpen }) => {
   const [expanded, setExpanded] = useState(false);
   const location = useLocation();
-
+  const userInfo = useSelector((state) => state.auth.userInfo);
   const navLinks = [
-    { to: "/", label: "Home", Icon: House },
-    { to: "/chat", label: "Chat", Icon: MessageSquareMore },
-    { to: "/savedbooks", label: "Saved Books", Icon: BookMarked },
-    { to: "/readlater", label: "Read later", Icon: Clock },
-    { to: "/history", label: "History", Icon: History },
-    { to: "/likedbooks", label: "Liked Books", Icon: BookHeart },
-    { to: "/profile", label: "Profile", Icon: CircleUserRound },
+    { to: "/user", label: "Dashboard", Icon: LuLayoutDashboard },
+    { to: "/user/history", label: "History", Icon: History },
+    { to: "/user/later", label: "Read Later", Icon: Clock3 },
+    { to: "/user/liked", label: "Liked Books", Icon: BookHeart },
+    { to: "/user/chat", label: "Groups", Icon: MessageSquareMore },
+    { to: "/user/profile", label: "Account", Icon: CircleUserRound },
+    { to: "/logout", label: "Log Out", Icon: LogOut },
   ];
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!event.target.closest(".menu-container")) {
+        setExpanded(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setExpanded(false);
+      }
+    };
+
+    if (expanded) {
+      document.addEventListener("click", handleOutsideClick);
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden"; // prevent background scroll
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "auto"; // reset on unmount
+    };
+  }, [expanded]);
 
   return (
-    <nav
-      className={`fixed top-0 left-0 h-full bg-gray-100 z-10 transition-all duration-300 ease-in-out transform ${
-        IsOpen ? "w-48 opacity-100" : "w-16 opacity-100"
-      }`}
-    >
-      <div className="flex justify-between items-center px-4 mt-4">
-        <button onClick={() => setIsOpen(!IsOpen)} className="p-2 text-black">
-          <span className="text-2xl">☰</span>
-        </button>
-        <div className="flex cursor-pointer items-center ml-2">
-          <BookOpenText className="w-6 h-6 m-1" />
-          <h2 className={`font-bold text-2xl text-black `}>Bookish</h2>
-        </div>
-      </div>
-
-      <ul className="mt-8 px-2 space-y-4 m-1">
-        {navLinks.map(({ to, label, Icon }) => (
-          <li
-            key={to}
-            className={`group p-2 relative ${
-              IsOpen ? "hover:bg-gray-300 hover:text-black rounded-md" : ""
-            } ${location.pathname === to ? "bg-blue-500 text-black" : ""}`} 
+    <>
+      <nav
+        className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ease-in-out ${
+          expanded ? "w-46 bg-gray-300" : "w-6"
+        }`}
+      >
+        <div className="flex justify-between items-center px-4 mt-4 menu-container w-full">
+          <button
+            onClick={() => setExpanded((prev) => !prev)}
+            className="p-2 text-black"
+            aria-expanded={expanded}
+            aria-label="Toggle menu"
           >
-            <Link to={to} className="flex items-center space-x-4">
-              <Icon className="w-6 h-6" />
-              {IsOpen && <span>{label}</span>}
-            </Link>
-            {!IsOpen && (
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className={`flex items-center ml-2 `}>
+            <BookOpenText className="w-6 h-6 m-1" />
+            <h2 className="font-bold text-2xl sm:text-xl text-black">
+              Bookish
+            </h2>
+          </div>
+        </div>
+        <div className="mt-8 px-2 space-y-4 m-1">
+          {navLinks.map(({ to, label, Icon }) => {
+            const isActive = location.pathname === to;
+            const IconComponent = Icon;
+            return (
               <div
-                className="absolute bg-gray-900 text-white text-sm rounded-md py-1 px-2 left-10 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                style={{ whiteSpace: "nowrap" }}
+                key={to}
+                className={`p-2 relative ${
+                  expanded ? "hover:bg-gray-300 rounded-md" : ""
+                } ${isActive ? "bg-blue-500 text-black" : ""}`}
               >
-                {label}
+                <Link
+                  to={to}
+                  className={`flex items-center p-2 transition-all duration-300 ${
+                    expanded
+                      ? "hover:bg-gray-800 hover:text-white rounded-md px-2"
+                      : ""
+                  } ${isActive ? "bg-amber-500 rounded-md shadow-md" : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => setExpanded(false)}
+                >
+                  <div className="relative group">
+                    <IconComponent className="w-6 h-6" />
+                    {!expanded && (
+                      <div className="absolute left-full ml-1 top-1/2 -translate-y-1/2 bg-black text-white whitespace-nowrap text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg z-50 pointer-events-none">
+                        {label}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={`${
+                      expanded ? "block ml-4" : "hidden"
+                    } transition-all duration-300`}
+                  >
+                    {label}
+                  </span>
+                </Link>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
-    </nav>
+            );
+          })}
+        </div>
+      </nav>
+      {expanded && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setExpanded(false)}
+        />
+      )}
+    </>
   );
-}
+};
 
 export default SideBar;

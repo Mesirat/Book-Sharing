@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import axios from "axios";
-import { useAuthStore } from "../../store/authStore";
-import Cards from "../../component/Cards";
-import SideBar from "../../component/SideBar";
+
+import Cards from "../components/Cards";
+import SideBar from "../components/SideBar";
 import { Loader } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
 import Recommendation from "./Recommendation";
@@ -14,7 +14,7 @@ const User = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarClicked, setIsSidebarClicked] = useState(false);
-  const { user, isAuthenticated } = useAuthStore();
+ 
   const location = useLocation();
 
   const searchBooks = async () => {
@@ -67,7 +67,7 @@ const User = () => {
       <div className="flex-1 py-6 px-4">
         {!isSidebarClicked && location.pathname !== "/user" && (
           <div className="flex justify-center mb-4">
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden w-3/4 md:w-1/2 lg:w-1/3">
+            <div className="fixed flex items-center border border-gray-300 rounded-lg overflow-hidden w-3/4 md:w-1/2 lg:w-1/3">
               <input
                 type="text"
                 className="w-full px-3 py-2 outline-none"
@@ -84,10 +84,25 @@ const User = () => {
         )}
 
         {loading && <Loader className="animate-spin mx-auto my-4" />}
-        {error && <div className="text-red-500 text-center my-4">{error}</div>}
+        {error && <div className="text-red-500 text-center my-12">{error}</div>}
 
         <Cards books={books} />
-
+        <div className="bg-[url('/assets/32.jpg')] bg-cover bg-center h-screen flex flex-col items-start justify-center px-4 sm:px-10 lg:px-24 text-left">
+        <div className="mt-8 sm:mt-12">
+          <p className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 lg:mb-6 leading-tight">
+            Reading gives us
+          </p>
+          <p className="text-2xl sm:text-4xl lg:text-6xl text-yellow-300 font-bold mb-3 sm:mb-4 lg:mb-6 leading-tight">
+            someplace to go
+          </p>
+          <p className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 lg:mb-6 leading-tight">
+            when we have to stay
+          </p>
+          <p className="text-2xl sm:text-4xl lg:text-6xl text-yellow-300 font-bold leading-tight">
+            where we are.
+          </p>
+        </div>
+      </div>
         <Outlet />
       </div>
     </div>

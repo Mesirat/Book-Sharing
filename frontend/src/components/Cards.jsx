@@ -22,3 +22,4 @@ const Cards = ({ books, setShow, setBookItem }) => {
     </>
   );
 };
+export default Cards;

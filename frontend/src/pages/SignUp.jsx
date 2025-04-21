@@ -1,129 +1,92 @@
-import React, { useState, useEffect } from "react";
-import { FcGoogle } from "react-icons/fc";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useSignupMutation } from "../slices/usersApiSlice";
-import { setCredentials } from "../slices/authSlice";
-import { toast } from "react-toastify";
-import { LoaderCircle } from "lucide-react";
-import SideBar from "../components/SideBar.jsx";
+import { useState } from 'react';
+import axios from 'axios';
+import { FaUser } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
+import { RiLockPasswordFill } from "react-icons/ri";
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+
 const SignUp = () => {
-  const [username, setUserName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  console.log(username,email, password);
-  const [signup, { loading }] = useSignupMutation();
-  const { userInfo } = useSelector((state) => state.auth);
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (userInfo) {
-      navigate("/");
-    }
-  }, [navigate, userInfo]);
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await signup({
-        username,
-        email,
-        password,
-      }).unwrap();
-      dispatch(setCredentials({ ...res }));
-      navigate("/");
-    } catch (err) {
-      toast.error(err?.data?.message || err.error);
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+      
 
-  return (
-    <>
-      <SideBar />
+        try {
+            const response = await axios.post('http://localhost:5000/users/signup', {
+                name:username,
+                email,
+                password
+            });
+            console.log(response.data);
+        } catch (error) {
+            console.log('Error submitting data', error);
+            setError("An error occurred while signing up");
+        }
+    };
 
-      <div className="reltive flex items-center justify-center h-screen bg-gray-200 p-4">
-        <div className="flex lg:w-[35%]  md:w-[70%] sm:[80%] items-center bg-gray-300 shadow-sm shadow-gray-400 rounded-2xl w-full  mx-auto">
-          <div className="w-full  flex flex-col items-center  px-2 py-6">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4 font-serif text-center lg:text-start">
-              Sign Up
-            </h2>
-            <form
-              onSubmit={handleSignup}
-              className="w-full max-w-md lg:w-4/5  "
-            >
-              <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm lg:text-md font-semibold text-gray-600 mb-2"
-                >
-                  User Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-md p-2 outline-none mb-4"
-                  placeholder="Enter your first name"
-                  value={username}
-                  onChange={(e) => setUserName(e.target.value)}
-                  required
-                />
-              </div>
-             
-              <div className="mt-4">
-                <label
-                  htmlFor="email"
-                  className="block text-sm lg:text-md font-semibold text-gray-600 mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-md p-2 outline-none"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="mt-4">
-                <label
-                  htmlFor="password"
-                  className="block text-sm lg:text-md font-semibold text-gray-600 mb-2"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  className="w-full rounded-md p-2 outline-none"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="text-end mt-4">
-                <p className="text-xs lg:text-sm">
-                  Already have an account?{" "}
-                  <a
-                    href=""
-                    className="text-gray-700 font-semibold hover:underline"
-                  >
-                    Log In
-                  </a>
-                </p>
-              </div>
-              <div className="text-center mt-6">
+    return (
+        <div className="flex justify-center items-center min-h-screen bg-gray-100">
+            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h1 className="text-2xl text-gray-400 font-semibold text-center mb-6">Sign Up</h1>
+
+                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
+                <div className="mb-4 flex items-center border-b-2 pb-2">
+                    <FaUser className="text-black mr-3" />
+                    <input
+                        type="text"
+                        placeholder="User Name"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="bg-transparent border-none outline-none w-full text-black text-lg p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-4 flex items-center border-b-2 pb-2">
+                    <MdEmail className="text-black mr-3" />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="bg-transparent border-none outline-none w-full text-black text-lg p-2"
+                        required
+                    />
+                </div>
+
+                <div className="mb-4 flex items-center border-b-2 pb-2">
+                    <RiLockPasswordFill className="text-black mr-3" />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="bg-transparent border-none outline-none w-full text-black text-lg p-2"
+                        required
+                    />
+                </div>
+
                 <button
-                  type="submit"
-                  className="w-cover font-semibold px-1 lg:w-[35%] text-white bg-gray-900 py-2 rounded-md  hover:shadow-md hover:shadow-white hover:rounded-3xl"
+                    type="submit"
+                    className="w-full py-3 mb-6 text-white text-xl font-semibold bg-gradient-to-r from-[#0ef] to-[#c800ff] rounded-full hover:bg-[#0ef] transition"
                 >
-                  {loading ? <LoaderCircle /> : "Sign Up"}
+                    Sign Up
                 </button>
-              </div>
+
+                <p className="text-sm text-center">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-black hover:underline">Sign In </Link>
+                </p>
+
+               
             </form>
-          </div>
         </div>
-      </div>
-    </>
-  );
+    );
 };
+
 export default SignUp;

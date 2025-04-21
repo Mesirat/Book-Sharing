@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Modals from "../component/Modals";
-import Cards from "../component/Cards.jsx";
+import Modals from "../components/Modals";
+import Cards from "../components/Cards.jsx";
 import { Loader } from "lucide-react";
 
 const Recommendation = ({ user }) => {

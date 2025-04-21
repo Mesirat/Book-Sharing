@@ -21,4 +21,4 @@ const Modals = ({ bookItem, setShow }) => {
       </div>
     );
   };
-  
+export default Modals;
