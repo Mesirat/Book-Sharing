@@ -6,7 +6,7 @@ import { useSignupMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
 import { LoaderCircle } from "lucide-react";
-import SideBar from "../components/SideBar";
+import SideBar from "../components/SideBar.jsx";
 const SignUp = () => {
   const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");

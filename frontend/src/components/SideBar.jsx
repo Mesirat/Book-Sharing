@@ -2,7 +2,8 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { House, MessageSquareMore, BookMarked, Clock, History, BookHeart, CircleUserRound, BookOpenText } from "lucide-react";
 
-function SideBar({ IsOpen, setIsOpen }) {
+const SideBar = ({ setIsOpen, IsOpen }) => {
+  const [expanded, setExpanded] = useState(false);
   const location = useLocation();
 
   const navLinks = [

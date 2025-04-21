@@ -11,7 +11,7 @@ const ReadBook = () => {
     const fetchBook = async () => {
       const res = await fetch(`/api/books/${bookId}`);
       const data = await res.json();
-      setFileURL(data.fileURL);  // fileURL should point to a PDF hosted on your server or cloud
+      setFileURL(data.fileURL);  
     };
     fetchBook();
   }, [bookId]);
