@@ -126,14 +126,15 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       set({ loading: false });
     }
-  },
+  }
+  
+,  
+  
+login: async (email, password) => {
+  set({ loading: true, message: null, error: null });
 
-  login: async (email, password) => {
-    try {
-      const response = await axios.post(`${API_URL}/login`, {
-        email,
-        password,
-      });
+  try {
+    const response = await axios.post(`${API_URL}/login`, { email, password });
 
       if (
         response.data.isLoggedIn &&
