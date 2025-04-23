@@ -51,12 +51,12 @@ const EmailVerification = () => {
   };
 
   return (
-    <div className="w-full h-screen font-sans text-white flex items-center justify-center bg-gradient-to-br from-[#1a2740] to-[#081b29]">
-      <div className="relative w-full max-w-md bg-opacity-90 bg-[#0b3b56] rounded-lg shadow-lg p-8">
+    <div className="w-full h-screen font-sans  flex items-center justify-center bg-gray-200">
+      <div className="relative w-full max-w-md bg-opacity-90 bg-white rounded-lg shadow-lg p-8">
         <h2 className="text-3xl font-extrabold text-center text-transparent bg-gradient-to-r from-[#00ffff] to-[#ff0080] bg-clip-text mb-4">
           Verify Your Email
         </h2>
-        <p className="text-center text-gray-300 mb-6">
+        <p className="text-center text-gray-800 mb-6">
           Enter the 6-digit code sent to your email address.
         </p>
 
@@ -80,7 +80,7 @@ const EmailVerification = () => {
                 value={item}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-12 text-2xl text-center font-bold bg-gray-800 text-white border-2 border-gray-600 rounded-md focus:outline-none focus:border-[#0ef] transition-all"
+                className="w-12 h-12 text-2xl text-center font-bold bg-gray-200 border-2 rounded-md focus:outline-none focus:border-[#0ef] transition-all"
                 aria-label={`Digit ${index + 1}`}
               />
             ))}
@@ -89,10 +89,10 @@ const EmailVerification = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full mt-4 py-3 text-xl font-bold text-center rounded-lg transition-all ${
+            className={`w-full mt-4 py-3 text-xl font-bold text-white text-center rounded-full transition-all ${
               loading
                 ? "bg-gray-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-[#00ffff] to-[#ff0080] hover:from-[#0ef] hover:to-[#ff66c4]"
+                : "bg-gradient-to-r from-[#0ef] to-[#c800ff] hover:from-[#0ef] hover:to-[#ff66c4]"
             }`}
           >
             {loading ? <Loader className="w-6 h-6 animate-spin mx-auto" /> : "Submit"}

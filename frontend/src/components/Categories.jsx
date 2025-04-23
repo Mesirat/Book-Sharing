@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// import { bookCategories } from "../data";
+import { bookCategories } from "../data";
 import axios from "axios";
 
 const Categories = () => {
@@ -13,15 +13,14 @@ const Categories = () => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(
-        "http://localhost:5000/books/search",
-        { params: { category } }
-      );
+      const response = await axios.get("http://localhost:5000/books/search", {
+        params: { category },
+      });
 
       if (response.data?.items?.length > 0) {
         setBooks(response.data.items);
       } else {
-        setBooks([]); // Handle no books scenario
+        setBooks([]);
       }
     } catch (err) {
       console.error(err);
@@ -38,12 +37,14 @@ const Categories = () => {
 
   return (
     <div className="w-full flex flex-col items-center font-serif px-4 sm:px-6 lg:px-8">
-      {/* Header */}
+     
       <div className="w-full flex justify-center mb-10">
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl text-center">Categories</h1>
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl text-center">
+          Categories
+        </h1>
       </div>
 
-      {/* Categories Grid */}
+      
       <div className="grid grid-cols-1 mb-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-12 lg:mx-[200px]">
         {Object.entries(bookCategories).map(([parent, subcategories]) => (
           <div
@@ -68,9 +69,11 @@ const Categories = () => {
         ))}
       </div>
 
-      {/* Books Section */}
+      
       <div className="w-full mt-10">
-        {loading && <p className="text-center text-lg text-gray-600">Loading books...</p>}
+        {loading && (
+          <p className="text-center text-lg text-gray-600">Loading books...</p>
+        )}
         {error && <p className="text-center text-red-500">{error}</p>}
 
         {selectedCategory && !loading && !error && books.length === 0 && (

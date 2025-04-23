@@ -1,68 +1,3 @@
-// import genereateToken from "../utils/generateToken.js";
-// import { User } from "../models/userModel.js";
-
-// export const logIn = async (req, res) => {
-//   const { email, password } = req.body;
-
-//   const user = await User.findOne({ email });
-
-//   if (user && (await user.matchPassword(password))) {
-
-//     generateToken(res, user._id);
-
-//     res.status(200).json({
-//       _id: user._id,
-//       firstname: user.firstname,
-//       lastname: user.lastname,
-//       email: user.email,
-//     });
-//   } else {
-
-//     res.status(400).json({
-//       message: "Invalid Email or Password",
-//     });
-//   }
-// };
-
-// export const signUp = async (req, res) => {
-//   const { username,  email, password } = req.body;
-//   try {
-
-//   const userExists = await User.findOne({ email });
-//   if (userExists) {
-//    return res.status(400).json({message:"User Already Exists"});
-//   }
-
-//   const user = await User.create({
-//     username,
-//     email,
-//     password,
-//   });
-//   if (user) {
-//     genereateToken(res,user._id);
-//     return res.status(201).json({
-//       _id: user._id,
-//       username: user.username,
-
-//       email: user.email,
-//     });
-//   } else {
-//    return res.status(400).json({message:"Invalid User Data"});
-//   }
-// } catch (error) {
-//   return res.status(500).json({ message: "Server error", error: error.message });
-// }};
-
-// export const logOut = async (req, res) => {
-//   res.cookies('jwt','',{
-//     httpOnly:true,
-//     expires:new Date(0)
-//   })
-//   res.status(200).json({message:'User Logged out successfully'})
-// };
-// export const getProfile = async (req, res) => {};
-// export const updateProfile = async (req, res) => {};
-
 import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
@@ -156,44 +91,32 @@ export const getUserById = async (req, res) => {
   }
 };
 
+
 export const signUp = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  validateFields({ name, email, password });
 
-  // const userExist = await User.findOne({ email });
-  // if (userExist) {
-  //   res.status(400);
-  //   throw new Error("User already exist");
-  // }
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists" });
+  }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const verificationToken = generateVerificationToken();
 
-  const user = new User({
+  const user = await User.create({
     name,
     email,
-    password: hashedPassword,
-    verificationToken,
-    verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    password
   });
 
-  try {
-    await user.save();
-    generateToken(res, user._id);
-    await sendVerificationEmail(user.email, verificationToken);
+ 
+  const userWithoutPassword = { ...user._doc, password: undefined };
 
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      user: {
-        ...user._doc,
-        password: undefined,
-      },
-    });
-  } catch (error) {
-    res.status(400).json({ message: `Invalid user data: ${error.message}` });
-  }
+  res.status(201).json({
+    success: true,
+    message: "User registered successfully",
+    user: userWithoutPassword,
+  });
 });
+
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {
@@ -230,55 +153,37 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 export const logIn = asyncHandler(async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    validateFields({ email, password });
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    if (!user.isVerified) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Please verify your email first" });
-    }
-
-    const token = generateToken(res, user._id);
-    const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
-      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-    });
-
-    user.lastLogin = new Date();
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      isLoggedIn: true,
-      user: {
-        ...user._doc,
-        password: undefined,
-      },
-      token,
-      refreshToken,
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(400).json({ success: false, message: error.message });
+  const user = await User.findOne({ email });
+ 
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials" });
   }
+
+  const isValidPassword = await bcrypt.compare(password, user.password);
+   if (!isValidPassword) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  const token = generateToken(res, user._id);
+  const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+
+  user.lastLogin = new Date();
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    isLoggedIn: true,
+    user: { ...user._doc, password: undefined },
+    token,
+    refreshToken,
+  });
 });
+
 
 export const getProfile = asyncHandler(async (req, res) => {
   const user = {
@@ -587,14 +492,14 @@ export const getLikedBooks = asyncHandler(async (req, res) => {
   try {
     const userId = req.user?._id;
 
-    console.log("User ID from Token:", userId);  // Log the user ID
+    console.log("User ID from Token:", userId); // Log the user ID
 
     // Check if userId exists and is valid
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid User ID format" });
     }
 
-    console.log("Fetching Liked Books for User ID:", userId);  // Log the user ID for debugging
+    console.log("Fetching Liked Books for User ID:", userId); // Log the user ID for debugging
 
     const user = await User.findById(userId).select("likedBooks");
 
@@ -602,11 +507,11 @@ export const getLikedBooks = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("User Found:", user);  // Log the user object for debugging
+    console.log("User Found:", user); // Log the user object for debugging
 
     res.status(200).json({ likedBooks: user.likedBooks || [] });
   } catch (error) {
-    console.error("Error fetching Liked Books:", error);  // Log detailed error message
+    console.error("Error fetching Liked Books:", error); // Log detailed error message
     res.status(500).json({
       message: error.message || "An error occurred while fetching liked books.",
     });
@@ -620,7 +525,7 @@ export const likeBook = asyncHandler(async (req, res) => {
     }
 
     const { bookId, title, author, thumbnail } = req.body;
-    const userId = req.user._id;  // This will no longer throw an error
+    const userId = req.user._id; // This will no longer throw an error
 
     if (!bookId || !title || !author || !thumbnail) {
       return res.status(400).json({ message: "Missing book details" });

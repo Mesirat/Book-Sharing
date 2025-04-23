@@ -1,86 +1,61 @@
-import {
-	PASSWORD_RESET_REQUEST_TEMPLATE,
-	PASSWORD_RESET_SUCCESS_TEMPLATE,
-	VERIFICATION_EMAIL_TEMPLATE,
-} from "./emailTemplates.js";
-import { client, sender } from "./mailtrap.config.js";
+import { PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE, VERIFICATION_EMAIL_TEMPLATE } from "./emailTemplates.js";
+import { client, sender } from './mailtrap.config.js';
 
-export const sendVerificationEmail = async (email, verificationToken) => {
-	const recipient = [{ email }];
+const sendEmail = async ({ to, subject, html, template_uuid, template_variables, category }) => {
+  try {
+    const options = {
+      from: sender,
+      to: [{ email: to }],
+      subject,
+      category,
+    };
 
-	try {
-		const response = await mailtrapClient.send({
-			from: sender,
-			to: recipient,
-			subject: "Verify your email",
-			html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", verificationToken),
-			category: "Email Verification",
-		});
+    if (html) {
+      options.html = html;
+    }
 
-		console.log("Email sent successfully", response);
-	} catch (error) {
-		console.error(`Error sending verification`, error);
+    if (template_uuid) {
+      options.template_uuid = template_uuid;
+      options.template_variables = template_variables;
+    }
 
-		throw new Error(`Error sending verification email: ${error}`);
-	}
+    const response = await client.send(options);
+    console.log(`${category} email sent successfully`, response);
+    return response;
+  } catch (error) {
+    console.error(`Error sending ${category} email:`, error);
+    throw new Error(`Error sending ${category} email: ${error.message}`);
+  }
 };
 
-export const sendWelcomeEmail = async (email, name) => {
-	const recipient = [{ email }];
+export const sendVerificationEmail = (email, verificationToken) =>
+  sendEmail({
+    to: email,
+    subject: "Verify your email",
+    html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationCode}", verificationToken),
+    category: "Email verification",
+  });
 
-	try {
-		const response = await mailtrapClient.send({
-			from: sender,
-			to: recipient,
-			template_uuid: "e65925d1-a9d1-4a40-ae7c-d92b37d593df",
-			template_variables: {
-				company_info_name: "Auth Company",
-				name: name,
-			},
-		});
+export const sendWelcomeEmail = (email, name) =>
+  sendEmail({
+    to: email,
+    template_uuid: "e65925d1-a9d1-4a40-ae7c-d92b37d593df",
+    template_variables: { company_info_name: "Bookish.com", name },
+    category: "Welcome email",
+  });
 
-		console.log("Welcome email sent successfully", response);
-	} catch (error) {
-		console.error(`Error sending welcome email`, error);
+export const sendPasswordResetEmail = (email, resetURL) =>
+  sendEmail({
+    to: email,
+    subject: "Reset your password",
+    html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
+    category: "Password reset",
+  });
 
-		throw new Error(`Error sending welcome email: ${error}`);
-	}
-};
-
-export const sendPasswordResetEmail = async (email, resetURL) => {
-	const recipient = [{ email }];
-
-	try {
-		const response = await mailtrapClient.send({
-			from: sender,
-			to: recipient,
-			subject: "Reset your password",
-			html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
-			category: "Password Reset",
-		});
-	} catch (error) {
-		console.error(`Error sending password reset email`, error);
-
-		throw new Error(`Error sending password reset email: ${error}`);
-	}
-};
-
-export const sendResetSuccessEmail = async (email) => {
-	const recipient = [{ email }];
-
-	try {
-		const response = await mailtrapClient.send({
-			from: sender,
-			to: recipient,
-			subject: "Password Reset Successful",
-			html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-			category: "Password Reset",
-		});
-
-		console.log("Password reset email sent successfully", response);
-	} catch (error) {
-		console.error(`Error sending password reset success email`, error);
-
-		throw new Error(`Error sending password reset success email: ${error}`);
-	}
-};
+export const sendResetSuccessEmail = (email) =>
+  sendEmail({
+    to: email,
+    subject: "Password reset successful",
+    html: PASSWORD_RESET_SUCCESS_TEMPLATE,
+    category: "Password Reset Success",
+  });

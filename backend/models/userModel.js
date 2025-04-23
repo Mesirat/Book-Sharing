@@ -1,6 +1,17 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+const likedBooksSchema = new mongoose.Schema(
+  {
+    bookId: { type: String, required: true },
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    thumbnail: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+
+
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -9,11 +20,12 @@ const userSchema = mongoose.Schema(
     },
 
     phone: {
-      type: String, // Changed to string for better handling of phone numbers
-      default:"+251900000000",
+      type: String,
       unique: true,
+      sparse: true, 
+      required: false,  
       validate: {
-        validator: (v) => /\+?[0-9]{10,15}/.test(v), // Basic phone number validation
+        validator: (v) => /\+?[0-9]{10,15}/.test(v), 
         message: (props) => `${props.value} is not a valid phone number!`,
       },
     },
@@ -30,17 +42,12 @@ const userSchema = mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
+    likedBooks: [likedBooksSchema], 
     
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
-    verificationToken: String,
-    verificationTokenExpiresAt: Date,
     profileImage: {
-      type: String, // Store the image URL or path
+      type: String, 
       default: "default-avatar.jpg", // Default image if none is provided
     },
   },
@@ -77,28 +84,3 @@ export const User = mongoose.model("user", userSchema);
 
 
 
-// const mongoose = require("mongoose");
-
-// const likedBooksSchema = new mongoose.Schema(
-//   {
-//     bookId: { type: String, required }, // Unique identifier for the book (e.g., Google Books ID)
-//     title: { type: String, required },
-//     author: { type: String, required },
-//     thumbnail: { type: String, required },
-//   },
-//   { timestamps: true }
-// );
-
-// const userSchema = new mongoose.Schema(
-//   {
-//     email: { type: String, required, unique: true },
-//     password: { type: String, required },
-//     profileImage: { type: String },
-//     likedBooks: [likedBooksSchema], // Array to store liked books
-//   },
-//   { timestamps: true }
-// );
-
-// const User = mongoose.model("User", userSchema);
-
-// module.exports = User;

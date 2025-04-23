@@ -1,16 +1,3 @@
-// import { configureStore } from "@reduxjs/toolkit";
-// import authReducer from '../slices/authSlice.js';
-// import { apiSlice } from "../slices/apiSlices.js";
-// const store = configureStore({
-//     reducer:{
-//         auth:authReducer,
-//         [apiSlice.reducerPath]:apiSlice.reducer,
-//     },
-//     middleware:(getDefaultMiddleware)=>getDefaultMiddleware().concat(apiSlice.middleware),
-//     devTools:true,
-// });
-// export default store;
-
 import { create } from "zustand";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -108,71 +95,82 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  signup: async (name, email, password) => {
+  signup: async (name, email, password, navigate) => {
+    set({ loading: true });
     try {
       const response = await useAuthStore
         .getState()
-        .makeRequest("post", `${API_URL}/signup`, {
-          name,
-          email,
-          password,
-        });
+        .makeRequest("post", `${API_URL}/signup`, { name, email, password });
+  
+      const { user } = response;
+  
       set({
-        user: response.user,
-        isAuthenticated: true,
+        user,
+        isAuthenticated: false, // Not authenticated yet due to email verification
+        emailForVerification: user.email,
+        verificationToken: user.verificationToken,
+        message: "Signup successful! Please verify your email.",
         loading: false,
-        message: "Signup successful!",
       });
+  
+      // if (navigate) navigate("/verifyEmail");  // Redirect to email verification page
     } catch (error) {
-      set({ loading: false });
+      console.error("Signup error:", error?.response?.data || error.message);
+      set({
+        loading: false,
+        message: error?.response?.data?.message || "An error occurred during signup.",
+      });
     }
-  }
-  
-,  
-  
-login: async (email, password) => {
-  set({ loading: true, message: null, error: null });
+  },  
 
-  try {
-    const response = await axios.post(`${API_URL}/login`, { email, password });
+ login: async (email, password) => {
+    set({ loading: true, message: null, error: null });
 
-      if (
-        response.data.isLoggedIn &&
-        response.data.user &&
-        response.data.token &&
-        response.data.refreshToken
-      ) {
-        const { user, token, refreshToken } = response.data;
-        if (token && refreshToken) {
-          localStorage.setItem("accessToken", token);
-          localStorage.setItem("refreshToken", refreshToken);
+    try {
+      const response = await axios.post(
+        `${API_URL}/login`,
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
+      );
+
+      const { success, user, token, refreshToken } = response.data;
+
+      if (success && user && token && refreshToken) {
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("refreshToken", refreshToken);
 
         set({
-          user: user,
+          user,
           isAuthenticated: true,
           loading: false,
           message: "Login successful!",
           token,
+          error: null,
         });
+
         return { user, token };
       } else {
-        throw new Error("Login failed: No user or token received");
+        throw new Error("Login failed: Missing response data");
       }
     } catch (error) {
-      console.error(
-        "Login failed:",
-        error.response ? error.response.data : error.message
-      );
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      const message =
+        error?.response?.data?.message || "Login failed. Please try again.";
+
       set({
         loading: false,
         isAuthenticated: false,
         user: null,
-        message:
-          error.response?.data?.message || "Login Failed. Please try again.",
+        error: message,
       });
+
+  
+      setTimeout(() => {
+        set({ error: null });
+      }, 20000);
     }
   },
 

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home.jsx";
-import User from "./pages/User.jsx"; // Should contain <Outlet />
+import User from "./pages/User.jsx"; 
 import UpdateProfile from "./pages/UpdateProfile.jsx";
 import Recommendation from "./pages/Recommendation.jsx";
 import ChatApp from "./pages/ChatApp.jsx";
@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword.jsx";
 import BookDetail from "./pages/BookDetail.jsx";
 
 import { useAuthStore } from "./store/authStore.js";
+import NotFound from "./pages/NotFound.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -35,8 +36,8 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const RedirectAuthUser = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
-  if (isAuthenticated && user.isVerified) {
+  const { isAuthenticated} = useAuthStore();
+  if (isAuthenticated ) {
     return <Navigate to="/" replace />;
   }
   return children;
@@ -49,14 +50,14 @@ function App() {
     checkAuth();
     const interval = setInterval(() => {
       refreshToken();
-    }, 14 * 60 * 1000); // Refresh token every 14 minutes
+    }, 14 * 60 * 1000); 
     return () => clearInterval(interval);
   }, [checkAuth, refreshToken]);
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Router>
-        {/* <Routes>
+        <Routes>
          
           <Route path="/" element={<Home />} />
           <Route path="/bookDetail" element={<BookDetail />} />
@@ -64,7 +65,7 @@ function App() {
         
           <Route path="/login" element={<RedirectAuthUser><Login /></RedirectAuthUser>} />
           <Route path="/signup" element={<RedirectAuthUser><SignUp /></RedirectAuthUser>} />
-          <Route path="/verifyEmail" element={<EmailVerification />} />
+          {/* <Route path="/verifyEmail" element={<EmailVerification />} /> */}
           <Route path="/forgotPassword" element={<RedirectAuthUser><ForgotPassword /></RedirectAuthUser>} />
           <Route path="/resetPassword/:token" element={<RedirectAuthUser><ResetPassword /></RedirectAuthUser>} />
 
@@ -76,17 +77,17 @@ function App() {
             <Route path="history" element={<History />} />
             <Route path="later" element={<ReadLater />} />
             <Route path="liked" element={<LikedBooks />} />
-            <Route path="group" element={<Group />} />
+            {/* <Route path="group" element={<Group />} /> */}
             <Route path="profile" element={<Profile />} />
             <Route path="logout" element={<LogOut />} />
           </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes> */}
-        <Routes>
+          <Route path="*" element={<NotFound/>} />
+        </Routes>
+        {/* <Routes>
         <Route path="/login" element={<RedirectAuthUser><Login /></RedirectAuthUser>} />
         <Route path="/signup" element={<RedirectAuthUser><SignUp /></RedirectAuthUser>} />
-        </Routes>
+        </Routes> */}
       </Router>
       <Toaster />
     </div>
