@@ -5,7 +5,7 @@ import { MdEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { Loader } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/NavBar';
+import Navbar from '../../components/headers/bars/NavBar';
 
 const SignUp = () => {
   const [username, setUsername] = useState('');

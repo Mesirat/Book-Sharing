@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Loader } from "lucide-react";
-import Input from "../components/Input";
-import { useAuthStore } from "../store/authStore.js";
-import NavBar from "../components/SideBar.jsx";
+import Input from "../../components/Input";
+import { useAuthStore } from "../../store/authStore.js";
+import NavBar from "../../components/headers/bars/SideBar.jsx";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

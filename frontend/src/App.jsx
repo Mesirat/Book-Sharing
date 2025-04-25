@@ -11,18 +11,19 @@ import ReadLater from "./pages/ReadLater.jsx";
 import LikedBooks from "./pages/LikedBooks.jsx";
 // import Group from "./pages/Group.jsx";
 import Profile from "./pages/Profile.jsx";
-import LogOut from "./pages/LogOut.jsx";
+import LogOut from "./pages/Auth/LogOut.jsx";
 
-import Login from "./pages/Login.jsx";
-import SignUp from "./pages/SignUp.jsx";
+import Login from "./pages/Auth/Login.jsx";
+import SignUp from "./pages/Auth/SignUp.jsx";
 import EmailVerification from "./pages/EmailVerification.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
+import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 // import NotFound from "./pages/NotFound.jsx";
 import BookDetail from "./pages/BookDetail.jsx";
 
 import { useAuthStore } from "./store/authStore.js";
 import NotFound from "./pages/NotFound.jsx";
+import ReadBook from "./pages/ReadBook.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -68,14 +69,15 @@ function App() {
           <Route path="/resetPassword/:token" element={<RedirectAuthUser><ResetPassword /></RedirectAuthUser>} />
           <Route path="/logout" element={<LogOut />} />
 
-         
+          <Route path="/readbook/:bookId" element={<ProtectedRoute><ReadBook/></ProtectedRoute>} />
+
           <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>}>
             <Route path="recommendation" element={<Recommendation />} />
             <Route path="updateProfile" element={<UpdateProfile />} />
             <Route path="chat" element={<ChatApp />} />
             <Route path="history" element={<History />} />
-            <Route path="later" element={<ReadLater />} />
-            <Route path="liked" element={<LikedBooks />} />
+            <Route path="laterReads" element={<ReadLater />} />
+            <Route path="likedBooks" element={<LikedBooks />} />
             {/* <Route path="group" element={<Group />} /> */}
             <Route path="profile" element={<Profile />} />
             
@@ -83,10 +85,7 @@ function App() {
 
           <Route path="*" element={<NotFound/>} />
         </Routes>
-        {/* <Routes>
-        <Route path="/login" element={<RedirectAuthUser><Login /></RedirectAuthUser>} />
-        <Route path="/signup" element={<RedirectAuthUser><SignUp /></RedirectAuthUser>} />
-        </Routes> */}
+  
       </Router>
       <Toaster />
     </div>

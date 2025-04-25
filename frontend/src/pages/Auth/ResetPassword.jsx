@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useAuthStore } from "../store/authStore.js";
-import Input from "../components/Input.jsx";
+import { useAuthStore } from "../../store/authStore.js";
+import Input from "../../components/Input.jsx";
 import toast from "react-hot-toast";
 import { Lock, Loader } from "lucide-react";
 

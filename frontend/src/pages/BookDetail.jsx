@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import {Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Check, ThumbsUp, Star } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 
 const API_URL = "http://localhost:5000/books";
-
 
 const BookDetail = () => {
   const location = useLocation();
@@ -21,13 +20,16 @@ const BookDetail = () => {
 
   if (!book) {
     return (
-      <div className="text-center text-gray-500 mt-10">No book data available.</div>
+      <div className="text-center text-gray-500 mt-10">
+        No book data available.
+      </div>
     );
   }
 
   useEffect(() => {
     const savedLikes = JSON.parse(localStorage.getItem("likedBooks")) || [];
-    const savedLaterReads = JSON.parse(localStorage.getItem("laterReads")) || [];
+    const savedLaterReads =
+      JSON.parse(localStorage.getItem("laterReads")) || [];
     setLikedBooks(savedLikes);
     setLaterReads(savedLaterReads);
 
@@ -45,7 +47,13 @@ const BookDetail = () => {
     if (book) fetchRatings();
   }, [book]);
 
-  const handleAction = async (action, book, endpoint, stateSetter, localKey) => {
+  const handleAction = async (
+    action,
+    book,
+    endpoint,
+    stateSetter,
+    localKey
+  ) => {
     setIsProcessing(true);
     try {
       const response = await axios.put(
@@ -54,7 +62,8 @@ const BookDetail = () => {
           bookId: book.id,
           title: book.volumeInfo.title,
           author: book.volumeInfo.authors?.join(", ") || "Unknown Author",
-          thumbnail: book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg",
+          thumbnail:
+            book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg",
         },
         {
           headers: {
@@ -65,7 +74,10 @@ const BookDetail = () => {
       stateSetter(response.data[action]);
       localStorage.setItem(localKey, JSON.stringify(response.data[action]));
     } catch (error) {
-      console.error(`Error performing ${action}:`, error.response?.data || error.message);
+      console.error(
+        `Error performing ${action}:`,
+        error.response?.data || error.message
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -107,23 +119,28 @@ const BookDetail = () => {
     }
   };
 
-  const thumbnail = book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg";
+  const thumbnail =
+    book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg";
   const title = book.volumeInfo.title || "Untitled";
   const authors = book.volumeInfo.authors?.join(", ") || "Unknown Author";
   const publisher = book.volumeInfo.publisher || "Unknown Publisher";
   const publishYear = book.volumeInfo.publishedDate?.split("-")[0] || "N/A";
-  const description = book.volumeInfo.description || "No description available.";
+  const description =
+    book.volumeInfo.description || "No description available.";
 
   const isLiked = likedBooks.some((likedBook) => likedBook.bookId === book.id);
-  const isLaterRead = laterReads.some((laterRead) => laterRead.bookId === book.id);
+  const isLaterRead = laterReads.some(
+    (laterRead) => laterRead.bookId === book.id
+  );
 
   return (
     <div className="bg-gray-50  p-4 sm:px-8 lg:px-20">
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-lg px-3 sm:p-10">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">{title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">
+          {title}
+        </h1>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          
           <div className="flex flex-col items-center lg:items-start lg:w-1/3 space-y-4">
             <img
               src={thumbnail}
@@ -137,7 +154,6 @@ const BookDetail = () => {
               By <span className="font-semibold underline">{authors}</span>
             </p>
 
-            
             <div className="flex flex-wrap gap-3 mt-4 justify-center lg:justify-start w-full">
               <button
                 onClick={handleLike}
@@ -171,23 +187,26 @@ const BookDetail = () => {
                 {isLaterRead ? "Added" : "Later Read"}
               </button>
 
-              <button
-                onClick={handleReadNow}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
+              <Link
+                to={`/readbook/${book.id}`}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Read Now
-              </button>
+              </Link>
             </div>
 
-            
             <div className="mt-4 w-full">
-              <p className="font-semibold text-center lg:text-left">Average Rating: {averageRating.toFixed(1)}</p>
+              <p className="font-semibold text-center lg:text-left">
+                Average Rating: {averageRating.toFixed(1)}
+              </p>
               <div className="flex justify-center lg:justify-start mt-2 gap-1">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <Star
                     key={value}
                     className="w-6 h-6 cursor-pointer"
-                    fill={value <= (userRating || averageRating) ? "gold" : "white"}
+                    fill={
+                      value <= (userRating || averageRating) ? "gold" : "white"
+                    }
                     onClick={() => handleRating(value)}
                   />
                 ))}
@@ -195,10 +214,13 @@ const BookDetail = () => {
             </div>
           </div>
 
-         
           <div className="lg:w-2/3 overflow-y-auto max-h-[400px] px-1 sm:px-4">
-            <h2 className="text-xl font-bold text-blue-700 mb-3">What's in the book?</h2>
-            <p className="text-gray-800 leading-relaxed text-justify">{description}</p>
+            <h2 className="text-xl font-bold text-blue-700 mb-3">
+              What's in the book?
+            </h2>
+            <p className="text-gray-800 leading-relaxed text-justify">
+              {description}
+            </p>
           </div>
         </div>
       </div>

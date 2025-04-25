@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Cards from "../components/Cards";
-import SideBar from "../components/SideBar";
+import SideBar from "../components/headers/bars/SideBar";
 import { useLocation, useSearchParams } from "react-router-dom";
-import Navbar from "../components/NavBar";
+import Navbar from "../components/headers/bars/NavBar";
 import { Loader } from "lucide-react";
 
 const User = () => {

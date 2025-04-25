@@ -20,8 +20,8 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
   const navLinks = [
     { to: "/user", label: "Dashboard", Icon: LuLayoutDashboard },
     { to: "/user/history", label: "History", Icon: History },
-    { to: "/user/later", label: "Read Later", Icon: Clock3 },
-    { to: "/user/liked", label: "Liked Books", Icon: BookHeart },
+    { to: "/user/laterReads", label: "Read Later", Icon: Clock3 },
+    { to: "/user/likedBooks", label: "Liked Books", Icon: BookHeart },
     { to: "/user/chat", label: "Groups", Icon: MessageSquareMore },
     { to: "/user/profile", label: "Account", Icon: CircleUserRound },
     { to: "/logout", label: "Log Out", Icon: LogOut },
@@ -31,8 +31,8 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
     <>
       <nav
         className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ease-in-out ${
-          expanded ? "w-46 bg-gray-300" : "w-6"
-        } md:w-48`}
+          expanded ? "w-56 bg-gray-300" : "w-6"
+        } md:w-64`}
       >
         <div className="flex  items-center px-4 mt-2 menu-container w-full">
           <button
@@ -48,7 +48,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
             )}
           </button>
           {expanded && (
-            <Link to="/" className=" flex items-center space-x-2 z-50 ">
+            <Link to="/" className=" flex items-center space-x-2 z-50 ml-8">
               <BookOpenText className="w-6 h-6" />
               <span className="font-bold text-2xl text-gray-700">Bookish</span>
             </Link>

@@ -1,9 +1,9 @@
 import React from "react";
-import Navbar from "../components/NavBar";
+import Navbar from "../components/headers/bars/NavBar";
 import { ArrowRight } from "lucide-react";
 import { bookCategories } from "../data";
 import { Link } from "react-router-dom";
-import SideBar from "../components/SideBar";
+import SideBar from "../components/headers/bars/SideBar";
 const Home = () => {
   return (
     <>
