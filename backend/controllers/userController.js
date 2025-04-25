@@ -3,6 +3,7 @@ import { User } from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import cookieParser from "cookie-parser";
 import generateVerificationToken from "../utils/generateVerificationToken.js";
 import {
   sendPasswordResetEmail,
@@ -91,7 +92,6 @@ export const getUserById = async (req, res) => {
   }
 };
 
-
 export const signUp = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -100,23 +100,35 @@ export const signUp = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "User already exists" });
   }
 
+  const user = await User.create({ name, email, password });
+  
 
-  const user = await User.create({
-    name,
-    email,
-    password
+  const token = generateToken(res, user._id);
+
+  const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
   });
 
- 
-  const userWithoutPassword = { ...user._doc, password: undefined };
+  user.lastLogin = new Date();
+  user.refreshToken = refreshToken;
+  await user.save();
 
-  res.status(201).json({
+  res.cookie("accessToken", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
     success: true,
-    message: "User registered successfully",
-    user: userWithoutPassword,
+    message: "User registered and logged in successfully",
+    isLoggedIn: true,
+    user: { ...user._doc, password: undefined },
+    token,
+    refreshToken,
   });
 });
-
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {
@@ -156,13 +168,13 @@ export const logIn = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
- 
+
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
   const isValidPassword = await bcrypt.compare(password, user.password);
-   if (!isValidPassword) {
+  if (!isValidPassword) {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
@@ -183,7 +195,6 @@ export const logIn = asyncHandler(async (req, res) => {
     refreshToken,
   });
 });
-
 
 export const getProfile = asyncHandler(async (req, res) => {
   const user = {
@@ -445,13 +456,13 @@ export const updateProfilePicture = [
       user.profileImage = filePath;
       await user.save();
 
-      // Send updated profile image URL as response
+   
       res.json({
         message: "Profile image updated successfully",
         profileImage: filePath,
         user: {
           ...user._doc,
-          password: undefined, // Exclude password from the response
+          password: undefined,
         },
       });
     } catch (error) {
@@ -460,130 +471,3 @@ export const updateProfilePicture = [
     }
   }),
 ];
-export const getLaterReads = asyncHandler(async (req, res) => {
-  try {
-    const userId = req.user?._id;
-    console.log("User ID in Request:", userId); // Log the user ID to check if it's valid
-
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid or missing user ID" });
-    }
-
-    console.log(`Fetching Later Reads for User ID: ${userId}`);
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("User fetched from DB:", user); // Log the user object to verify
-
-    // Return laterReads or an empty array if it's undefined
-    res.status(200).json({ laterReads: user.laterReads || [] });
-  } catch (error) {
-    console.error("Error fetching Later Reads:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while fetching Later Reads." });
-  }
-});
-export const getLikedBooks = asyncHandler(async (req, res) => {
-  try {
-    const userId = req.user?._id;
-
-    console.log("User ID from Token:", userId); // Log the user ID
-
-    // Check if userId exists and is valid
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid User ID format" });
-    }
-
-    console.log("Fetching Liked Books for User ID:", userId); // Log the user ID for debugging
-
-    const user = await User.findById(userId).select("likedBooks");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    console.log("User Found:", user); // Log the user object for debugging
-
-    res.status(200).json({ likedBooks: user.likedBooks || [] });
-  } catch (error) {
-    console.error("Error fetching Liked Books:", error); // Log detailed error message
-    res.status(500).json({
-      message: error.message || "An error occurred while fetching liked books.",
-    });
-  }
-});
-
-export const likeBook = asyncHandler(async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
-
-    const { bookId, title, author, thumbnail } = req.body;
-    const userId = req.user._id; // This will no longer throw an error
-
-    if (!bookId || !title || !author || !thumbnail) {
-      return res.status(400).json({ message: "Missing book details" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Proceed with the like/unlike logic...
-  } catch (error) {
-    console.error("Error in likeBook:", error);
-    res.status(500).json({ message: "Server error: " + error.message });
-  }
-});
-
-export const laterRead = asyncHandler(async (req, res) => {
-  try {
-    const { bookId, title, author, thumbnail } = req.body;
-    const userId = req.user._id;
-
-    if (!bookId || !title || !author || !thumbnail) {
-      return res.status(400).json({ message: "Missing book details" });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if the book already exists in the laterReads list
-    const existingIndex = user.laterReads.findIndex(
-      (book) => book.bookId.toString() === bookId
-    );
-
-    if (existingIndex !== -1) {
-      // Remove the book from the laterReads list
-      user.laterReads.splice(existingIndex, 1);
-      await user.save();
-
-      return res.status(200).json({
-        message: "Book removed from Later Reads",
-        laterReads: user.laterReads,
-      });
-    }
-
-    // Add the book to the laterReads list
-    user.laterReads.push({ bookId, title, author, thumbnail });
-    await user.save();
-
-    res.status(200).json({
-      message: "Book added to Later Reads",
-      laterReads: user.laterReads,
-    });
-  } catch (error) {
-    console.error("Error in laterRead:", error.message);
-    res.status(500).json({ message: "Server error: " + error.message });
-  }
-});

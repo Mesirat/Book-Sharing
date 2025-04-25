@@ -1,29 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { IoSearchOutline } from "react-icons/io5";
 import axios from "axios";
-
 import Cards from "../components/Cards";
 import SideBar from "../components/SideBar";
+import { useLocation, useSearchParams } from "react-router-dom";
+import Navbar from "../components/NavBar";
 import { Loader } from "lucide-react";
-import { Outlet, useLocation } from "react-router-dom";
-import Recommendation from "./Recommendation";
 
 const User = () => {
   const [books, setBooks] = useState([]);
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSidebarClicked, setIsSidebarClicked] = useState(false);
- 
-  const location = useLocation();
 
-  const searchBooks = async () => {
-    if (query.trim() !== "") {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const query = searchParams.get("query") || "";
+    if (query.trim()) {
+      searchBooks(query);
+    }
+  }, [searchParams]);
+
+  const searchBooks = async (searchQuery) => {
+    if (searchQuery.trim() !== "") {
       setLoading(true);
       setError(null);
       try {
         const response = await axios.get("http://localhost:5000/books/search", {
-          params: { query },
+          params: { query: searchQuery },
         });
         setBooks(response.data.items);
       } catch (err) {
@@ -31,14 +36,6 @@ const User = () => {
       } finally {
         setLoading(false);
       }
-    } else {
-      setError("Please enter a valid query.");
-    }
-  };
-
-  const searchBox = (e) => {
-    if (e.key === "Enter") {
-      searchBooks();
     }
   };
 
@@ -50,62 +47,26 @@ const User = () => {
     setIsSidebarClicked(false);
   };
 
-  useEffect(() => {
-   
-    if (location.pathname === "/user") {
-      resetSidebarState();
-    } else {
-     
-      setIsSidebarClicked(false);
-    }
-  }, [location.pathname]);
-
   return (
-    <div className="font-sans relative min-h-screen bg-customLight flex">
-      <SideBar onClick={handleSidebarClick} />
+    <>
+      <Navbar />
+      <div className="font-sans relative min-h-screen bg-customLight flex">
+        <SideBar onClick={handleSidebarClick} />
 
-      <div className="flex-1 py-6 px-4">
-        {!isSidebarClicked && location.pathname !== "/user" && (
-          <div className="flex justify-center mb-4">
-            <div className="fixed flex items-center border border-gray-300 rounded-lg overflow-hidden w-3/4 md:w-1/2 lg:w-1/3">
-              <input
-                type="text"
-                className="w-full px-3 py-2 outline-none"
-                placeholder="What do you want to read?"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={searchBox}
-              />
-              <button className="text-black p-2" onClick={searchBooks}>
-                <IoSearchOutline className="text-xl" />
-              </button>
+        <div className="flex-1 py-6 px-4 ml-20 md:ml-12 lg:ml-8">
+          {!isSidebarClicked && location.pathname === "/user" && (
+            <div className="flex justify-center mb-4">
+              <Cards books={books} />
             </div>
-          </div>
-        )}
+          )}
 
-        {loading && <Loader className="animate-spin mx-auto my-4" />}
-        {error && <div className="text-red-500 text-center my-12">{error}</div>}
-
-        <Cards books={books} />
-        <div className="bg-[url('/assets/32.jpg')] bg-cover bg-center h-screen flex flex-col items-start justify-center px-4 sm:px-10 lg:px-24 text-left">
-        <div className="mt-8 sm:mt-12">
-          <p className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 lg:mb-6 leading-tight">
-            Reading gives us
-          </p>
-          <p className="text-2xl sm:text-4xl lg:text-6xl text-yellow-300 font-bold mb-3 sm:mb-4 lg:mb-6 leading-tight">
-            someplace to go
-          </p>
-          <p className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 lg:mb-6 leading-tight">
-            when we have to stay
-          </p>
-          <p className="text-2xl sm:text-4xl lg:text-6xl text-yellow-300 font-bold leading-tight">
-            where we are.
-          </p>
+          {loading && <Loader className="mx-auto w-6 h-6 animate-spin"/>}
+          {error && (
+            <div className="text-red-500 text-center my-12">{error}</div>
+          )}
         </div>
       </div>
-        <Outlet />
-      </div>
-    </div>
+    </>
   );
 };
 

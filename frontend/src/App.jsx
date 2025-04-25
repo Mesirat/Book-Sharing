@@ -29,9 +29,7 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  if (!user.isVerified) {
-    return <Navigate to="/verifyEmail" replace />;
-  }
+ 
   return children;
 };
 
@@ -68,6 +66,7 @@ function App() {
           {/* <Route path="/verifyEmail" element={<EmailVerification />} /> */}
           <Route path="/forgotPassword" element={<RedirectAuthUser><ForgotPassword /></RedirectAuthUser>} />
           <Route path="/resetPassword/:token" element={<RedirectAuthUser><ResetPassword /></RedirectAuthUser>} />
+          <Route path="/logout" element={<LogOut />} />
 
          
           <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>}>
@@ -79,7 +78,7 @@ function App() {
             <Route path="liked" element={<LikedBooks />} />
             {/* <Route path="group" element={<Group />} /> */}
             <Route path="profile" element={<Profile />} />
-            <Route path="logout" element={<LogOut />} />
+            
           </Route>
 
           <Route path="*" element={<NotFound/>} />

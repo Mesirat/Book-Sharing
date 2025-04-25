@@ -13,10 +13,6 @@ import {
   updateProfile,
   Contact,
   updateProfilePicture,
-  likeBook,
-  laterRead,
-  getLaterReads,
-  getLikedBooks,
 } from "../controllers/userController.js";
 
 import rateLimit from "express-rate-limit";
@@ -39,12 +35,10 @@ router.post("/resetPassword/:token", resetPassword);
 router.get("/checkAuth", protect, checkAuth);
 router.put("/updateProfile", protect, updateProfile);
 router.post("/refreshToken", refreshToken);
-router.put('/likeBook',protect, likeBook);
-router.put('/laterRead',protect,laterRead);
+
 router.get("/:id", getUserById);
 router.post("/contact", Contact);
-router.get('/laterReads', protect, getLaterReads);
-router.get('/likedBooks',protect,getLikedBooks)
+
 router.put("/updateProfilePicture", upload.single('profilePic'), updateProfilePicture);
 
 export default router;

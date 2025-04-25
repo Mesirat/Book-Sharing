@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-
-// Book Schema Definition
+import { User } from './userModel.js';
 const bookSchema = new mongoose.Schema(
   {
     bookId: {

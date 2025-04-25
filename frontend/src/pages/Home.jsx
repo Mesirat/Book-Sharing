@@ -3,14 +3,16 @@ import Navbar from "../components/NavBar";
 import { ArrowRight } from "lucide-react";
 import { bookCategories } from "../data";
 import { Link } from "react-router-dom";
+import SideBar from "../components/SideBar";
 const Home = () => {
   return (
     <>
       <div className="h-screen">
+        <SideBar/>
         <Navbar />
         <section className="h-full w-full bg-gray-80 flex flex-col md:flex-row items-center justify-between px-6 md:px-20 mb-12">
           <div className="w-full md:w-1/2 h-full flex flex-col justify-center items-center md:items-start text-center md:text-left">
-            <div className="text-9xl md:text-6xl font-extrabold text-gray-900 mb-8">
+            <div className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-8">
               <h1 className="mb-6">The World </h1>
               <h1 className="mb-6">Belongs to</h1>
               <h1 className="mb-6">Those Who Read</h1>
@@ -32,13 +34,14 @@ const Home = () => {
             />
           </div>
         </section>
-        <section className="h-full w-full  items-center  px-6 md:px-20 mb-12">
-          <div className="mb-16 ">
-            <h1 className="text-5xl font-sanserif text-black">
+
+        <section className="h-full w-full items-center px-6 md:px-20 mb-12">
+          <div className="mb-16">
+            <h1 className="text-4xl md:text-5xl font-sans text-black">
               Featured Categories
             </h1>
-            <div className="flex flex-row items-center justify-between mt-6">
-              <div className="text-xl  text-grayish">
+            <div className="flex flex-col md:flex-row items-center justify-between mt-6">
+              <div className="text-xl text-gray-600 mb-4 md:mb-0">
                 <h1 className="mb-1">
                   Go on fun trips to the future! Discover new worlds, learn how
                   things work, and{" "}
@@ -48,24 +51,20 @@ const Home = () => {
                 </h1>
               </div>
               <div className="flex bg-blue-600 hover:bg-blue-700 flex-row items-center justify-center mx-2 rounded-lg shadow-md transition duration-300 px-8 py-2">
-                <Link
-                  to="/category"
-                  className=" text-white text-lg font-medium  "
-                >
+                <Link to="/category" className="text-white text-lg font-medium">
                   All Categories
                 </Link>
                 <ArrowRight className="text-white" />
               </div>
             </div>
-          
-          <div className="flex flex-row items-center justify-between mt-6">
-            <div className="grid grid-cols-1 mb-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12 mt-6">
               {Object.entries(bookCategories)
                 .slice(0, 5)
                 .map(([parent, subcategories]) => (
                   <div
                     key={parent}
-                    className="flex flex-col items-center rounded-2xl p-4 transition-transform duration-300  shadow-lg shadow-gray-200 bg-white cursor-pointer"
+                    className="flex flex-col items-center rounded-2xl p-4 transition-transform duration-300 shadow-lg shadow-gray-200 bg-white cursor-pointer"
                   >
                     <div className="flex flex-wrap gap-1 justify-center py-2">
                       {subcategories.map((subcategory, index) => (
@@ -77,26 +76,24 @@ const Home = () => {
                         />
                       ))}
                     </div>
-                    <h2 className=" text-black text-xl sm:text-2xl lg:text-2xl my-2">
+                    <h2 className="text-black text-xl sm:text-2xl my-2">
                       {parent}
                     </h2>
                   </div>
                 ))}
             </div>
           </div>
-          </div>
-          <div className="mt-24  p-4">
+
+          <div className="mt-24 p-4">
             <div className="mb-16 flex flex-col items-center">
-              <h1 className="text-5xl font-sanserif text-black">
+              <h1 className="text-4xl md:text-5xl font-sans text-black">
                 Top Read This Week
               </h1>
-              <div className="flex flex-row items-center justify-between mt-6">
-                <div className="text-xl  text-grayish">
-                  <h1 className="mb-1">
-                    This week’s most-read books are here! See what readers can’t
-                    put down.{" "}
-                  </h1>
-                </div>
+              <div className="text-xl text-gray-600 mt-6 mb-4 md:mb-0">
+                <h1 className="mb-1">
+                  This week’s most-read books are here! See what readers can’t
+                  put down.{" "}
+                </h1>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full">
@@ -105,18 +102,16 @@ const Home = () => {
                 .map(([parent, subcategories]) => (
                   <div
                     key={parent}
-                    className="flex bg-white  overflow-hidden transition-transform duration-300 "
+                    className="flex bg-white overflow-hidden transition-transform duration-300"
                   >
-                   
                     <div className="w-1/3">
                       <img
-                        src={subcategories[0]} 
+                        src={subcategories[0]}
                         alt={`${parent} thumbnail`}
                         className="h-80 w-full object-cover"
                       />
                     </div>
 
-                    
                     <div className="w-2/3 p-4 flex flex-col justify-between">
                       <div>
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -143,49 +138,46 @@ const Home = () => {
                 ))}
             </div>
           </div>
-          <div className="mt-24  p-4">
+
+          <div className="mt-24 p-4">
             <div className="mb-16 flex flex-col items-center">
-              <h1 className="text-5xl font-sanserif text-black">
+              <h1 className="text-4xl md:text-5xl font-sans text-black">
                 Featured Books
               </h1>
-              <div className="flex flex-row items-center justify-between mt-6">
-                <div className="text-xl  text-grayish">
-                  <h1 className="mb-1">
-                  Explore amazing stories from famous authors in this captivating collection.{" "}
-                  </h1>
-                </div>
+              <div className="text-xl text-gray-600 mt-6 mb-4 md:mb-0">
+                <h1 className="mb-1">
+                  Explore amazing stories from famous authors in this
+                  captivating collection.{" "}
+                </h1>
               </div>
             </div>
-            <div className="flex flex-row items-center justify-between mt-6">
-            <div className="grid grid-cols-1 mb-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
-  {Object.entries(bookCategories).map(([parent, subcategories]) => (
-    <div
-      key={parent}
-      className="flex flex-col items-center p-4 transition-transform duration-300 bg-white cursor-pointer"
-    >
-      <div className="flex flex-wrap gap-2 justify-center">
-        {subcategories.map((subcategory, index) => (
-          <div
-            key={index}
-            className="w-full h-80 overflow-hidden rounded-md"
-          >
-            <img
-              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
-              src={subcategory}
-              alt={`${parent} thumbnail ${index + 1}`}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 mt-6">
+              {Object.entries(bookCategories).map(([parent, subcategories]) => (
+                <div
+                  key={parent}
+                  className="flex flex-col items-center p-4 transition-transform duration-300 bg-white cursor-pointer"
+                >
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {subcategories.map((subcategory, index) => (
+                      <div
+                        key={index}
+                        className="w-full h-80 overflow-hidden rounded-md"
+                      >
+                        <img
+                          className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+                          src={subcategory}
+                          alt={`${parent} thumbnail ${index + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <h2 className="text-black text-xl sm:text-2xl lg:text-2xl my-2">
+                    {parent}
+                  </h2>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
-      <h2 className="text-black text-xl sm:text-2xl lg:text-2xl my-2">
-        {parent}
-      </h2>
-    </div>
-  ))}
-</div>
-
-</div>
-</div>
         </section>
       </div>
     </>

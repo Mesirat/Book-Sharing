@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { LoaderCircle } from "lucide-react";
+import Cards from "../components/Cards";  // Import your Cards component
 
-const API_URL = "http://localhost:5000/users";  // Ensure the endpoint is correct
+const API_URL = "http://localhost:5000/books";
+const POPULAR_BOOKS_API_URL = "http://localhost:5000/books/popularbooks";
 
 const LikedBooks = () => {
   const [likedBooks, setLikedBooks] = useState([]);
+  const [popularBooks, setPopularBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,16 +20,13 @@ const LikedBooks = () => {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
-        setLikedBooks(response.data.laterReads);
+        setLikedBooks(response.data.likedBooks); // <-- Corrected this line
       } catch (error) {
         if (error.response) {
-          // API error response
           setError(error.response.data.message || "Failed to fetch liked books");
         } else if (error.request) {
-          // Network error
           setError("Network error. Please try again later.");
         } else {
-          // Unexpected error
           setError("An unexpected error occurred.");
         }
       } finally {
@@ -34,11 +34,21 @@ const LikedBooks = () => {
       }
     };
 
+    const fetchPopularBooks = async () => {
+      try {
+        const response = await axios.get(POPULAR_BOOKS_API_URL);
+        setPopularBooks(response.data.books);
+      } catch (error) {
+        console.error("Failed to fetch popular books.");
+      }
+    };
+
     fetchLikedBooks();
+    fetchPopularBooks();
   }, []);
 
   if (loading) {
-    return <LoaderCircle className="animate-spin" size={32} />;
+    return <div className="flex justify-center items-center h-64"><LoaderCircle className="animate-spin" size={32} /></div>;
   }
 
   if (error) {
@@ -47,23 +57,15 @@ const LikedBooks = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-3xl font-bold mb-6 text-center">Your Later Read Books</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center">Your Liked Books</h2>
+
       {likedBooks.length === 0 ? (
-        <p className="text-center text-gray-700">No books added for later reading.</p>
+        <>
+          <p className="text-center text-gray-700 mb-6">You haven’t liked any books yet. Here are some popular ones you might enjoy:</p>
+          <Cards books={popularBooks} /> {/* Pass popular books to Cards */}
+        </>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {likedBooks.map((book) => (
-            <div key={book.bookId || book.id} className="border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-              <img
-                src={book.thumbnail || "/fallback-image.jpg"} 
-                alt={book.title || "Book Cover"}
-                className="h-48 w-full object-cover rounded"
-              />
-              <h3 className="text-lg font-bold mt-4">{book.title || "Unknown Title"}</h3>
-              <p className="text-gray-600 mt-2">{book.author || "Unknown Author"}</p>
-            </div>
-          ))}
-        </div>
+        <Cards books={likedBooks} /> 
       )}
     </div>
   );

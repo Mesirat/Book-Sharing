@@ -123,9 +123,9 @@ export const useAuthStore = create((set) => ({
     }
   },  
 
- login: async (email, password) => {
+  login: async (email, password) => {
     set({ loading: true, message: null, error: null });
-
+  
     try {
       const response = await axios.post(
         `${API_URL}/login`,
@@ -136,13 +136,13 @@ export const useAuthStore = create((set) => ({
           },
         }
       );
-
+  
       const { success, user, token, refreshToken } = response.data;
-
+  
       if (success && user && token && refreshToken) {
         localStorage.setItem("accessToken", token);
         localStorage.setItem("refreshToken", refreshToken);
-
+  
         set({
           user,
           isAuthenticated: true,
@@ -151,7 +151,7 @@ export const useAuthStore = create((set) => ({
           token,
           error: null,
         });
-
+  
         return { user, token };
       } else {
         throw new Error("Login failed: Missing response data");
@@ -159,20 +159,24 @@ export const useAuthStore = create((set) => ({
     } catch (error) {
       const message =
         error?.response?.data?.message || "Login failed. Please try again.";
-
+  
       set({
         loading: false,
         isAuthenticated: false,
         user: null,
         error: message,
       });
-
   
+      
       setTimeout(() => {
         set({ error: null });
       }, 20000);
+  
+     
+      throw error;
     }
   },
+  
 
   logout: async () => {
     set({ loading: true, error: null });
@@ -413,6 +417,5 @@ export const useAuthStore = create((set) => ({
       });
     }
   },
-  
-  
+
 }));

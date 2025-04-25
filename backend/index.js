@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 import connectDB  from './config/db.js';
 import userRouter from './routes/userRoutes.js';
-// import bookrouter from './routes/bookrouter.js';
+import bookrouter from './routes/bookRoutes.js';
 // import GroupRoutes from './routes/GroupRoutes.js';
 // import MessageRoute from './routes/MessageRoute.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -31,19 +31,19 @@ const corsOptions = {
   methods: 'GET,POST,PUT,DELETE',
 };
 
-// Middleware
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Routes
+
 app.use('/users', userRouter);
-// app.use('/books', bookrouter);
+app.use('/books', bookrouter);
 // app.use('/groups', GroupRoutes);
 // app.use('/messages', MessageRoute);
 
-// Serve frontend in production
+
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist/build')));
   app.get('*', (req, res) => {
@@ -51,14 +51,14 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Socket.io setup
-initSocket(server, corsOptions); // 👈 initialize the socket server
 
-// Error handling
+initSocket(server, corsOptions); 
+
+
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
+
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
