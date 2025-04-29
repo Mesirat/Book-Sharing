@@ -6,6 +6,7 @@ import {
   Bell,
   ShoppingCart,
   BookOpenText,
+  LogIn,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../../store/authStore";
@@ -48,7 +49,7 @@ const Navbar = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={searchBox}
-            className="w-full outline-none border-none text-gray-600 px-2 bg-transparent"
+            className="w-full outline-none border-none  px-2 bg-transparent"
           />
         </div>
 
@@ -62,12 +63,21 @@ const Navbar = () => {
               />
             </Link>
           ) : (
+          <>
+          
             <Link
               to="/login"
-              className="hidden md:inline-block text-sm px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="hidden lg:flex text-sm px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               Sign In
             </Link>
+             <Link
+             to="/login"
+             className="flex lg:hidden text-sm px-3 py-1  rounded hover:bg-blue-600"
+           >
+             <LogIn />
+           </Link>
+          </>
           )}
         </div>
       </div>

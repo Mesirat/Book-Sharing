@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { LoaderCircle } from "lucide-react";
+import { Loader, LoaderCircle } from "lucide-react";
 import Cards from "../components/Cards";  // Import your Cards component
 
 const API_URL = "http://localhost:5000/books";
@@ -48,7 +48,9 @@ const LikedBooks = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64"><LoaderCircle className="animate-spin" size={32} /></div>;
+    return  <div className="flex justify-center items-center h-60">
+    <Loader className="animate-spin text-blue-500 w-10 h-10" />
+  </div>;
   }
 
   if (error) {

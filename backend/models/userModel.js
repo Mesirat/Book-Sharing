@@ -56,4 +56,4 @@ userSchema.methods.isEmailVerificationTokenValid = function () {
   return this.verificationTokenExpiresAt > Date.now();
 };
 
-export const User = mongoose.model("user", userSchema);
+export const User = mongoose.model("User", userSchema);

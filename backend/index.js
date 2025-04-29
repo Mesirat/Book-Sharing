@@ -6,13 +6,13 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import connectDB  from './config/db.js';
+import connectDB from './config/db.js';
 import userRouter from './routes/userRoutes.js';
 import bookrouter from './routes/bookRoutes.js';
-// import GroupRoutes from './routes/GroupRoutes.js';
-// import MessageRoute from './routes/MessageRoute.js';
+import GroupRoutes from './routes/groupRoutes.js';
+import MessageRoutes from './routes/messageRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-import { initSocket } from './socket.js'; // 👈 import socket init function
+import { initSocket } from './socket.js';
 
 dotenv.config();
 connectDB();
@@ -31,6 +31,9 @@ const corsOptions = {
   methods: 'GET,POST,PUT,DELETE',
 };
 
+// Initialize socket and pass the server instance
+const io = initSocket(server, corsOptions);
+app.set("io", io);
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -40,9 +43,8 @@ app.use(cookieParser());
 
 app.use('/users', userRouter);
 app.use('/books', bookrouter);
-// app.use('/groups', GroupRoutes);
-// app.use('/messages', MessageRoute);
-
+app.use('/groups', GroupRoutes);
+app.use('/messages', MessageRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist/build')));
@@ -51,13 +53,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-
-initSocket(server, corsOptions); 
-
-
 app.use(notFound);
 app.use(errorHandler);
-
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);

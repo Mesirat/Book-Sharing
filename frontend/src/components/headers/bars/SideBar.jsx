@@ -32,7 +32,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
       <nav
         className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ease-in-out ${
           expanded ? "w-56 bg-gray-300" : "w-6"
-        } md:w-64`}
+        } `}
       >
         <div className="flex  items-center px-4 mt-2 menu-container w-full">
           <button
@@ -55,15 +55,15 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
           )}
         </div>
 
-        <div className="mt-8 px-2 space-y-4 m-1">
+        <div className={`mt-8 px-2 space-y-4 m-1 `}> 
           {navLinks.map(({ to, label, Icon }) => {
             const isActive = location.pathname === to;
             const IconComponent = Icon;
             return (
               <div
                 key={to}
-                className={`p-2 relative ${
-                  expanded ? "hover:bg-gray-300 rounded-md" : ""
+                className={`p-2 relative ${!expanded && location.pathname=== "/user/chat" ? "hidden": ""} ${
+                  expanded ? "hover:bg-gray-300 rounded-md" : "" 
                 } ${isActive ? " text-black" : ""}`}
               >
                 <Link

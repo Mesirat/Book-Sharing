@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Paperclip, SendHorizontal, X } from "lucide-react";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
+import { useAuthStore } from "../../store/authStore";
 
 const MessageInput = ({ onSendMessage }) => {
   const [text, setText] = useState("");
@@ -11,7 +12,7 @@ const MessageInput = ({ onSendMessage }) => {
   const maxMessageLength = 1500;
   const { user } = useAuthStore();
   const inputRef = useRef(null);
-  const maxFileSize = 5 * 1024 * 1024; // 5MB limit
+  const maxFileSize = 5 * 1024 * 1024; 
 
   const handleSend = () => {
     if (text.trim() || file) {
@@ -30,7 +31,7 @@ const MessageInput = ({ onSendMessage }) => {
         alert("File size exceeds the 5MB limit.");
       } else {
         setFile(selectedFile);
-        setPreview(URL.createObjectURL(selectedFile)); // Preview the image
+        setPreview(URL.createObjectURL(selectedFile)); 
       }
     }
   };
@@ -47,9 +48,9 @@ const MessageInput = ({ onSendMessage }) => {
 
   return (
     <div className="p-4 border-t bg-white relative">
-      {/* Image Preview Modal */}
+      
       {preview && (
-        <div className="absolute top-0 left-0 w-full h-full bg-gray-800 bg-opacity-80 flex justify-center items-center z-50">
+        <div className="absolute top-[-200px] left-0 w-full h-full  bg-opacity-80 flex justify-center items-center z-50">
           <div className="bg-white p-4 rounded-lg shadow-lg max-w-xs relative">
             <button
               className="absolute top-2 right-2 text-gray-500"
@@ -72,7 +73,7 @@ const MessageInput = ({ onSendMessage }) => {
         </div>
       )}
 
-      {/* Input and Controls */}
+    
       <div className="flex items-center">
         <label htmlFor="file-input" className="cursor-pointer mr-2">
           <Paperclip />
@@ -104,10 +105,10 @@ const MessageInput = ({ onSendMessage }) => {
           }}
         />
 
-        {/* Emoji Picker */}
+  
         <div className="relative">
           <button
-            className="text-xl cursor-pointer"
+            className="text-xl cursor-pointer ml-2"
             onClick={() => setEmojiPickerVisible((prev) => !prev)}
             aria-label="Select emoji"
           >
@@ -120,10 +121,10 @@ const MessageInput = ({ onSendMessage }) => {
           )}
         </div>
 
-        {/* Send Button */}
+      
         <button
-          className={`ml-2 px-4 py-2 rounded ${
-            text.trim() || file ? "bg-blue-500 hover:bg-blue-600 text-white" : "hidden"
+          className={`ml-2 p-2 rounded ${
+            text.trim() || file ? "  text-blue-600" : "hidden"
           }`}
           onClick={handleSend}
           disabled={!text.trim() && !file}
@@ -132,7 +133,7 @@ const MessageInput = ({ onSendMessage }) => {
         </button>
       </div>
 
-      {/* Character Count */}
+   
       <p className={`text-xs mt-2 ${text.length > maxMessageLength ? "text-red-500" : "text-gray-500"}`}>
         {text.length}/{maxMessageLength} characters
       </p>

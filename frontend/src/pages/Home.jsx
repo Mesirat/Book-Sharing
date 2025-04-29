@@ -4,7 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { bookCategories } from "../data";
 import { Link } from "react-router-dom";
 import SideBar from "../components/headers/bars/SideBar";
+import GroupList from "../components/chat/GroupList.jsx";
+import GroupCreate from "../components/chat/GroupCreate.jsx";
+import { useAuthStore } from "../store/authStore";
+import { useState } from "react";
 const Home = () => {
+  const { isAuthenticated,user } = useAuthStore();
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   return (
     <>
       <div className="h-screen">
@@ -177,6 +183,16 @@ const Home = () => {
                 </div>
               ))}
             </div>
+            {isAuthenticated && (
+              <div>
+              {/* <button onClick={() => setShowCreateGroupModal(true)}>Create Group</button>
+          
+              {showCreateGroupModal && (
+                <GroupCreate onClose={() => setShowCreateGroupModal(false)} />
+              )} */}
+             
+            </div>
+             ) }
           </div>
         </section>
       </div>

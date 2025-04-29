@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import { Group } from '../models/GroupModel.js';
 import { Message } from '../models/messageModel.js';
-import { JoinGroup, LeaveGroup, getUsersInGroup } from '../controller/GroupController.js';
+import { JoinGroup, LeaveGroup, getUsersInGroup ,CreateGroup} from '../controller/GroupController.js';
 
 const SocketHandler = (server) => {
   const io = new Server(server, {

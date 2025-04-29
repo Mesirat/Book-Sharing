@@ -6,14 +6,13 @@ import { User } from "../models/userModel.js";
 import createUpload from "../middleware/uploadMiddleware.js";
 import { fileURLToPath } from "url";
 import asyncHandler from "express-async-handler";
+import cloudinary from "../config/cloudinary.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const upload = createUpload('group');
+const upload = createUpload("group");
 
-export const CreateGroup = asyncHandler(async (req, res) => {
-  const io = req.io;
-
-  // Multer middleware already processed the file, errors handled in the route
+export const CreateGroup = async (req, res) => {
+  const io = req.app.get("io");
   const { groupName, description, creator } = req.body;
 
   if (!groupName || groupName.trim().length === 0) {
@@ -30,36 +29,50 @@ export const CreateGroup = asyncHandler(async (req, res) => {
 
   const creatorExists = await User.findById(creator);
   if (!creatorExists) {
-    return res.status(400).json({ success: false, message: "Creator does not exist." });
+    return res
+      .status(400)
+      .json({ success: false, message: "Creator does not exist." });
   }
 
   try {
     const normalizedGroupName = groupName.trim().toLowerCase();
-    const existingGroup = await Group.findOne({ name: normalizedGroupName });
+    const existingGroup = await Group.findOne({
+      groupName: normalizedGroupName,
+    });
 
     if (existingGroup) {
       return res
         .status(400)
         .json({ success: false, message: "Group already exists!" });
     }
+let profilePic = null;
 
-    const profilePic = req.file ? `/uploads/groups/${req.file.filename}` : null;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "groups", 
+        resource_type: "image", 
+      });
+      profilePic = result.secure_url;
+    }
 
     const newGroup = new Group({
-      name: normalizedGroupName,
+      groupName: normalizedGroupName,
       description,
       profilePic,
       creator: new mongoose.Types.ObjectId(creator),
+      members: [creator], 
+      memberCount: 1,
     });
 
     await newGroup.save();
+
     io.emit("newGroupAdded", newGroup);
 
     res.status(201).json({
       success: true,
       group: {
         id: newGroup._id,
-        name: newGroup.name,
+        groupName: newGroup.groupName,
         profilePic: newGroup.profilePic,
       },
       message: "Group created successfully.",
@@ -71,13 +84,13 @@ export const CreateGroup = asyncHandler(async (req, res) => {
       message: "Internal server error. Please try again later.",
     });
   }
-});
+};
 
 export const GetGroups = async (req, res) => {
-  const { page = 1, limit = 10, search = "" } = req.query;
+  const { page, limit, search } = req.query;  
 
-  const pageNumber = Math.max(1, parseInt(page, 10));
-  const pageSize = Math.max(1, parseInt(limit, 10));
+  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+  const pageSize = Math.max(1, parseInt(limit, 10) || 10);
 
   const searchFilter = search
     ? { name: { $regex: search.trim(), $options: "i" } }
@@ -88,14 +101,8 @@ export const GetGroups = async (req, res) => {
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize);
 
-    const totalGroups = await Group.countDocuments();
-    const totalPages = Math.ceil(totalGroups / pageSize);
-
-    if (!groups.length) {
-      return res.status(404).json({
-        message: "No groups found for this page.",
-      });
-    }
+    const totalGroups = await Group.countDocuments(searchFilter); 
+    const totalPages = Math.ceil(totalGroups / pageSize) || 1;
 
     res.status(200).json({
       groups,
@@ -113,36 +120,40 @@ export const GetGroups = async (req, res) => {
   }
 };
 
+
 export const JoinGroup = async (req, res) => {
-  const io = req.io;
-  const { groupId } = req.params;
+  const io = req.app.get("io");
+
+  let { groupId } = req.params;
   const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+
+  groupId = groupId.replace(/^:/, "");
+
+  if (!mongoose.Types.ObjectId.isValid(groupId)) {
+    return res.status(400).json({ message: "Invalid group ID" });
+  }
+
   try {
     const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const isAlreadyMember = group.members.some(
+      (memberId) => memberId.toString() === userId.toString()
+    );
+    if (isAlreadyMember) {
+      return res.status(400).json({ message: "You are already a member of this group" });
     }
 
-    if (
-      group.members.some(
-        (member) => member.userId.toString() === userId.toString()
-      )
-    ) {
-      return res
-        .status(400)
-        .json({ message: "You are already a member of this group" });
-    }
+   
 
-    group.members.push({
-      userId: new mongoose.Types.ObjectId(userId),
-      username: user.name,
-    });
-
+    group.members.push(userId);
     group.memberCount = group.members.length;
     await group.save();
 
@@ -152,7 +163,7 @@ export const JoinGroup = async (req, res) => {
       memberCount: group.memberCount,
     });
 
-    res.status(200).json({ message: "Successfully joined the group" });
+    res.status(201).json({ message: "Successfully joined the group" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to join group" });
@@ -160,7 +171,7 @@ export const JoinGroup = async (req, res) => {
 };
 
 export const LeaveGroup = async (req, res) => {
-  const io = req.io;
+  const io = req.app.get("io");
   const { groupId } = req.params;
   const { userId } = req.body;
   try {
@@ -168,19 +179,11 @@ export const LeaveGroup = async (req, res) => {
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const memberIndex = group.members.findIndex(
-      (member) => member.userId.toString() === userId.toString()
+      (memberId) => memberId.toString() === userId.toString()
     );
     if (memberIndex === -1) {
-      return res
-        .status(400)
-        .json({ message: "You are not a member of this group" });
+      return res.status(400).json({ message: "You are not a member of this group" });
     }
 
     group.members.splice(memberIndex, 1);
@@ -225,7 +228,7 @@ export const GetGroupDetails = async (req, res) => {
   const { groupId, userId } = req.params;
 
   try {
-    const group = await Group.findById(groupId);
+    const group = await Group.findById(groupId).populate("members","userId");
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
@@ -280,37 +283,17 @@ export const checkMembership = async (req, res) => {
   }
 };
 export const getMyGroups = async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: "Invalid user ID." });
-  }
-
-  if (!id) {
-    return res.status(400).json({ message: "User ID is required." });
-  }
+  const { userId } = req.params;
 
   try {
-    const userGroups = await Group.find({ "members.userId": id }).populate(
-      "members.userId",
-      "username"
-    );
+    const userGroups = await Group.find({ members: userId })
+      .select("groupName profilePic members")
+      .populate("members", "name");
 
-    if (userGroups.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No groups found for this user." });
-    }
+    res.status(200).json({ groups: userGroups || [] });
 
-    res.status(200).json(userGroups);
   } catch (error) {
     console.error("Error in getMyGroups:", error);
-    res
-      .status(500)
-      .json({ message: "Error retrieving user groups", error: error.message });
+    res.status(500).json({ message: "Error retrieving user groups", error: error.message });
   }
 };
-
-
-
-
