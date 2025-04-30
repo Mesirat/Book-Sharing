@@ -50,10 +50,10 @@ const Login = () => {
   return (
     <>
       <NavBar />
-      <div className="font-serif text-white flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="font-serif  flex justify-center items-center min-h-screen bg-gray-100">
         <div className="relative w-full max-w-md mx-auto bg-opacity-90 bg-white rounded-lg shadow-xl p-8 sm:p-10 md:p-12">
           <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-6">
-            <h1 className="text-3xl font-semibold text-center text-transparent bg-gradient-to-r from-[#0ef] to-[#c800ff] bg-clip-text mb-6">
+            <h1 className="text-3xl font-semibold text-center text-text  mb-6">
               Welcome Back
             </h1>
 
@@ -103,11 +103,11 @@ const Login = () => {
             <button
               type="submit"
               disabled={Loading}
-              className={`w-full py-3 text-xl font-bold rounded-full ${
+              className={`bg-button text-text w-full py-3 text-xl font-bold rounded-full ${
                 Loading
-                  ? "bg-gradient-to-r from-[#0ef] to-[#3B5998] opacity-50 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#0ef] to-[#3B5998] hover:from-[#0ef] hover:to-[#ff66c4] transition duration-300"
-              } text-white transform hover:scale-105`}
+                  ? " opacity-50 cursor-not-allowed"
+                  : " transition duration-300"
+              }  transform hover:bg-secondary ` }
             >
               {Loading ? (
                 <Loader className="w-6 h-6 animate-spin mx-auto" />

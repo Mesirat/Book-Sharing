@@ -229,7 +229,7 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
 
   return (
     <div className=" bg-gray-100 rounded-lg shadow-lg mx-auto ">
-      {/* <h2 className="text-2xl font-bold mb-6 text-center">Groups</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Groups</h2>
       <div className="flex justify-end mb-6">
         <button
           onClick={openModal}
@@ -237,7 +237,7 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
         >
           Create Group
         </button>
-      </div> */}
+      </div>
       <div className="flex justify-center mb-6">
         <input
           type="text"

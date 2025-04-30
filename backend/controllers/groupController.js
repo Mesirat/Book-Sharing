@@ -3,35 +3,40 @@ import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
 import { User } from "../models/userModel.js";
-import createUpload from "../middleware/uploadMiddleware.js";
+
 import { fileURLToPath } from "url";
 import asyncHandler from "express-async-handler";
-import cloudinary from "../config/cloudinary.js";
+import { v2 as cloudinary } from "cloudinary";
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const upload = createUpload("group");
+
 
 export const CreateGroup = async (req, res) => {
   const io = req.app.get("io");
   const { groupName, description, creator } = req.body;
 
   if (!groupName || groupName.trim().length === 0) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Group name cannot be empty." });
+    return res.status(400).json({
+      success: false,
+      message: "Group name cannot be empty.",
+    });
   }
 
   if (!mongoose.Types.ObjectId.isValid(creator)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid creator ID format." });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid creator ID format.",
+    });
   }
 
   const creatorExists = await User.findById(creator);
   if (!creatorExists) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Creator does not exist." });
+    return res.status(400).json({
+      success: false,
+      message: "Creator does not exist.",
+    });
   }
 
   try {
@@ -41,26 +46,20 @@ export const CreateGroup = async (req, res) => {
     });
 
     if (existingGroup) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Group already exists!" });
-    }
-let profilePic = null;
-
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "groups", 
-        resource_type: "image", 
+      return res.status(400).json({
+        success: false,
+        message: "Group already exists!",
       });
-      profilePic = result.secure_url;
     }
+
+    const profilePic = req.file?.path || null; // Cloudinary returns secure URL in req.file.path
 
     const newGroup = new Group({
       groupName: normalizedGroupName,
       description,
       profilePic,
       creator: new mongoose.Types.ObjectId(creator),
-      members: [creator], 
+      members: [creator],
       memberCount: 1,
     });
 
@@ -85,6 +84,7 @@ let profilePic = null;
     });
   }
 };
+
 
 export const GetGroups = async (req, res) => {
   const { page, limit, search } = req.query;  

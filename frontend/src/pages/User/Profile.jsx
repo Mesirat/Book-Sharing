@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TbCameraPlus } from "react-icons/tb";
-import { useAuthStore } from "../store/authStore";
+import { useAuthStore } from "../../store/authStore";
 import UpdateProfile from "./UpdateProfile";
 
 const Profile = () => {

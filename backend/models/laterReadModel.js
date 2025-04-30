@@ -12,14 +12,12 @@ const laterReadSchema = new mongoose.Schema({
       title: { type: String, required: true },
       author: { type: String, required: true },
       thumbnail: { type: String, required: true },
-  addedAt: {
-    type: Date,
-    default: Date.now
-  }
+      addedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
   ],
 });
 
-export const LaterRead = mongoose.model('LaterRead', laterReadSchema);
-
-
+export const LaterRead = mongoose.model("LaterRead", laterReadSchema);

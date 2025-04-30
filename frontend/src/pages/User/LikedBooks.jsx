@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Loader, LoaderCircle } from "lucide-react";
-import Cards from "../components/Cards";  // Import your Cards component
+import Cards from "../../components/Cards";  
 
 const API_URL = "http://localhost:5000/books";
 const POPULAR_BOOKS_API_URL = "http://localhost:5000/books/popularbooks";
@@ -20,7 +20,7 @@ const LikedBooks = () => {
             Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         });
-        setLikedBooks(response.data.likedBooks); // <-- Corrected this line
+        setLikedBooks(response.data.likedBooks);
       } catch (error) {
         if (error.response) {
           setError(error.response.data.message || "Failed to fetch liked books");
@@ -58,13 +58,13 @@ const LikedBooks = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-3xl font-bold mb-6 text-center">Your Liked Books</h2>
+    <div className="w-full container mx-auto ">
+      <h2 className="text-3xl font-bold mb-6 px-4">Liked Books</h2>
 
       {likedBooks.length === 0 ? (
         <>
           <p className="text-center text-gray-700 mb-6">You haven’t liked any books yet. Here are some popular ones you might enjoy:</p>
-          <Cards books={popularBooks} /> {/* Pass popular books to Cards */}
+          <Cards books={popularBooks} /> 
         </>
       ) : (
         <Cards books={likedBooks} /> 

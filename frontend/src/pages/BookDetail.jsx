@@ -64,6 +64,10 @@ const BookDetail = () => {
           author: book.volumeInfo.authors?.join(", ") || "Unknown Author",
           thumbnail:
             book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg",
+          publisher : book.volumeInfo.publisher || "Unknown Publisher",
+          publishYear : book.volumeInfo.publishedDate?.split("-")[0] || "N/A",
+          description :
+              book.volumeInfo.description || "No description available.",
         },
         {
           headers: {
@@ -120,13 +124,13 @@ const BookDetail = () => {
   };
 
   const thumbnail =
-    book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg";
-  const title = book.volumeInfo.title || "Untitled";
-  const authors = book.volumeInfo.authors?.join(", ") || "Unknown Author";
-  const publisher = book.volumeInfo.publisher || "Unknown Publisher";
-  const publishYear = book.volumeInfo.publishedDate?.split("-")[0] || "N/A";
+    book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg" || book.thumbnail;
+  const title = book.volumeInfo.title || "Untitled" || book.title;
+  const authors = book.volumeInfo.authors?.join(", ") || "Unknown Author" || book.author;
+  const publisher = book.volumeInfo.publisher || "Unknown Publisher" || book.publisher;
+  const publishYear = book.volumeInfo.publishedDate?.split("-")[0] || "N/A" || book.publishYear;
   const description =
-    book.volumeInfo.description || "No description available.";
+    book.volumeInfo.description || "No description available." || book.description;
 
   const isLiked = likedBooks.some((likedBook) => likedBook.bookId === book.id);
   const isLaterRead = laterReads.some(

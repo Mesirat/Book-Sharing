@@ -7,39 +7,58 @@ import mongoose from 'mongoose';
 import {LikedBook} from '../models/likedBookModel.js';
 import {LaterRead} from '../models/laterReadModel.js';
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
-export const createBook = asyncHandler(async (req, res) => {
-  const { bookId, title, authors, publisher, publishedDate, description, pageCount, categories, thumbnail, previewLink, isbn } = req.body;
-
+export const UploadBook = asyncHandler(async (req, res) => {
   try {
-    const existingBook = await Book.findOne({ bookId });
-
-    if (existingBook) {
-      return res.status(400).json({ message: 'Book already exists!' });
-    }
-
-    const book = new Book({
-      bookId,
+    const {
       title,
       authors,
       publisher,
-      publishedDate,
+      publishedYear,
       description,
-      pageCount,
       categories,
-      thumbnail,
-      previewLink,
-      isbn,
+    } = req.body;
+
+    const authorsArray = authors?.split(",").map((a) => a.trim()) || [];
+    const categoriesArray = categories?.split(",").map((c) => c.trim()) || [];
+
+    const existingBook = await Book.findOne({
+      title: title.trim(),
+      authors: { $all: authorsArray },
+    });
+
+    if (existingBook) {
+      return res.status(400).json({
+        message: "Book already exists in the system.",
+      });
+    }
+
+    const thumbnailPath = req.files?.thumbnail?.[0]?.path;
+    const pdfPath = req.files?.pdf?.[0]?.path;
+
+    const book = new Book({
+      title: title.trim(),
+      authors: authorsArray,
+      publisher,
+      publishedYear,
+      description,
+      categories: categoriesArray,
+      thumbnail: thumbnailPath,
+      pdfLink: pdfPath,
     });
 
     await book.save();
 
-    res.status(201).json({ message: 'Book created successfully!', book });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(201).json({
+      message: "Book uploaded",
+      book,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Upload failed",
+    });
   }
 });
-
 
 export const getBooks = asyncHandler(async (req, res) => {
   const { title, author } = req.query;
@@ -48,11 +67,11 @@ export const getBooks = asyncHandler(async (req, res) => {
     let query = {};
 
     if (title) {
-      query.title = { $regex: title, $options: 'i' }; // Case-insensitive search by title
+      query.title = { $regex: title, $options: 'i' }; 
     }
 
     if (author) {
-      query.authors = { $in: [author] }; // Filter by author
+      query.authors = { $in: [author] }; 
     }
 
     const books = await Book.find(query);
@@ -64,7 +83,7 @@ export const getBooks = asyncHandler(async (req, res) => {
   }
 });
 
-// Get a single book by bookId
+
 export const getBookById = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
@@ -82,7 +101,7 @@ export const getBookById = asyncHandler(async (req, res) => {
   }
 });
 
-// Update a book's information
+
 export const updateBook = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
   const { title, authors, publisher, publishedDate, description, pageCount, categories, thumbnail, previewLink, isbn } = req.body;
@@ -115,7 +134,7 @@ export const updateBook = asyncHandler(async (req, res) => {
   }
 });
 
-// Delete a book by bookId
+
 export const deleteBook = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
@@ -135,7 +154,7 @@ export const deleteBook = asyncHandler(async (req, res) => {
   }
 });
 
-// Get user rating for a book (from your existing function)
+
 export const getUserRating = asyncHandler(async (req, res) => {
   const { volumeId } = req.params;
 
@@ -159,7 +178,7 @@ export const getUserRating = asyncHandler(async (req, res) => {
   }
 });
 
-// Rate a book (from your existing function)
+
 export const ratingBooks = asyncHandler(async (req, res) => {
   const { volumeId, userId, rating } = req.body;
 

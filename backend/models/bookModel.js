@@ -1,45 +1,35 @@
-import mongoose from 'mongoose';
-import { User } from './userModel.js';
+import mongoose from "mongoose";
+
 const bookSchema = new mongoose.Schema(
   {
-    bookId: {
-      type: String,
-      required: true,
-      unique: true, 
-      index: true,  // Index for fast lookups
-    },
     title: {
       type: String,
       required: true,
     },
     authors: {
-      type: [String], 
+      type: [String],
       default: [],
     },
     publisher: {
       type: String,
-      default: 'Unknown Publisher',
+      default: "Unknown Publisher",
     },
-    publishedDate: {
-      type: String, 
-      default: 'N/A',
+    publishedYear: {
+      type: String,
+      default: "N/A",
     },
     description: {
       type: String,
-      default: 'No description available.',
-    },
-    pageCount: {
-      type: Number,
-      default: 0,
+      default: "No description available.",
     },
     categories: {
       type: [String],
       default: [],
-      index: true, // Index for fast lookups by categories
+      index: true,
     },
     thumbnail: {
       type: String,
-      default: '/assets/default-thumbnail.jpg',
+      default: "/assets/default-thumbnail.jpg",
     },
     averageRating: {
       type: Number,
@@ -49,18 +39,24 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    previewLink: {
-      type: String,
-      default: '',
+    readCount: {
+      type: Number,
+      default: 0,
     },
-    isbn: {
+    pdfLink: {
       type: String,
-      default: '',
-      index: true, // Index for faster searches by ISBN
-      match: /^(97(8|9))?\d{9}(\d|X)$/, // Basic ISBN validation
     },
   },
   { timestamps: true }
 );
 
-export const Book = mongoose.model('Book', bookSchema);
+bookSchema.methods.incrementReadCount = async function () {
+  try {
+    this.readCount += 1;
+    await this.save();
+  } catch (err) {
+    console.error("Error incrementing read count:", err);
+  }
+};
+
+export const Book = mongoose.model("Book", bookSchema);

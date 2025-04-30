@@ -5,12 +5,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import mongoose from "mongoose";
-import createUpload from "../middleware/uploadMiddleware.js";
+import {uploadBookAssets} from "../middleware/uploadMiddleware.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-const upload = createUpload("message");
+
 
 
 export const createMessage = async (req, res) => {

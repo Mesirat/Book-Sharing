@@ -3,12 +3,12 @@ import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home.jsx";
-import User from "./pages/User.jsx"; 
-import UpdateProfile from "./pages/UpdateProfile.jsx";
-import Recommendation from "./pages/Recommendation.jsx";
-import ReadLater from "./pages/ReadLater.jsx";
-import LikedBooks from "./pages/LikedBooks.jsx";
-import Profile from "./pages/Profile.jsx";
+import User from "./pages/User/User.jsx"; 
+import UpdateProfile from "./pages/User/UpdateProfile.jsx";
+import Recommendation from "./pages/User/Recommendation.jsx";
+import ReadLater from "./pages/User/ReadLater.jsx";
+import LikedBooks from "./pages/User/LikedBooks.jsx";
+import Profile from "./pages/User/Profile.jsx";
 import LogOut from "./pages/Auth/LogOut.jsx";
 
 import Login from "./pages/Auth/Login.jsx";
@@ -19,9 +19,10 @@ import BookDetail from "./pages/BookDetail.jsx";
 
 import { useAuthStore } from "./store/authStore.js";
 import NotFound from "./pages/NotFound.jsx";
-import ReadBook from "./pages/ReadBook.jsx";
+import ReadBook from "./pages/User/ReadBook.jsx";
 import GroupChat from "./pages/GroupChat.jsx";
-import History from "./pages/History.jsx";
+import History from "./pages/User/History.jsx";
+import UploadBook from "./pages/UploadBook.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
@@ -92,7 +93,7 @@ function InnerApp() {
       <Route path="/logout" element={<LogOut />} />
 
       <Route path="/readbook/:bookId" element={<ProtectedRoute><ReadBook /></ProtectedRoute>} />
-
+      <Route path="/uploadbook" element={<UploadBook />} />
       <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>}>
         <Route path="recommendation" element={<Recommendation />} />
         <Route path="updateProfile" element={<UpdateProfile />} />

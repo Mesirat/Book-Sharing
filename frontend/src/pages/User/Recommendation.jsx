@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Modals from "../components/Modals";
-import Cards from "../components/Cards.jsx";
+import Modals from "../../components/Modals.jsx";
+import Cards from "../../components/Cards.jsx";
 import { Loader } from "lucide-react";
 
 const Recommendation = ({ user }) => {
@@ -62,19 +62,18 @@ const Recommendation = ({ user }) => {
   return (
     <>
       <div className="grid min-h-screen w-full justify-center items-center overflow-hidden px-8 lg:mt-[50px] bg-gray-100">
-        {/* Header */}
+       
         <div className="w-full flex justify-center mb-10">
           <h1 className="text-4xl sm:text-6xl lg:text-8xl text-center font-serif text-blue-700">
             Recommended Books
           </h1>
         </div>
 
-        {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           <Cards books={books} setShow={setShow} setBookItem={setBookItem} />
         </div>
 
-        {/* Pagination Controls */}
+       
         <div className="flex justify-center space-x-4 mt-8">
           <button 
             onClick={() => handlePageChange('prev')} 
@@ -93,7 +92,7 @@ const Recommendation = ({ user }) => {
         </div>
       </div>
 
-      {/* Modal */}
+      
       {show && <Modals bookItem={bookItem} setShow={setShow} />}
     </>
   );

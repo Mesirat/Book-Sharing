@@ -13,11 +13,15 @@ import {
   updateProfile,
   Contact,
   updateProfilePicture,
+  getProgress,
+  updateProgress,
+  getAllProgress,
 } from "../controllers/userController.js";
 
 import rateLimit from "express-rate-limit";
-import {protect} from '../middleware/authMiddleware.js'
-import  createUpload  from "../middleware/uploadMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";
+import  {uploadBookAssets}  from "../middleware/uploadMiddleware.js"; 
+
 const router = express.Router();
 
 const loginLimiter = rateLimit({
@@ -25,7 +29,7 @@ const loginLimiter = rateLimit({
   max: 5,
   message: "Too many login attempts. Please try again later.",
 });
-const upload = createUpload('profile')
+
 router.post("/signup", signUp);
 router.post("/login", loginLimiter, logIn);
 router.post("/logout", logOut);
@@ -35,10 +39,15 @@ router.post("/resetPassword/:token", resetPassword);
 router.get("/checkAuth", protect, checkAuth);
 router.put("/updateProfile", protect, updateProfile);
 router.post("/refreshToken", refreshToken);
-
+router.get("/getProgress/:bookId", protect, getProgress);
+router.post("/updateProgress/:bookId", protect, updateProgress);
+router.get("/getAllProgress", protect, getAllProgress);
 router.get("/:id", getUserById);
 router.post("/contact", Contact);
-
-router.put("/updateProfilePicture", upload.single('profilePic'), updateProfilePicture);
+router.put(
+  "/updateProfilePicture",
+  uploadBookAssets.single("userProfile"),
+  updateProfilePicture
+);
 
 export default router;

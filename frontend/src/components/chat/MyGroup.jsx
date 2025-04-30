@@ -89,7 +89,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
 
   return (
     <div>
-      <div className="sticky top-0  z-10  p-1">
+      <div className="sticky top-0 text-text z-10  p-1">
         <input
           type="text"
           placeholder="Search groups..."
@@ -100,7 +100,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
       </div>
 
       {filteredGroups.length === 0 ? (
-        <p className="text-center text-gray-500">No groups found.</p>
+        <p className="text-center ">No groups found.</p>
       ) : (
         <div className="space-y-4 z-50 p-1">
           {filteredGroups.map((group) => (
@@ -111,7 +111,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
               onClick={() => handleGroupClick(group)}
               className={`w-full  min-h-16 px-4 py-2 border rounded-md shadow-md cursor-pointer  flex items-center ${
                 currentGroup && currentGroup._id === group._id
-                  ? "bg-gray-300 ring-2 ring-blue-200 outline-none"
+                  ? "bg-secondary ring-2 ring-blue-200 outline-none"
                   : "hover:bg-gray-300 hover:bg-opacity-70"
               } `}
             >
@@ -123,7 +123,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
                     className="w-12 h-12 rounded-full object-cover "
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                  <div className="w-12 h-12 rounded-full bg-button flex items-center justify-center">
                     <span className="font-bold text-sm uppercase">
                       {group.groupName.charAt(0)}
                     </span>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Cards from "../components/Cards";
-import SideBar from "../components/headers/bars/SideBar";
+import Cards from "../../components/Cards";
+import SideBar from "../../components/headers/bars/SideBar";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
-import Navbar from "../components/headers/bars/NavBar";
+import Navbar from "../../components/headers/bars/NavBar";
 import { Loader } from "lucide-react";
 
 const User = () => {
@@ -50,7 +50,7 @@ const User = () => {
 
           {loading && <Loader className="animate-spin mx-auto my-4" />}
           {error && <div className="text-red-500 text-center my-12">{error}</div>}
-
+          
           <Outlet />
         </div>
       </div>

@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 import mongoose from "mongoose";
+import { ReadingProgress } from "../models/readingProgressModel.js";
 import bcrypt from "bcryptjs";
 import cookieParser from "cookie-parser";
 import generateVerificationToken from "../utils/generateVerificationToken.js";
@@ -17,6 +18,7 @@ import { catchError } from "rxjs";
 import nodemailer from "nodemailer";
 import path from "path";
 import multer from "multer";
+
 import fs from "fs";
 const validateFields = (fields) => {
   for (const [key, value] of Object.entries(fields)) {
@@ -101,7 +103,6 @@ export const signUp = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({ name, email, password });
-  
 
   const token = generateToken(res, user._id);
 
@@ -456,7 +457,6 @@ export const updateProfilePicture = [
       user.profileImage = filePath;
       await user.save();
 
-   
       res.json({
         message: "Profile image updated successfully",
         profileImage: filePath,
@@ -471,3 +471,52 @@ export const updateProfilePicture = [
     }
   }),
 ];
+
+export const updateProgress = asyncHandler( async (req, res) => {
+  const { currentPage, totalPages } = req.body;
+  const { bookId } = req.params;
+
+  try {
+    const updated = await ReadingProgress.findOneAndUpdate(
+      { user: req.user._id, book: bookId },
+      { currentPage, totalPages },
+      { new: true, upsert: true }
+    );
+    res.status(200).json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update progress" });
+  }
+});
+
+export const getProgress = asyncHandler(async (req, res) => {
+  const { bookId } = req.params;
+  try {
+    const progress = await ReadingProgress.findOne({
+      user: req.user._id,
+      book: bookId
+    }).lean();
+
+    if (!progress) {
+      return res.status(404).json({ message: "Progress not found" });
+    }
+
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch reading progress" });
+  }
+});
+export const getAllProgress = asyncHandler(async (req, res) => {
+  try {
+    const progress = await ReadingProgress.find({ user: req.user._id })
+      .populate("book")
+      .lean();
+
+    if (!progress) {
+      return res.status(404).json({ message: "No progress found" });
+    }
+
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch reading progress" });
+  }
+});

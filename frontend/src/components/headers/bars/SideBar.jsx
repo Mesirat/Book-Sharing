@@ -30,7 +30,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 h-screen z-50 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 text-text left-0 h-screen z-50 transition-all duration-300 ease-in-out ${
           expanded ? "w-56 bg-gray-300" : "w-6"
         } `}
       >
@@ -50,7 +50,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
           {expanded && (
             <Link to="/" className=" flex items-center space-x-2 z-50 ml-8">
               <BookOpenText className="w-6 h-6" />
-              <span className="font-bold text-2xl text-gray-700">Bookish</span>
+              <span className="font-bold text-2xl ">Bookish</span>
             </Link>
           )}
         </div>
@@ -62,19 +62,19 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
             return (
               <div
                 key={to}
-                className={`p-2 relative ${!expanded && location.pathname=== "/user/chat" ? "hidden": ""} ${
-                  expanded ? "hover:bg-gray-300 rounded-md" : "" 
-                } ${isActive ? " text-black" : ""}`}
+                className={`p-2 relative ${
+                  expanded ? "hover:bg-gray-300 rounded-md" : "hidden" 
+                } ${isActive ? "" : ""}`}
               >
                 <Link
                   to={to}
-                  className={`flex items-center p-2 transition-all duration-300 ${
+                  className={`flex items-center p-2 transition-all duration-3 ${
                     expanded
-                      ? "hover:bg-gray-800 hover:text-white rounded-md px-2"
+                      ? "hover:bg-secondary  rounded-md px-2"
                       : ""
                   } ${
                     isActive && expanded
-                      ? "bg-amber-500 rounded-md shadow-md"
+                      ? "bg-button rounded-md shadow-md"
                       : ""
                   }`}
                   aria-current={isActive ? "page" : undefined}
@@ -83,7 +83,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
                   <div className="relative group">
                     <IconComponent className="w-6 h-6" />
                     {!expanded && (
-                      <div className="absolute left-full ml-1 top-1/2 -translate-y-1/2 bg-black text-white whitespace-nowrap text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg z-50 pointer-events-none">
+                      <div className="absolute left-full ml-1 top-1/2 -translate-y-1/2 bg-secondary  whitespace-nowrap text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-3 shadow-lg z-50 pointer-events-none">
                         {label}
                       </div>
                     )}
@@ -91,7 +91,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
                   <span
                     className={`${
                       expanded ? "block ml-4" : "hidden"
-                    } transition-all duration-300`}
+                    } transition-all duration-3`}
                   >
                     {label}
                   </span>
@@ -104,7 +104,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
 
       {expanded && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-red bg-opacity-50 z-40"
           onClick={() => setExpanded(false)}
         />
       )}

@@ -123,7 +123,7 @@ const GroupChat = () => {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         }
       );
       return response.status(200).json({ success: true });

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const likedBookSchema = new mongoose.Schema({
   _id: {
-    type: mongoose.Schema.Types.ObjectId, // This will be the user's ID
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
@@ -21,4 +21,3 @@ const likedBookSchema = new mongoose.Schema({
 });
 
 export const LikedBook = mongoose.model("LikedBook", likedBookSchema);
-
