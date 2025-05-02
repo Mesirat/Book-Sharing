@@ -4,61 +4,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 import axios from "axios"
 import mongoose from 'mongoose';
-import {LikedBook} from '../models/likedBookModel.js';
-import {LaterRead} from '../models/laterReadModel.js';
+import {LikedBook} from '../models/user/likedBookModel.js';
+import {LaterRead} from '../models/user/laterReadModel.js';
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
-export const UploadBook = asyncHandler(async (req, res) => {
-  try {
-    const {
-      title,
-      authors,
-      publisher,
-      publishedYear,
-      description,
-      categories,
-    } = req.body;
 
-    const authorsArray = authors?.split(",").map((a) => a.trim()) || [];
-    const categoriesArray = categories?.split(",").map((c) => c.trim()) || [];
-
-    const existingBook = await Book.findOne({
-      title: title.trim(),
-      authors: { $all: authorsArray },
-    });
-
-    if (existingBook) {
-      return res.status(400).json({
-        message: "Book already exists in the system.",
-      });
-    }
-
-    const thumbnailPath = req.files?.thumbnail?.[0]?.path;
-    const pdfPath = req.files?.pdf?.[0]?.path;
-
-    const book = new Book({
-      title: title.trim(),
-      authors: authorsArray,
-      publisher,
-      publishedYear,
-      description,
-      categories: categoriesArray,
-      thumbnail: thumbnailPath,
-      pdfLink: pdfPath,
-    });
-
-    await book.save();
-
-    res.status(201).json({
-      message: "Book uploaded",
-      book,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      message: "Upload failed",
-    });
-  }
-});
 
 export const getBooks = asyncHandler(async (req, res) => {
   const { title, author } = req.query;

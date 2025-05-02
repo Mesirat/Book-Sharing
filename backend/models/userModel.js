@@ -20,13 +20,22 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "default-avatar.jpg",
     },
+    role:{
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
     lastLogin: {
       type: Date,
       default: Date.now,
     },
-    resetPasswordToken: String,
-    resetPasswordExpiresAt: Date,
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+    
   },
+  
   {
     timestamps: true, 
   }
@@ -52,8 +61,8 @@ userSchema.methods.isPasswordResetTokenValid = function () {
 };
 
 
-userSchema.methods.isEmailVerificationTokenValid = function () {
-  return this.verificationTokenExpiresAt > Date.now();
-};
+// userSchema.methods.isEmailVerificationTokenValid = function () {
+//   return this.verificationTokenExpiresAt > Date.now();
+// };
 
 export const User = mongoose.model("User", userSchema);

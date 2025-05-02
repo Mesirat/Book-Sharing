@@ -1,9 +1,15 @@
-import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home.jsx";
-import User from "./pages/User/User.jsx"; 
+import User from "./pages/User/User.jsx";
 import UpdateProfile from "./pages/User/UpdateProfile.jsx";
 import Recommendation from "./pages/User/Recommendation.jsx";
 import ReadLater from "./pages/User/ReadLater.jsx";
@@ -22,13 +28,32 @@ import NotFound from "./pages/NotFound.jsx";
 import ReadBook from "./pages/User/ReadBook.jsx";
 import GroupChat from "./pages/GroupChat.jsx";
 import History from "./pages/User/History.jsx";
-import UploadBook from "./pages/UploadBook.jsx";
-
+import UploadBook from "./pages/Admin/UploadBook.jsx";
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import UserRegistration from "./pages/Admin/UserRegistration.jsx";
+import BookManager from "./pages/Admin/BookManager.jsx";
+import RoleManager from "./pages/Admin/RoleManager.jsx";
+import Report from "./pages/Admin/ReportManager.jsx";
+import ChangePassword from "./pages/Auth/ChangePassword.jsx";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+  return children;
+};
+
+const AdminProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
@@ -51,7 +76,7 @@ function App() {
       set({
         isAuthenticated: true,
         token,
-        user: JSON.parse(localStorage.getItem('user')) || {},
+        user: JSON.parse(localStorage.getItem("user")) || {},
       });
     }
   }, [set, checkAuth]);
@@ -60,7 +85,8 @@ function App() {
     checkAuth();
     const interval = setInterval(() => {
       refreshToken();
-    }, 14 * 60 * 1000); 
+    }, 14 * 60 * 1000);
+
     return () => clearInterval(interval);
   }, [checkAuth, refreshToken]);
 
@@ -78,7 +104,7 @@ function InnerApp() {
   const location = useLocation();
 
   useEffect(() => {
-    localStorage.setItem('lastRoute', location.pathname);
+    localStorage.setItem("lastRoute", location.pathname);
   }, [location]);
 
   return (
@@ -86,15 +112,66 @@ function InnerApp() {
       <Route path="/" element={<Home />} />
       <Route path="/bookDetail" element={<BookDetail />} />
 
-      <Route path="/login" element={<RedirectAuthUser><Login /></RedirectAuthUser>} />
-      <Route path="/signup" element={<RedirectAuthUser><SignUp /></RedirectAuthUser>} />
-      <Route path="/forgotPassword" element={<RedirectAuthUser><ForgotPassword /></RedirectAuthUser>} />
-      <Route path="/resetPassword/:token" element={<RedirectAuthUser><ResetPassword /></RedirectAuthUser>} />
+      <Route
+        path="/login"
+        element={
+          <RedirectAuthUser>
+            <Login />
+          </RedirectAuthUser>
+        }
+      />
+      <Route
+        path="/changePassword"
+        element={
+          <RedirectAuthUser>
+            <ChangePassword />
+          </RedirectAuthUser>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <RedirectAuthUser>
+            <SignUp />
+          </RedirectAuthUser>
+        }
+      />
+      <Route
+        path="/forgotPassword"
+        element={
+          <RedirectAuthUser>
+            <ForgotPassword />
+          </RedirectAuthUser>
+        }
+      />
+      <Route
+        path="/resetPassword/:token"
+        element={
+          <RedirectAuthUser>
+            <ResetPassword />
+          </RedirectAuthUser>
+        }
+      />
       <Route path="/logout" element={<LogOut />} />
 
-      <Route path="/readbook/:bookId" element={<ProtectedRoute><ReadBook /></ProtectedRoute>} />
-      <Route path="/uploadbook" element={<UploadBook />} />
-      <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>}>
+      <Route
+        path="/readbook/:bookId"
+        element={
+          <ProtectedRoute>
+            <ReadBook />
+          </ProtectedRoute>
+        }
+      />
+     
+
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute>
+            <User />
+          </ProtectedRoute>
+        }
+      >
         <Route path="recommendation" element={<Recommendation />} />
         <Route path="updateProfile" element={<UpdateProfile />} />
         <Route path="chat" element={<GroupChat />} />
@@ -104,10 +181,25 @@ function InnerApp() {
         <Route path="profile" element={<Profile />} />
       </Route>
 
-      <Route path="*" element={<NotFound />} />
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
+        }
+      >
+        <Route path="bookManagement" element={<BookManager />} />
+        <Route path="report" element={<Report />} />
+        <Route path="roleManagement" element={<RoleManager />} />
+        <Route path="addUsers" element={<UserRegistration />} />
+        <Route path="userManagement" element={<UserRegistration />} />
+        <Route path="uploadBook" element={<UploadBook />} />
+        <Route path="settings" element={<UploadBook />} />
+      </Route>
 
+      <Route path="*" element={<NotFound />} />
     </Routes>
-   
   );
 }
 

@@ -7,10 +7,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import connectDB from './config/db.js';
+import adminRouter from './routes/adminRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import bookrouter from './routes/bookRoutes.js';
-import GroupRoutes from './routes/groupRoutes.js';
-import MessageRoutes from './routes/messageRoutes.js';
+import groupRouter from './routes/groupRoutes.js';
+import messageRouter from './routes/messageRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { initSocket } from './socket.js';
 
@@ -31,7 +32,7 @@ const corsOptions = {
   methods: 'GET,POST,PUT,DELETE',
 };
 
-// Initialize socket and pass the server instance
+
 const io = initSocket(server, corsOptions);
 app.set("io", io);
 
@@ -40,11 +41,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-
+app.use("/admin", adminRouter);
 app.use('/users', userRouter);
 app.use('/books', bookrouter);
-app.use('/groups', GroupRoutes);
-app.use('/messages', MessageRoutes);
+app.use('/groups', groupRouter);
+app.use('/messages', messageRouter);
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist/build')));

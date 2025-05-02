@@ -23,11 +23,11 @@ export const uploadBookAssets = multer({
           allowed_formats: ["jpg", "jpeg", "png", "gif"],
         };
       }
-      if (file.fieldname === "pdf") {
+      if (file.fieldname === "pdf" ) {
         return {
           folder: "book_pdfs",
           resource_type: "raw",
-          allowed_formats: ["pdf"],
+          allowed_formats: ["pdf","csv"],
         };
       }
       return { folder: "misc_uploads" };

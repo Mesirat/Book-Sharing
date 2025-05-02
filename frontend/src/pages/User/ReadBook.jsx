@@ -8,10 +8,23 @@ const ReadBook = () => {
 
   useEffect(() => {
     const fetchBook = async () => {
-      const res = await fetch(`/api/books/${bookId}`);
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`http://localhost:5000/books/${bookId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    
+      if (!res.ok) {
+        console.error("Failed to fetch book", await res.text());
+        return;
+      }
+    
       const data = await res.json();
-      setFileURL(data.fileURL); 
+      setFileURL(data.pdfLink);
+     
     };
+    
     fetchBook();
   }, [bookId]);
 

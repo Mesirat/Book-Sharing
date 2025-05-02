@@ -4,7 +4,7 @@ import {
   getProfile,
   getUserById,
   verifyEmail,
-  signUp,
+ 
   logIn,
   forgotPassword,
   resetPassword,
@@ -12,10 +12,12 @@ import {
   refreshToken,
   updateProfile,
   Contact,
-  updateProfilePicture,
+
   getProgress,
   updateProgress,
   getAllProgress,
+  changePassword,
+  streamPDF,
 } from "../controllers/userController.js";
 
 import rateLimit from "express-rate-limit";
@@ -30,7 +32,6 @@ const loginLimiter = rateLimit({
   message: "Too many login attempts. Please try again later.",
 });
 
-router.post("/signup", signUp);
 router.post("/login", loginLimiter, logIn);
 router.post("/logout", logOut);
 router.post("/verifyEmail", verifyEmail);
@@ -44,10 +45,12 @@ router.post("/updateProgress/:bookId", protect, updateProgress);
 router.get("/getAllProgress", protect, getAllProgress);
 router.get("/:id", getUserById);
 router.post("/contact", Contact);
-router.put(
-  "/updateProfilePicture",
-  uploadBookAssets.single("userProfile"),
-  updateProfilePicture
-);
+router.put("/changePassword", protect, changePassword);
+router.get("/pdf/:publicId(*)", streamPDF);
+// router.put(
+//   "/updateProfilePicture",
+//   uploadBookAssets.single("userProfile"),
+//   updateProfilePicture
+// );
 
 export default router;

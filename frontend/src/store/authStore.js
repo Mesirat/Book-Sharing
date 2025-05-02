@@ -6,71 +6,43 @@ const API_URL = "http://localhost:5000/users";
 
 axios.defaults.withCredentials = true;
 
-axios.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      return useAuthStore
-        .getState()
-        .refreshToken()
-        .then((newAccessToken) => {
-          if (newAccessToken) {
-            axios.defaults.headers.common[
-              "Authorization"
-            ] = `Bearer ${newAccessToken}`;
-            originalRequest.headers[
-              "Authorization"
-            ] = `Bearer ${newAccessToken}`;
-            return axios(originalRequest);
-          } else {
-            useAuthStore.getState().resetState();
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            window.location.href = "/login";
-          }
-        });
-    }
-
-    return Promise.reject(error);
-  }
-);
 
 export const useAuthStore = create((set) => ({
   user: null,
+  token: null,
   isAuthenticated: false,
-  error: null,
-  set: (newState) => set(state => ({ ...state, ...newState })),
+  isAdmin: false,
   loading: false,
-  isCheckingAuth: true,
   message: null,
-
+  error: null,
+  isCheckingAuth: false,
+  
   resetError: () => set({ error: null }),
-
+  set: (newState) => set(newState),
   resetState: () =>
     set({
       user: null,
+      token: null,
       isAuthenticated: false,
-      error: null,
+      isAdmin: false,
       loading: false,
       message: null,
+      error: null,
+      isCheckingAuth: false,
     }),
-
+    
     isTokenExpired: (token) => {
       try {
-        const decoded = jwt_decode(token); 
-        return decoded.exp * 1000 < Date.now(); 
-      } catch (err) {
-        return true; 
-      }
-    },
-
+      const decoded = jwtDecode(token);
+      return decoded.exp * 1000 < Date.now();
+    } catch (err) {
+      return true;
+    }
+  },
+  
   makeRequest: async (method, url, data = null) => {
     set({ loading: true, error: null });
-
+    
     try {
       const token = localStorage.getItem("accessToken");
       const config = {
@@ -79,50 +51,40 @@ export const useAuthStore = create((set) => ({
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
           "Content-Type":
-            data instanceof FormData
-              ? "multipart/form-data"
+          data instanceof FormData
+          ? "multipart/form-data"
               : "application/json",
-        },
-        data,
-      };
-
-      const response = await axios(config);
-      return response.data;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message;
+            },
+            data,
+          };
+          
+          const response = await axios(config);
+          return response.data;
+        } catch (error) {
+          const errorMessage = error.response?.data?.message || error.message;
       set({ error: errorMessage, loading: false });
       throw error;
     }
   },
+  
+  uploadUsers: async (file) => {
+    const formData = new FormData();
+    formData.append("csv", file);
 
-  signup: async (name, email, password, navigate) => {
-    set({ loading: true });
     try {
-      const response = await useAuthStore
-        .getState()
-        .makeRequest("post", `${API_URL}/signup`, { name, email, password });
-  
-      const { user } = response;
-  
-      set({
-        user,
-        isAuthenticated: false, // Not authenticated yet due to email verification
-        emailForVerification: user.email,
-        verificationToken: user.verificationToken,
-        message: "Signup successful! Please verify your email.",
-        loading: false,
+      const res = await axios.post("http://localhost:5000/admin/uploadUsers", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+        },
       });
-  
-      // if (navigate) navigate("/verifyEmail");  // Redirect to email verification page
-    } catch (error) {
-      console.error("Signup error:", error?.response?.data || error.message);
-      set({
-        loading: false,
-        message: error?.response?.data?.message || "An error occurred during signup.",
-      });
-    }
-  },  
 
+      return res.data;
+    } catch (err) {
+      console.error("Upload failed", err.response?.data || err.message);
+      throw err;
+    }
+  },
   login: async (email, password) => {
     set({ loading: true, message: null, error: null });
   
@@ -130,14 +92,10 @@ export const useAuthStore = create((set) => ({
       const response = await axios.post(
         `${API_URL}/login`,
         { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { headers: { "Content-Type": "application/json" } }
       );
   
-      const { success, user, token, refreshToken } = response.data;
+      const { success, user, token, refreshToken, mustChangePassword } = response.data;
   
       if (success && user && token && refreshToken) {
         localStorage.setItem("accessToken", token);
@@ -146,201 +104,154 @@ export const useAuthStore = create((set) => ({
         set({
           user,
           isAuthenticated: true,
+          isAdmin: user.role === "admin",
           loading: false,
-          message: "Login successful!",
+          message: user.role === "admin"
+            ? "Admin login successful!"
+            : "Login successful!",
           token,
           error: null,
         });
   
-        return { user, token };
+      
+        return { user, token, mustChangePassword };
       } else {
         throw new Error("Login failed: Missing response data");
       }
     } catch (error) {
-      const message =
-        error?.response?.data?.message || "Login failed. Please try again.";
+      const message = error?.response?.data?.message || "Login failed. Please try again.";
   
       set({
         loading: false,
         isAuthenticated: false,
         user: null,
+        isAdmin: false,
         error: message,
       });
   
-      
       setTimeout(() => {
         set({ error: null });
       }, 20000);
   
-     
       throw error;
     }
   },
   
-
-  logout: async () => {
-    set({ loading: true, error: null });
   
-    try {
+  logout: () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     
-      await axios.post(`${API_URL}/logout`);
-  
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-  
-      
-      set({
-        user: null,
-        isAuthenticated: false,
-        message: "Logged out successfully",
-        loading: false,
-      });
-    } catch (err) {
-      console.error(
-        "Error logging out:",
-        err.response?.data?.message || err.message
-      );
-  
-      
-      set({
-        loading: false,
-        error: "Failed to log out. Please try again later.",
-      });
-    }
+    set({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isAdmin: false,
+      loading: false,
+      message: null,
+      error: null,
+    });
   },
   
   refreshToken: async () => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken || useAuthStore.getState().isTokenExpired(refreshToken)) {
-      console.error("Refresh token expired or missing.");
-      useAuthStore.getState().logout();
-      return null;
-    }
+    const storedRefreshToken = localStorage.getItem("refreshToken");
+    if (!storedRefreshToken) return null;
+  
     try {
       const response = await axios.post(`${API_URL}/refreshToken`, {
-        refreshToken,
+        refreshToken: storedRefreshToken,
       });
-      const { token, refreshToken: newRefreshToken } = response.data.token;
-
-      localStorage.setItem("accessToken", token);
-      if (newRefreshToken) {
-        localStorage.setItem("refreshToken", newRefreshToken);
+  
+      const { token, user } = response.data;
+  
+      if (token && user) {
+        localStorage.setItem("accessToken", token);
+        set({
+          token,
+          user,
+          isAuthenticated: true,
+          isAdmin: user.role === "admin",
+        });
+        return token; 
+      } else {
+        throw new Error("Invalid refresh token response");
       }
-      return token;
     } catch (error) {
-      console.error(
-        "Failed to refresh token:",
-        error.response?.data?.message || error.message
-      );
-      useAuthStore.getState().logout();
-      return null;
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isAdmin: false,
+      });
+      return null; 
     }
   },
-
+  
+  
   checkAuth: async () => {
-    set({ isCheckingAuth: true, error: null });
+    set({ isCheckingAuth: true });
+    
     const token = localStorage.getItem("accessToken");
-
+    
     if (!token) {
-      localStorage.removeItem("accessToken");
-      set({ user: null, isAuthenticated: false, isCheckingAuth: false });
+      set({ isCheckingAuth: false });
       return;
     }
-
+    
     try {
-      const response = await axios.get(`${API_URL}/checkAuth`, {
+      const response = await axios.get(`${API_URL}/check-auth`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      
       if (response.data?.user) {
         set({
           user: response.data.user,
+          token,
           isAuthenticated: true,
+          isAdmin: response.data.user.role === "admin",
           isCheckingAuth: false,
         });
       } else {
-        throw new Error("User data is missing in the response.");
+        throw new Error("Invalid auth response");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "Authentication failed. Please log in again.";
-      console.error("Auth check failed:", errorMessage);
-
-      localStorage.removeItem("accessToken");
-
-      if (error.response?.status === 401) {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          try {
-            const refreshResponse = await axios.post(
-              `${API_URL}/refreshToken`,
-              { refreshToken }
-            );
-            localStorage.setItem(
-              "accessToken",
-              refreshResponse.data.accessToken
-            );
-            checkAuth(); // Retry authentication with the new access token
-          } catch (refreshError) {
-            console.error("Token refresh failed:", refreshError);
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            set({
-              user: null,
-              isAuthenticated: false,
-              isCheckingAuth: false,
-              error: "Token refresh failed. Please log in again.",
-            });
-          }
-        } else {
-          localStorage.removeItem("accessToken");
-          set({
-            user: null,
-            isAuthenticated: false,
-            isCheckingAuth: false,
-            error: errorMessage,
-          });
-        }
-      } else {
-        localStorage.removeItem("accessToken");
-        set({
-          user: null,
-          isAuthenticated: false,
-          isCheckingAuth: false,
-          error: errorMessage,
-        });
-      }
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isAdmin: false,
+        isCheckingAuth: false,
+      });
     }
   },
-
+  
   forgotPassword: async (email) => {
     try {
       const response = await useAuthStore
-        .getState()
-        .makeRequest("post", `${API_URL}/forgotPassword`, { email });
+      .getState()
+      .makeRequest("post", `${API_URL}/forgotPassword`, { email });
       set({ message: response.message, loading: false });
     } catch {
       set({ loading: false });
     }
   },
-
+  
   resetPassword: async (token, password) => {
     try {
       const response = await useAuthStore
-        .getState()
-        .makeRequest("post", `${API_URL}/resetPassword/${token}`, { password });
+      .getState()
+      .makeRequest("post", `${API_URL}/resetPassword/${token}`, { password });
       set({ message: response.message, loading: false });
     } catch {
       set({ loading: false });
     }
   },
-
+  
   verifyEmail: async (code) => {
     try {
       const response = await useAuthStore
-        .getState()
-        .makeRequest("post", `${API_URL}/verifyEmail`, { code });
+      .getState()
+      .makeRequest("post", `${API_URL}/verifyEmail`, { code });
       set({
         user: response.user,
         isAuthenticated: true,
@@ -352,13 +263,13 @@ export const useAuthStore = create((set) => ({
       set({ loading: false });
     }
   },
-
+  
   updateProfile: async (updatedFields) => {
     set({ loading: true, error: null });
     try {
       const response = await useAuthStore
-        .getState()
-        .makeRequest("put", `${API_URL}/updateProfile`, updatedFields);
+      .getState()
+      .makeRequest("put", `${API_URL}/updateProfile`, updatedFields);
       set({
         user: response.data.user,
         message: "Profile updated successfully!",
@@ -371,10 +282,10 @@ export const useAuthStore = create((set) => ({
       });
     }
   },
-
+  
   updateProfilePicture: async (file) => {
     set({ loading: true, error: null });
-  
+    
     if (!file) {
       set({
         error: "No file selected! Please select an image to upload.",
@@ -382,12 +293,12 @@ export const useAuthStore = create((set) => ({
       });
       return;
     }
-  
+    
     try {
       const formData = new FormData();
       formData.append("profileImage", file);
-  
-      // Send the form data to the backend
+
+      
       const response = await axios.put(
         `${API_URL}/updateProfilePicture`,
         formData,
@@ -398,24 +309,51 @@ export const useAuthStore = create((set) => ({
           },
         }
       );
-  
+      
       const updatedProfileImage = response.data.profileImage;
       const updatedUser = {
-        ...useAuthStore.getState().user,  // Access the current user from the store
-        profileImage: updatedProfileImage,  // Update the profile image in the user object
+        ...useAuthStore.getState().user, 
+        profileImage: updatedProfileImage, 
       };
-  
+      
       set({
-        user: updatedUser,  // Update the user object in the store with the new profile image
+        user: updatedUser, 
         loading: false,
         message: "Profile picture updated successfully!",
       });
     } catch (error) {
       set({
-        error: error?.response?.data?.message || error.message || "Something went wrong!",
-        loading: false,
-      });
+        error:
+          error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong!",
+          loading: false,
+        });
+      }
+    },
+    
+  }));
+  
+  axios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+  
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+  
+        const newAccessToken = await useAuthStore.getState().refreshToken();
+  
+        if (newAccessToken) {
+          originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+          return axios(originalRequest);
+        } else {
+          useAuthStore.getState().logout();
+          window.location.href = "/login";
+        }
+      }
+  
+      return Promise.reject(error);
     }
-  },
-
-}));
+  );
+  

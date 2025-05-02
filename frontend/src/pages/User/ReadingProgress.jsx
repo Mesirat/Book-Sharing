@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const ReadingProgress = () => {
   const [progressList, setProgressList] = useState([]);
-  const API_URL = "http://localhost:5000/users"; // Adjust to your backend
+  const API_URL = "http://localhost:5000/users"; 
 
   useEffect(() => {
     const fetchAllProgress = async () => {

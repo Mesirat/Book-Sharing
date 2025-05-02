@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 import mongoose from "mongoose";
-import { ReadingProgress } from "../models/readingProgressModel.js";
+import { ReadingProgress } from "../models/user/readingProgressModel.js";
 import bcrypt from "bcryptjs";
 import cookieParser from "cookie-parser";
 import generateVerificationToken from "../utils/generateVerificationToken.js";
@@ -16,6 +16,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { catchError } from "rxjs";
 import nodemailer from "nodemailer";
+import axios from "axios";  
 import path from "path";
 import multer from "multer";
 
@@ -28,43 +29,7 @@ const validateFields = (fields) => {
   }
 };
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = "uploads";
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
 
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${req.user._id}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedExtensions = /png|jpg|jpeg/;
-  const extname = allowedExtensions.test(
-    path.extname(file.originalname).toLowerCase()
-  ); // Check file extension
-
-  if (extname) {
-    cb(null, true);
-  } else {
-    cb(
-      new Error(
-        "Invalid file type. Only PNG, JPG, and JPEG files are allowed."
-      ),
-      false
-    ); // Reject the file
-  }
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_EXPIRES_IN = "15m";
@@ -94,42 +59,36 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const signUp = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+export const createUser = async ({ name, email, password ,mustChangePassword}) => {
+  const existingUser = await User.findOne({ email });
 
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    return res.status(400).json({ message: "User already exists" });
+  if (existingUser) {
+    return { exists: true };
   }
 
-  const user = await User.create({ name, email, password });
-
-  const token = generateToken(res, user._id);
-
-  const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-  });
-
-  user.lastLogin = new Date();
-  user.refreshToken = refreshToken;
+  const user = new User({ name, email, password ,mustChangePassword});
   await user.save();
 
-  res.cookie("accessToken", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  return { exists: false };
+};
 
-  res.status(200).json({
-    success: true,
-    message: "User registered and logged in successfully",
-    isLoggedIn: true,
-    user: { ...user._doc, password: undefined },
-    token,
-    refreshToken,
-  });
-});
+
+export const registerUser = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    const user = await createUser({ name, email, password });
+    generateToken(res, user);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    });
+  } catch (error) {
+    res.status(400).json({ message: "User registration failed.", error });
+  }
+};
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {
@@ -184,6 +143,7 @@ export const logIn = asyncHandler(async (req, res) => {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN,
   });
 
+
   user.lastLogin = new Date();
   user.refreshToken = refreshToken;
   await user.save();
@@ -191,9 +151,17 @@ export const logIn = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     isLoggedIn: true,
-    user: { ...user._doc, password: undefined },
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      lastLogin: user.lastLogin,
+      
+    },
     token,
     refreshToken,
+    mustChangePassword: user.mustChangePassword,
   });
 });
 
@@ -432,45 +400,45 @@ export const Contact = asyncHandler(async (req, res) => {
   }
 });
 
-export const updateProfilePicture = [
-  upload.single("profileImage"),
-  asyncHandler(async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+// export const updateProfilePicture = [
+//   upload.single("profileImage"),
+//   asyncHandler(async (req, res) => {
+//     if (!req.file) {
+//       return res.status(400).json({ message: "No file uploaded" });
+//     }
 
-    const filePath = `/uploads/${req.file.filename}`;
+//     const filePath = `/uploads/${req.file.filename}`;
 
-    try {
-      const user = await User.findById(req.user._id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+//     try {
+//       const user = await User.findById(req.user._id);
+//       if (!user) {
+//         return res.status(404).json({ message: "User not found" });
+//       }
 
-      if (user.profileImage) {
-        const oldImagePath = path.join(__dirname, "..", user.profileImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
+//       if (user.profileImage) {
+//         const oldImagePath = path.join(__dirname, "..", user.profileImage);
+//         if (fs.existsSync(oldImagePath)) {
+//           fs.unlinkSync(oldImagePath);
+//         }
+//       }
 
-      user.profileImage = filePath;
-      await user.save();
+//       user.profileImage = filePath;
+//       await user.save();
 
-      res.json({
-        message: "Profile image updated successfully",
-        profileImage: filePath,
-        user: {
-          ...user._doc,
-          password: undefined,
-        },
-      });
-    } catch (error) {
-      console.error("Error updating profile picture:", error);
-      res.status(500).json({ message: "Server error: " + error.message });
-    }
-  }),
-];
+//       res.json({
+//         message: "Profile image updated successfully",
+//         profileImage: filePath,
+//         user: {
+//           ...user._doc,
+//           password: undefined,
+//         },
+//       });
+//     } catch (error) {
+//       console.error("Error updating profile picture:", error);
+//       res.status(500).json({ message: "Server error: " + error.message });
+//     }
+//   }),
+// ];
 
 export const updateProgress = asyncHandler( async (req, res) => {
   const { currentPage, totalPages } = req.body;
@@ -520,3 +488,38 @@ export const getAllProgress = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reading progress" });
   }
 });
+export const changePassword = async (req, res) => {
+  const userId = req.user._id;
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) return res.status(401).json({ message: "Incorrect current password" });
+
+  user.password = newPassword; 
+  user.mustChangePassword = false;
+  await user.save();
+
+  res.status(200).json({ message: "Password changed successfully" });
+};
+export const streamPDF = async (req, res) => {
+  const { publicId } = req.params;
+
+  try {
+    const cloudinaryURL = `https://res.cloudinary.com/${process.env.CLOUD_NAME}/raw/upload/${publicId}`;
+
+    const response = await axios.get(cloudinaryURL, {
+      responseType: "stream",
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=" + publicId + ".pdf");
+
+    response.data.pipe(res);
+  } catch (err) {
+    console.error("PDF stream error", err);
+    res.status(500).send("Error streaming PDF");
+  }
+};

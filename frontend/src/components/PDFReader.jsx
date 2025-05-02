@@ -5,12 +5,12 @@ const PDFReader = ({ fileURL, bookId }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const API_URL = "http://localhost:5000/users";
-
+  
   useEffect(() => {
     const fetchProgress = async () => {
       try {
         const res = await axios.get(`${API_URL}/getProgress/${bookId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
         });
 
         const bookProgress = res.data.find(
@@ -37,7 +37,7 @@ const PDFReader = ({ fileURL, bookId }) => {
         `${API_URL}/updateProgress/${bookId}`,
         { currentPage: pageNum, totalPages },
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
         }
       );
     } catch (err) {
@@ -60,7 +60,7 @@ const PDFReader = ({ fileURL, bookId }) => {
       </div>
       <div className="pdf-viewer">
         <iframe
-          src={fileURL}
+         src={`http://localhost:5000/users/pdf/${fileURL}`}
           width="100%"
           height="600px"
           onLoad={() => setTotalPages(100)}

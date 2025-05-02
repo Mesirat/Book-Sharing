@@ -8,7 +8,7 @@ import NavBar from "../../components/headers/bars/NavBar.jsx";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [isAdmin, setIsAdmin] = useState(false);
   const { login, loading: Loading } = useAuthStore();  
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -26,25 +26,36 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const result = await login(email, password);
-      if (result) {
-        navigate("/user");
-      }
+        
+        const result = await login(email, password, isAdmin, ); 
+        
+        if (result) {
+          console.log(result.mustChangePassword);
+          if (result.mustChangePassword===true) {
+            navigate("/changePassword");// Redirect to change password page for first-time login
+          }
+          else if (result.user.role === 'admin') {
+                navigate("/admin");  // Redirect to admin dashboard
+            } else {
+                navigate("/user");  // Redirect to user dashboard
+            }
+        }
     } catch (err) {
-      let message = "Login failed. Please try again.";
-      const status = err?.response?.status;
-  
-      if (status === 401) {
-        message = "Invalid credentials. Please check your email and password.";
-      } else if (status === 429) {
-        message = "Too many login attempts. Please try again later.";
-      } else if (err?.response?.data?.message) {
-        message = err.response.data.message;
-      }
-  
-      setError(message);
+        let message = "Login failed. Please try again.";
+        const status = err?.response?.status;
+
+        if (status === 401) {
+            message = "Invalid credentials. Please check your email and password.";
+        } else if (status === 429) {
+            message = "Too many login attempts. Please try again later.";
+        } else if (err?.response?.data?.message) {
+            message = err.response.data.message;
+        }
+
+        setError(message);
     }
-  };
+};
+
   
 
   return (
