@@ -1,26 +1,19 @@
 import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
-import generateToken from "../utils/generateToken.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { ReadingProgress } from "../models/user/readingProgressModel.js";
-import bcrypt from "bcryptjs";
-import cookieParser from "cookie-parser";
-import generateVerificationToken from "../utils/generateVerificationToken.js";
+import { News } from "../models/user/newsModel.js";
 import {
   sendPasswordResetEmail,
   sendResetSuccessEmail,
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { catchError } from "rxjs";
 import nodemailer from "nodemailer";
-import axios from "axios";  
-import path from "path";
-import multer from "multer";
 
-import fs from "fs";
 const validateFields = (fields) => {
   for (const [key, value] of Object.entries(fields)) {
     if (!value) {
@@ -29,66 +22,225 @@ const validateFields = (fields) => {
   }
 };
 
-
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_EXPIRES_IN = "15m";
-const REFRESH_TOKEN_EXPIRES_IN = "7d";
 
-export const getUserById = async (req, res) => {
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  console.error("JWT_SECRET or JWT_REFRESH_SECRET is not defined in .env");
+  process.exit(1);
+}
+
+const generateToken = (res, userId) => {
   try {
-    const { id } = req.params;
+    const token = jwt.sign({ id: userId }, JWT_SECRET, {
+      expiresIn: "15m",
+    });
+    console.log("Generated access token:", token);
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
 
-    if (!id) {
-      return res.status(404).json({ message: "User ID is not found" });
-    }
-    const user = await User.findById(id);
-
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
-
-    res.status(200).json(user);
+    return token;
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error. Could not retrieve user." });
+    console.error("Error generating access token:", error);
+    throw new Error("Failed to generate access token");
   }
 };
 
-export const createUser = async ({ name, email, password ,mustChangePassword}) => {
-  const existingUser = await User.findOne({ email });
+const generateRefreshToken = (res, userId) => {
+  try {
+    const refreshToken = jwt.sign({ id: userId }, JWT_REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
+    console.log("Generated refresh token:", refreshToken);
 
-  if (existingUser) {
-    return { exists: true };
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+
+    return refreshToken;
+  } catch (error) {
+    console.error("Error generating refresh token:", error);
+    throw new Error("Failed to generate refresh token");
   }
-
-  const user = new User({ name, email, password ,mustChangePassword});
-  await user.save();
-
-  return { exists: false };
 };
-
 
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
-    const user = await createUser({ name, email, password });
-    generateToken(res, user);
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "User already exists" });
+    }
+
+    const user = new User({ name, email, password });
+    await user.save();
+
+    const token = generateToken(res, user._id);
+    const refreshToken = generateRefreshToken(res, user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
 
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+      refreshToken,
     });
   } catch (error) {
-    res.status(400).json({ message: "User registration failed.", error });
+    console.error("Register error:", error);
+    res.status(400).json({ success: false, message: "User registration failed.", error: error.message });
   }
 };
+
+export const logIn = asyncHandler(async (req, res) => {
+  const { email, password, isAdmin } = req.body;
+
+  try {
+    validateFields({ email, password });
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.error("Login failed: User not found for email:", email);
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    if (isAdmin && user.role !== "admin") {
+      console.error("Login failed: User is not an admin:", email);
+      return res.status(403).json({ success: false, message: "Access denied: Admins only" });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      console.error("Login failed: Invalid password for email:", email);
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const token = generateToken(res, user._id);
+    const refreshToken = generateRefreshToken(res, user._id);
+
+    user.lastLogin = new Date();
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    console.log("Login successful for user:", user._id, "Role:", user.role, "Cookies set:", { token, refreshToken });
+
+    res.status(200).json({
+      success: true,
+      isLoggedIn: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLogin: user.lastLogin,
+      },
+      token,
+      refreshToken,
+      mustChangePassword: user.mustChangePassword,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+export const logOut = asyncHandler(async (req, res) => {
+  try {
+    if (req.user && req.user._id) {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.refreshToken = null;
+        await user.save();
+        console.log("Logout successful for user:", req.user._id);
+      } else {
+        console.warn("User not found for ID:", req.user._id);
+      }
+    } else {
+      console.warn("No user in logout request, clearing cookies only. Headers:", req.headers, "Cookies:", req.cookies);
+    }
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ success: false, message: "Failed to log out" });
+  }
+});
+
+export const getAllProgress = asyncHandler(async (req, res) => {
+  try {
+    console.log("getAllProgress called for user ID:", req.user._id);
+    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+      console.error("Invalid user ID in getAllProgress:", req.user._id);
+      return res.status(400).json({ success: false, message: "Invalid user ID format" });
+    }
+
+    const progress = await ReadingProgress.find({ user: req.user._id })
+      .populate("book")
+      .lean();
+
+    if (!progress || progress.length === 0) {
+      console.log("No progress found for user:", req.user._id);
+      return res.status(404).json({ success: false, message: "No progress found" });
+    }
+
+    res.json({ success: true, progress });
+  } catch (error) {
+    console.error("Get all progress error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch reading progress" });
+  }
+});
+
+export const getAllBlogs = asyncHandler(async (req, res) => {
+  try {
+    console.log("getAllBlogs called for user ID:", req.user._id);
+    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+      console.error("Invalid user ID in getAllBlogs:", req.user._id);
+      return res.status(400).json({ success: false, message: "Invalid user ID format" });
+    }
+
+    const blogs = await News.find().sort({ date: -1 });
+    res.status(200).json({ success: true, blogs });
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch blogs" });
+  }
+});
+
+// ... other functions unchanged
+
+
+
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {
@@ -124,54 +276,17 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   }
 });
 
-export const logIn = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) {
-    return res.status(400).json({ message: "Invalid credentials" });
-  }
-
-  const token = generateToken(res, user._id);
-  const refreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-  });
-
-
-  user.lastLogin = new Date();
-  user.refreshToken = refreshToken;
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    isLoggedIn: true,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      lastLogin: user.lastLogin,
-      
-    },
-    token,
-    refreshToken,
-    mustChangePassword: user.mustChangePassword,
-  });
-});
 
 export const getProfile = asyncHandler(async (req, res) => {
   const user = {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
+    role: req.user.role,
+    profilePic: req.user.profileImage,
   };
-  res.status(200).json({ user });
+  res.status(200).json({ success: true, user });
 });
 
 export const updateProfile = async (req, res) => {
@@ -180,13 +295,17 @@ export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     if (email && email !== user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ message: "Email already in use." });
+        return res
+          .status(400)
+          .json({ success: false, message: "Email already in use." });
       }
       user.email = email;
     }
@@ -199,25 +318,31 @@ export const updateProfile = async (req, res) => {
     await user.save();
 
     res.status(200).json({
+      success: true,
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         lastName: user.LastName,
         email: user.email,
         phone: user.phone,
         country: user.country,
+        role: user.role,
       },
       message: "Profile updated successfully!",
     });
   } catch (err) {
-    console.error(err);
+    console.error("Update profile error:", err);
     res
       .status(500)
-      .json({ message: "Failed to update profile", error: err.message });
+      .json({
+        success: false,
+        message: "Failed to update profile",
+        error: err.message,
+      });
   }
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = asyncHandler(async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -229,40 +354,41 @@ export const refreshToken = async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch (err) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid or expired refresh token" });
     }
 
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select("-password");
     if (!user || user.refreshToken !== refreshToken) {
       return res
         .status(403)
         .json({ success: false, message: "Invalid or expired refresh token" });
     }
 
-    const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
+    const accessToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
     });
 
-    const newRefreshToken = jwt.sign(
-      { id: decoded.id },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const newRefreshToken = jwt.sign({ id: user._id }, JWT_REFRESH_SECRET, {
+      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    });
 
     user.refreshToken = newRefreshToken;
     await user.save();
 
     res.json({
       success: true,
-      message: "Tokens refreshed successfully",
-      accessToken,
+      token: accessToken,
       refreshToken: newRefreshToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
     console.error("Error in refreshToken:", err);
@@ -272,32 +398,21 @@ export const refreshToken = async (req, res) => {
       error: err.message,
     });
   }
-};
+});
 
-export const logOut = async (req, res) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-      await invalidateToken(refreshToken);
-    }
 
-    res.clearCookie("refreshToken");
-    res.json({ success: true, message: "Logged out successfully" });
-  } catch (err) {
-    console.error("Logout error:", err);
-    res.status(500).json({ success: false, message: "Failed to log out" });
-  }
-};
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(404).json({ success: false, message: "User not found" });
-  }
   try {
-    const resetToken = crypto.randomBytes(20).toString("hex");
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
+    const resetToken = crypto.randomBytes(20).toString("hex");
     const resetTokenExpiresAt = Date.now() + 15 * 60 * 1000;
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpiresAt = resetTokenExpiresAt;
@@ -309,11 +424,11 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       `http://localhost:3000/resetPassword/${resetToken}`
     );
 
-    res.status(200).json({ success: true, message: "Email sent to user" });
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset email sent" });
   } catch (error) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpiresAt = undefined;
-    await user.save({ validateBeforeSave: false });
+    console.error("Forgot password error:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -341,11 +456,12 @@ export const resetPassword = asyncHandler(async (req, res) => {
       .status(200)
       .json({ success: true, message: "Password reset successfully" });
   } catch (error) {
+    console.error("Reset password error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-export const checkAuth = async (req, res) => {
+export const checkAuth = asyncHandler(async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -367,13 +483,15 @@ export const checkAuth = async (req, res) => {
       message: "Internal server error. Please try again later.",
     });
   }
-};
+});
 
 export const Contact = asyncHandler(async (req, res) => {
   const { name, email, message } = req.body;
 
   if (!name || !email || !message) {
-    return res.status(400).json({ message: "All fields are required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "All fields are required" });
   }
 
   try {
@@ -392,55 +510,75 @@ export const Contact = asyncHandler(async (req, res) => {
       text: message,
     });
 
-    res.status(200).json({ message: "Message sent successfully!" });
+    res
+      .status(200)
+      .json({ success: true, message: "Message sent successfully!" });
   } catch (error) {
+    console.error("Contact error:", error);
     res
       .status(500)
-      .json({ message: "Failed to send message", error: error.message });
+      .json({
+        success: false,
+        message: "Failed to send message",
+        error: error.message,
+      });
   }
 });
 
-// export const updateProfilePicture = [
-//   upload.single("profileImage"),
-//   asyncHandler(async (req, res) => {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "No file uploaded" });
-//     }
+export const updateProfilePicture = asyncHandler(async (req, res) => {
+  const localFilePath = req.file?.path;
 
-//     const filePath = `/uploads/${req.file.filename}`;
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ success: false, message: "Not authorized" });
+  }
 
-//     try {
-//       const user = await User.findById(req.user._id);
-//       if (!user) {
-//         return res.status(404).json({ message: "User not found" });
-//       }
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-//       if (user.profileImage) {
-//         const oldImagePath = path.join(__dirname, "..", user.profileImage);
-//         if (fs.existsSync(oldImagePath)) {
-//           fs.unlinkSync(oldImagePath);
-//         }
-//       }
+    if (user.cloudinaryPublicId) {
+      await cloudinary.uploader.destroy(user.cloudinaryPublicId);
+    }
 
-//       user.profileImage = filePath;
-//       await user.save();
+    let uploaded = null;
 
-//       res.json({
-//         message: "Profile image updated successfully",
-//         profileImage: filePath,
-//         user: {
-//           ...user._doc,
-//           password: undefined,
-//         },
-//       });
-//     } catch (error) {
-//       console.error("Error updating profile picture:", error);
-//       res.status(500).json({ message: "Server error: " + error.message });
-//     }
-//   }),
-// ];
+    if (localFilePath) {
+      uploaded = await cloudinary.uploader.upload(localFilePath, {
+        folder: "profile_pics",
+      });
 
-export const updateProgress = asyncHandler( async (req, res) => {
+      user.profilePic = uploaded.secure_url;
+      user.cloudinaryPublicId = uploaded.public_id;
+    }
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({
+      success: true,
+      message: "Profile image updated successfully",
+      profilePic: user.profilePic,
+      user: userObj,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error: " + error.message });
+  } finally {
+    if (localFilePath && fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
+  }
+});
+
+export const updateProgress = asyncHandler(async (req, res) => {
   const { currentPage, totalPages } = req.body;
   const { bookId } = req.params;
 
@@ -450,9 +588,12 @@ export const updateProgress = asyncHandler( async (req, res) => {
       { currentPage, totalPages },
       { new: true, upsert: true }
     );
-    res.status(200).json(updated);
+    res.status(200).json({ success: true, progress: updated });
   } catch (err) {
-    res.status(500).json({ error: "Failed to update progress" });
+    console.error("Update progress error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update progress" });
   }
 });
 
@@ -461,50 +602,60 @@ export const getProgress = asyncHandler(async (req, res) => {
   try {
     const progress = await ReadingProgress.findOne({
       user: req.user._id,
-      book: bookId
+      book: bookId,
     }).lean();
 
     if (!progress) {
-      return res.status(404).json({ message: "Progress not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Progress not found" });
     }
 
-    res.json(progress);
+    res.json({ success: true, progress });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch reading progress" });
+    console.error("Get progress error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch reading progress" });
   }
 });
-export const getAllProgress = asyncHandler(async (req, res) => {
-  try {
-    const progress = await ReadingProgress.find({ user: req.user._id })
-      .populate("book")
-      .lean();
 
-    if (!progress) {
-      return res.status(404).json({ message: "No progress found" });
-    }
 
-    res.json(progress);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch reading progress" });
-  }
-});
-export const changePassword = async (req, res) => {
+export const changePassword = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { currentPassword, newPassword } = req.body;
 
-  const user = await User.findById(userId);
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-  const isMatch = await user.matchPassword(currentPassword);
-  if (!isMatch) return res.status(401).json({ message: "Incorrect current password" });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Incorrect current password" });
+    }
 
-  user.password = newPassword; 
-  user.mustChangePassword = false;
-  await user.save();
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.mustChangePassword = false;
+    await user.save();
 
-  res.status(200).json({ message: "Password changed successfully" });
-};
-export const streamPDF = async (req, res) => {
+    res
+      .status(200)
+      .json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to change password" });
+  }
+});
+
+export const streamPDF = asyncHandler(async (req, res) => {
   const { publicId } = req.params;
 
   try {
@@ -515,11 +666,101 @@ export const streamPDF = async (req, res) => {
     });
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "inline; filename=" + publicId + ".pdf");
+    res.setHeader("Content-Disposition", `inline; filename=${publicId}.pdf`);
 
     response.data.pipe(res);
   } catch (err) {
-    console.error("PDF stream error", err);
-    res.status(500).send("Error streaming PDF");
+    console.error("PDF stream error:", err);
+    res.status(500).json({ success: false, message: "Error streaming PDF" });
   }
+});
+
+export const createProgress = asyncHandler(async (req, res) => {
+  const { bookId, currentPage, totalPages } = req.body;
+
+  try {
+    const newProgress = new ReadingProgress({
+      user: req.user._id,
+      book: new mongoose.Types.ObjectId(bookId),
+      currentPage,
+      totalPages,
+    });
+
+    await newProgress.save();
+    res.status(201).json({ success: true, progress: newProgress });
+  } catch (err) {
+    console.error("Create progress error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Error creating progress" });
+  }
+});
+
+export const getUserStats = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Not authorized, user not found" });
+  }
+
+  const userId = req.user._id;
+
+  try {
+    const liked = await LikedBook.findOne({ user: userId });
+    const likedBook = liked ? liked.likedBooks.length : 0;
+
+    const later = await LaterRead.findOne({ user: userId });
+    const laterRead = later ? later.laterReads.length : 0;
+
+    const groupsJoined = await Group.countDocuments({ members: userId });
+
+    res.json({ success: true, stats: { likedBook, groupsJoined, laterRead } });
+  } catch (error) {
+    console.error("Get user stats error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch user stats" });
+  }
+});
+
+
+
+
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error. Could not retrieve user." });
+  }
+};
+
+export const createUser = async ({
+  name,
+  email,
+  password,
+  mustChangePassword,
+}) => {
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    return { exists: true };
+  }
+
+  const user = new User({ name, email, password, mustChangePassword });
+  await user.save();
+
+  return { exists: false, user };
 };
