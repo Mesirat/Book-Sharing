@@ -18,11 +18,16 @@ import {
   getAllProgress,
   changePassword,
   streamPDF,
+  createProgress,
+  getAllBlogs,
+  getUserStats,
+  updateProfilePicture,
 } from "../controllers/userController.js";
 
 import rateLimit from "express-rate-limit";
 import { protect } from "../middleware/authMiddleware.js";
 import  {uploadBookAssets}  from "../middleware/uploadMiddleware.js"; 
+import { create } from "domain";
 
 const router = express.Router();
 
@@ -37,12 +42,18 @@ router.post("/logout", logOut);
 router.post("/verifyEmail", verifyEmail);
 router.post("/forgotPassword", forgotPassword);
 router.post("/resetPassword/:token", resetPassword);
-router.get("/checkAuth", protect, checkAuth);
-router.put("/updateProfile", protect, updateProfile);
+router.get('/', protect, getUserById);
+router.get("/check-auth", checkAuth);
+router.put("/updateProfilePicture", protect, uploadBookAssets.fields([{name:"thumbnail",maxCount:1}]), updateProfilePicture);
 router.post("/refreshToken", refreshToken);
+router.get("/getBlogs",getAllBlogs)
+
+router.get("/userStats",protect ,getUserStats)
+router.post("/createProgress", protect, createProgress);
 router.get("/getProgress/:bookId", protect, getProgress);
-router.post("/updateProgress/:bookId", protect, updateProgress);
+router.put("/updateProgress/:bookId", protect, updateProgress);
 router.get("/getAllProgress", protect, getAllProgress);
+
 router.get("/:id", getUserById);
 router.post("/contact", Contact);
 router.put("/changePassword", protect, changePassword);

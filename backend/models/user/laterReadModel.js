@@ -10,7 +10,7 @@ const laterReadSchema = new mongoose.Schema({
     {
       bookId: { type: String, required: true },
       title: { type: String, required: true },
-      author: { type: String, required: true },
+      authors: { type: String, required: true },
       thumbnail: { type: String, required: true },
       addedAt: {
         type: Date,

@@ -5,6 +5,9 @@ import SideBar from "../../components/headers/bars/SideBar";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/headers/bars/NavBar";
 import { Loader } from "lucide-react";
+import { ReadingProgress } from "../../../../backend/models/user/readingProgressModel";
+import UserReadingProgress from "./ReadingProgress";
+import GroupList from "../../components/chat/GroupList";
 
 const User = () => {
   const [books, setBooks] = useState([]);
@@ -13,9 +16,8 @@ const User = () => {
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
-
+  const query = searchParams.get("query") || "";
   useEffect(() => {
-    const query = searchParams.get("query") || "";
     if (query.trim()) {
       searchBooks(query);
     }
@@ -29,7 +31,8 @@ const User = () => {
         const response = await axios.get("http://localhost:5000/books/search", {
           params: { query: searchQuery },
         });
-        setBooks(response.data.items);
+        const data = response.data;
+        setBooks(Array.isArray(data) ? data : [data]);
       } catch (err) {
         setError("Failed to fetch books. Please try again later.");
       } finally {
@@ -43,14 +46,32 @@ const User = () => {
       <Navbar />
       <div className="font-sans relative min-h-screen bg-customLight flex">
         <SideBar />
-        <div className={`flex-1 py-3 px-4   ${location.pathname=== "/user/chat" ? "ml-6": "ml-12 md:ml-16 lg:ml-16"}`}>
+        <div
+          className={`flex-1 py-3 px-4   ${
+            location.pathname === "/user/chat"
+              ? "ml-6"
+              : "ml-12 md:ml-16 lg:ml-16"
+          }`}
+        >
           {location.pathname === "/user" && (
-            <Cards books={books} />
+            <>
+              {!query && (
+                <>
+                  <UserReadingProgress />
+                  {/* <div className="overflow-x-auto hide-scrollbar px-1 py-2">
+                    <GroupList />
+                  </div> */}
+                </>
+              )}
+              <Cards books={books} />
+            </>
           )}
 
-          {loading && <Loader className="animate-spin mx-auto my-4" />}
-          {error && <div className="text-red-500 text-center my-12">{error}</div>}
-          
+        
+          {error && (
+            <div className="text-red-500 text-center my-12">{error}</div>
+          )}
+
           <Outlet />
         </div>
       </div>

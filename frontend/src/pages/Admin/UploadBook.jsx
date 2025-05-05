@@ -3,6 +3,7 @@ import axios from "axios";
 import genres from "../utils/genres";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BookPlus } from "lucide-react";
 
 const UploadBook = () => {
   const [formData, setFormData] = useState({
@@ -157,9 +158,11 @@ const UploadBook = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold py-3 rounded-full transition duration-300"
+          className="w-full flex justify-center items-center gap-2
+           bg-gray-800 hover:bg-gray-600 text-white text-lg font-semibold py-3 rounded-full transition duration-300"
         >
-          📤 Upload Book
+          <BookPlus className="w-5 h-5"/>
+          <span>Upload Book</span> 
         </button>
       </form>
       <ToastContainer position="top-right" autoClose={3000} />

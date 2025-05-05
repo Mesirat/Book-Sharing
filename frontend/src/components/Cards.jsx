@@ -1,27 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, Trash2 } from "lucide-react";
 
-const Cards = ({ books, onLike, onRemove }) => {
+const Cards = ({ books = [], onLike, onRemove }) => {
   const navigate = useNavigate();
+
+  const bookList = Array.isArray(books) ? books : [books];
 
   const handleCardClick = (book) => {
     navigate(`/bookDetail`, { state: { book } });
   };
 
   return (
-    <div className="w-full px-4  mt-8 mb-24 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
-      {books.map((book) => {
-        const isGoogleBook = book.volumeInfo;
-        const thumbnail = isGoogleBook
-          ? book.volumeInfo.imageLinks?.thumbnail || "/fallback-image.jpg"
-          : book.thumbnail || "/fallback-image.jpg";
+    <div className="w-full px-4 mt-8 mb-24 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
+      {bookList.map((book) => {
+        const thumbnail = book.thumbnail || "/fallback-image.jpg";
 
-        const title = isGoogleBook ? book.volumeInfo.title : book.title;
-        const author = isGoogleBook
-          ? book.volumeInfo.authors?.join(", ") || "Unknown Author"
-          : book.author || "Unknown Author";
+        const title = book.title;
+        const author = Array.isArray(book.authors)
+          ? book.authors.join(", ")
+          : book.authors || "Unknown Author";
 
-        const bookId = book.bookId || book.id;
+        const bookId = book.bookId;
 
         return (
           <div

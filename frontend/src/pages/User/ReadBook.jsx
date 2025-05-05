@@ -4,6 +4,7 @@ import PDFReader from "../../components/PDFReader";
 
 const ReadBook = () => {
   const { bookId } = useParams();
+  
   const [fileURL, setFileURL] = useState("");
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const ReadBook = () => {
 
   return (
     <div className="min-h-screen">
+     
       {fileURL ? (
         <PDFReader fileURL={fileURL} bookId={bookId} />
       ) : (

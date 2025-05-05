@@ -8,10 +8,8 @@ import { fileURLToPath } from "url";
 import asyncHandler from "express-async-handler";
 import { v2 as cloudinary } from "cloudinary";
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 export const CreateGroup = async (req, res) => {
   const io = req.app.get("io");
@@ -52,7 +50,7 @@ export const CreateGroup = async (req, res) => {
       });
     }
 
-    const profilePic = req.file?.path || null; // Cloudinary returns secure URL in req.file.path
+    const profilePic = req.file?.path || null;
 
     const newGroup = new Group({
       groupName: normalizedGroupName,
@@ -85,31 +83,18 @@ export const CreateGroup = async (req, res) => {
   }
 };
 
-
 export const GetGroups = async (req, res) => {
-  const { page, limit, search } = req.query;  
-
-  const pageNumber = Math.max(1, parseInt(page, 10) || 1);
-  const pageSize = Math.max(1, parseInt(limit, 10) || 10);
+  const { page, limit, search } = req.query;
 
   const searchFilter = search
     ? { name: { $regex: search.trim(), $options: "i" } }
     : {};
 
   try {
-    const groups = await Group.find(searchFilter)
-      .skip((pageNumber - 1) * pageSize)
-      .limit(pageSize);
-
-    const totalGroups = await Group.countDocuments(searchFilter); 
-    const totalPages = Math.ceil(totalGroups / pageSize) || 1;
+    const groups = await Group.find(searchFilter);
 
     res.status(200).json({
       groups,
-      totalGroups,
-      totalPages,
-      currentPage: pageNumber,
-      perPage: pageSize,
     });
   } catch (error) {
     console.error("Error fetching groups:", error);
@@ -120,7 +105,6 @@ export const GetGroups = async (req, res) => {
   }
 };
 
-
 export const JoinGroup = async (req, res) => {
   const io = req.app.get("io");
 
@@ -130,7 +114,6 @@ export const JoinGroup = async (req, res) => {
   if (!userId) {
     return res.status(400).json({ message: "Missing required fields" });
   }
-
 
   groupId = groupId.replace(/^:/, "");
 
@@ -148,10 +131,10 @@ export const JoinGroup = async (req, res) => {
       (memberId) => memberId.toString() === userId.toString()
     );
     if (isAlreadyMember) {
-      return res.status(400).json({ message: "You are already a member of this group" });
+      return res
+        .status(400)
+        .json({ message: "You are already a member of this group" });
     }
-
-   
 
     group.members.push(userId);
     group.memberCount = group.members.length;
@@ -183,7 +166,9 @@ export const LeaveGroup = async (req, res) => {
       (memberId) => memberId.toString() === userId.toString()
     );
     if (memberIndex === -1) {
-      return res.status(400).json({ message: "You are not a member of this group" });
+      return res
+        .status(400)
+        .json({ message: "You are not a member of this group" });
     }
 
     group.members.splice(memberIndex, 1);
@@ -228,7 +213,7 @@ export const GetGroupDetails = async (req, res) => {
   const { groupId, userId } = req.params;
 
   try {
-    const group = await Group.findById(groupId).populate("members","userId");
+    const group = await Group.findById(groupId).populate("members", "userId");
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
@@ -291,9 +276,10 @@ export const getMyGroups = async (req, res) => {
       .populate("members", "name");
 
     res.status(200).json({ groups: userGroups || [] });
-
   } catch (error) {
     console.error("Error in getMyGroups:", error);
-    res.status(500).json({ message: "Error retrieving user groups", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving user groups", error: error.message });
   }
 };

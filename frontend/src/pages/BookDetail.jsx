@@ -17,7 +17,7 @@ const BookDetail = () => {
   const [averageRating, setAverageRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
-
+  console.log(book._id);
   if (!book) {
     return (
       <div className="text-center text-gray-500 mt-10">
@@ -59,15 +59,15 @@ const BookDetail = () => {
       const response = await axios.put(
         `${API_URL}/${endpoint}`,
         {
-          bookId: book.id,
-          title: book.volumeInfo.title,
-          author: book.volumeInfo.authors?.join(", ") || "Unknown Author",
+          bookId: book._id,
+          title: book.title,
+          authors: book.authors?.join(", ") || "Unknown Author",
           thumbnail:
-            book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg",
-          publisher : book.volumeInfo.publisher || "Unknown Publisher",
-          publishYear : book.volumeInfo.publishedDate?.split("-")[0] || "N/A",
+            book.thumbnail || "/assets/6.jpg",
+          publisher : book.publisher || "Unknown Publisher",
+          publishYear : book.publishedYear?.split("-")[0] || "N/A",
           description :
-              book.volumeInfo.description || "No description available.",
+              book.description || "No description available.",
         },
         {
           headers: {
@@ -95,16 +95,14 @@ const BookDetail = () => {
     handleAction("laterReads", book, "ReadLater", setLaterReads, "laterReads");
   };
 
-  const handleReadNow = () => {
-    window.open(book.volumeInfo.previewLink, "_blank");
-  };
+ 
 
   const handleRating = async (rating) => {
     try {
       await axios.post(
         `${API_URL}/rate`,
         {
-          volumeId: book.id,
+          bookId: book._id,
           userId: user._id,
           rating,
         },
@@ -123,18 +121,18 @@ const BookDetail = () => {
     }
   };
 
-  const thumbnail =
-    book.volumeInfo.imageLinks?.smallThumbnail || "/assets/6.jpg" || book.thumbnail;
-  const title = book.volumeInfo.title || "Untitled" || book.title;
-  const authors = book.volumeInfo.authors?.join(", ") || "Unknown Author" || book.author;
-  const publisher = book.volumeInfo.publisher || "Unknown Publisher" || book.publisher;
-  const publishYear = book.volumeInfo.publishedDate?.split("-")[0] || "N/A" || book.publishYear;
-  const description =
-    book.volumeInfo.description || "No description available." || book.description;
+  const thumbnail = book.thumbnail;
+  const title =  book.title;
+  const authors = Array.isArray(book.authors)
+  ? book.authors.join(", ")
+  : book.authors || "Unknown Author";
+  const publisher =  book.publisher;
+  const publishYear =  book.publishYear?.split("-")[0] || "N/A";
+  const description = book.description || "No description available."  ;
 
-  const isLiked = likedBooks.some((likedBook) => likedBook.bookId === book.id);
+  const isLiked = likedBooks.some((likedBook) => likedBook.bookId === book._id);
   const isLaterRead = laterReads.some(
-    (laterRead) => laterRead.bookId === book.id
+    (laterRead) => laterRead.bookId === book._id
   );
 
   return (
@@ -152,7 +150,7 @@ const BookDetail = () => {
               className="w-60 h-auto rounded-lg shadow-md object-cover"
             />
             <p className="text-gray-600 text-center lg:text-left">
-              <strong>Published:</strong> {publisher}, {publishYear}
+              <strong>Published:</strong> {publisher} publication, {publishYear}
             </p>
             <p className="text-gray-700 italic text-center lg:text-left">
               By <span className="font-semibold underline">{authors}</span>
@@ -192,7 +190,7 @@ const BookDetail = () => {
               </button>
 
               <Link
-                to={`/readbook/${book.id}`}
+                to={`/readbook/${book._id}`}
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
                 Read Now

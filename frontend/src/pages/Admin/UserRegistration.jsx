@@ -45,8 +45,8 @@ const UserRegistration = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg max-w-2xl mx-auto mt-6">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Upload User CSV</h2>
+    <div className="bg-white p-6 rounded-xl text-text shadow-lg max-w-2xl mx-auto mt-6">
+      <h2 className="text-2xl font-semibold mb-4 ">Upload User CSV</h2>
 
       {/* 📘 Admin Instructions */}
       <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mb-6 text-sm">
@@ -68,7 +68,7 @@ const UserRegistration = () => {
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          className=" bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-400 transition"
         >
           Upload & Register
         </button>

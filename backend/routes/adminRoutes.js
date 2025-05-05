@@ -10,6 +10,10 @@ import {
   uploadUsers,
   UploadBook,
   getAllBooks,
+  suspendUser,
+  deleteUser,
+  updateBook,
+  uploadBlog,
 } from "../controllers/adminController.js";
 import { uploadBookAssets } from "../middleware/uploadMiddleware.js";
 import {uploadCSV}  from "../middleware/localUpload.js";
@@ -26,11 +30,12 @@ router.put("/users/:id/role", changeUserRole);
 router.delete("/books/:id", deleteBook);
 router.get("/books", getAllBooks);  
 // router.get("/books/:id", getBookById);
-// router.put("/books/:id", updateBook);
+router.put("/books/:id", updateBook);
 router.get("/reports", getAllReports);
 router.put("/reports/:id/respond", respondToReport);
 router.post("/uploadUsers", uploadCSV.single("csv"), uploadUsers);
-
+router.put("/suspend/:id", suspendUser);
+router.delete("/users/:id", deleteUser);
 router.post(
     "/uploadBooks",
     uploadBookAssets.fields([
@@ -39,4 +44,5 @@ router.post(
     ]),
     UploadBook
   );
+router.post("/uploadBlog",uploadBookAssets.fields([{name:"thumbnail",maxCount:1}]),uploadBlog)
 export default router;

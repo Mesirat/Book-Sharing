@@ -20,6 +20,10 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "default-avatar.jpg",
     },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
+    },
     role:{
       type: String,
       enum: ["user", "admin"],
@@ -33,7 +37,10 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
   },
   
   {

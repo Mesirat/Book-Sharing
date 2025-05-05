@@ -1,34 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import { ChevronLeft, ChevronRight, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import GroupCreate from "./GroupCreate";
 import { toast, ToastContainer } from "react-toastify";
 
-const GroupList = ({currentGroup, setCurrentGroup}) => {
+const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joinedGroup, setJoinedGroup] = useState([]);
   const [isJoining, setIsJoining] = useState(null);
-
-  const [currentPage, setCurrentPage] = useState(
-    parseInt(localStorage.getItem("currentPage")) || 1
-  );
-  const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useAuthStore();
-  const [searchTerm, setSearchTerm] = useState(
-    localStorage.getItem("searchTerm") || ""
-  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const debounceTimeout = useRef(null);
+
   const socket = useRef(null);
 
-  // Fetch groups function defined outside useEffect
-  const fetchGroups = async (page, search = "") => {
-    const limit = 10;
+  const fetchGroups = async (search = "") => {
     try {
       const response = await fetch(
-        `http://localhost:5000/groups?page=${page}&limit=${limit}&search=${search}`,
+        `http://localhost:5000/groups?search=${search}`,
         {
           method: "GET",
           headers: {
@@ -40,7 +33,6 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
 
       if (response.status === 404) {
         setGroups([]);
-        setTotalPages(1);
         return;
       }
 
@@ -48,7 +40,6 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
 
       const data = await response.json();
       setGroups(data.groups || []);
-      setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error("Error fetching groups:", error);
       setError("Failed to load groups. Please try again later.");
@@ -91,31 +82,23 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
       );
     });
 
-    // Calling the fetchGroups function here
-    fetchGroups(currentPage, searchTerm);
+    fetchGroups(searchTerm);
 
     return () => {
       if (socket.current) {
-        socket.current.off("connect");
-        socket.current.off("error");
-        socket.current.off("newGroupAdded");
-        socket.current.off("userJoinedGroup");
-        socket.current.off("userLeftGroup");
         socket.current.disconnect();
       }
     };
-  }, [currentPage, searchTerm, user._id]);
+  }, [searchTerm, user._id]);
 
   const handleSearchChange = (e) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-    localStorage.setItem("searchTerm", search);
-    setCurrentPage(1);
+    setSearchTerm(e.target.value);
+    clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(
+      () => fetchGroups(e.target.value),
+      500
+    );
   };
-
-  useEffect(() => {
-    localStorage.setItem("currentPage", currentPage);
-  }, [currentPage]);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -136,8 +119,6 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
       );
 
       if (!response.ok) throw new Error("Failed to join group");
-
-      const data = await response.json();
 
       setJoinedGroup((prev) => [...prev, String(groupId)]);
       setGroups((prevGroups) =>
@@ -179,8 +160,6 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
 
       if (!response.ok) throw new Error("Failed to leave group");
 
-      const data = await response.json();
-
       setJoinedGroup((prev) => prev.filter((id) => id !== String(groupId)));
       setGroups((prevGroups) =>
         prevGroups.map((group) =>
@@ -206,30 +185,21 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
 
   const handleGroupClick = (group) => {
     const isMember = group.members?.includes(user._id);
-
     if (isMember) {
       setCurrentGroup(group);
-     console.log(group)
     } else {
       toast.warn("You need to join the group first to chat!");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center">
-        <Loader className="animate-spin mx-auto text-4xl" />
-      </div>
-    );
-  }
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
   }
 
   return (
-    <div className=" bg-gray-100 rounded-lg shadow-lg mx-auto ">
+    <div className="bg-gray-100 rounded-lg w-[90vw] shadow-lg mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-center">Groups</h2>
+
       <div className="flex justify-end mb-6">
         <button
           onClick={openModal}
@@ -238,6 +208,7 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
           Create Group
         </button>
       </div>
+
       <div className="flex justify-center mb-6">
         <input
           type="text"
@@ -249,83 +220,70 @@ const GroupList = ({currentGroup, setCurrentGroup}) => {
       </div>
 
       {groups.length > 0 ? (
-        groups.map((group) => {
-          const isMember = group.members?.includes(user._id);
-          const memberCount = group.memberCount || 0;
+        <div className="flex overflow-x-auto space-x-4 pb-4 px-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+          {groups.map((group) => {
+            const isMember = group.members?.includes(user._id);
+            const memberCount = group.memberCount || 0;
 
-          return (
-            <div
-              key={group._id}
-              className="flex justify-between items-center p-4 mb-4 bg-white border rounded-lg shadow-md hover:shadow-xl transition-all"
-            >
+            return (
               <div
-                className="flex items-center space-x-4"
-                onClick={() => handleGroupClick(group)}
+                key={group._id}
+                className="min-w-[300px] flex flex-col justify-between p-4 bg-white border rounded-lg shadow-md hover:shadow-xl transition-all"
               >
-                <img
-                  src={`${group.profilePic}`}
-                  alt={group.groupName}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex flex-col">
-                  <span className="font-semibold text-lg">
-                    {group.groupName}
-                  </span>
-                  <span className="text-gray-500">{memberCount} members</span>
+                <div
+                  className="flex items-center space-x-4 cursor-pointer"
+                  onClick={() => handleGroupClick(group)}
+                >
+                  <img
+                    src={`${group.profilePic}`}
+                    alt={group.groupName}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-lg">
+                      {group.groupName}
+                    </span>
+                    <span className="text-gray-500">{memberCount} members</span>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  {isMember ? (
+                    <button
+                      onClick={() =>
+                        handleLeaveGroup(group._id, group.groupName)
+                      }
+                      disabled={isJoining === group._id}
+                      className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all disabled:opacity-50"
+                    >
+                      Leave
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        handleJoinGroup(group._id, group.groupName)
+                      }
+                      disabled={isJoining === group._id}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all disabled:opacity-50"
+                    >
+                      Join
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex space-x-2">
-                {isMember ? (
-                  <button
-                    onClick={() => handleLeaveGroup(group._id, group.groupName)}
-                    disabled={isJoining === group._id}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all disabled:opacity-50"
-                  >
-                    Leave
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleJoinGroup(group._id, group.groupName)}
-                    disabled={isJoining === group._id}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all disabled:opacity-50"
-                  >
-                    Join
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
+            );
+          })}
+        </div>
       ) : (
-        <p>No groups found.</p>
+        <p className="text-center text-gray-500">No groups found.</p>
       )}
 
-      <div className="flex justify-center space-x-4 mt-6">
-        {currentPage > 1 && (
-          <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="text-blue-600 hover:text-blue-800 transition-all"
-          >
-            <ChevronLeft size={24} />
-          </button>
-        )}
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        {currentPage < totalPages && (
-          <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="text-blue-600 hover:text-blue-800 transition-all"
-          >
-            <ChevronRight size={24} />
-          </button>
-        )}
-      </div>
-
       <ToastContainer />
-      <GroupCreate onClose={closeModal} isModalOpen={isModalOpen} fetchGroups={fetchGroups} currentPage={currentPage}
-        searchTerm={searchTerm}/>
-
+      <GroupCreate
+        onClose={closeModal}
+        isModalOpen={isModalOpen}
+        fetchGroups={fetchGroups}
+        searchTerm={searchTerm}
+      />
     </div>
   );
 };

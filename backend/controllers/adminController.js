@@ -2,13 +2,14 @@ import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
 import { Report } from "../models/reportModel.js";
 import { Book } from "../models/bookModel.js";
+import {News} from "../models/user/newsModel.js"
 import dotenv from "dotenv";
 import csv from "csv-parser";
 import fs from "fs";
 import { createUser, registerUser } from "./userController.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { v2 as cloudinary } from "cloudinary";
+import path from "path";
 
 dotenv.config();
 
@@ -23,6 +24,71 @@ function generatePassword(length = 8) {
   }
   return password;
 }
+
+
+
+export const getDashboardStats = asyncHandler(async (req, res) => {
+  const totalUsers = await User.countDocuments();
+  const totalBooks = await Book.countDocuments();
+  res.json({ totalUsers, totalBooks });
+});
+
+
+
+export const changeUserRole = asyncHandler(async (req, res) => {
+  const { role } = req.body;
+
+  if (!["user", "admin"].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
+  }
+
+  const user = await User.findById(req.params.id);
+  if (!user) throw new Error("User not found");
+
+  user.role = role;
+  await user.save();
+
+  res.json({ message: "User role updated", user });
+});
+export const deleteBook = asyncHandler(async (req, res) => {
+  await Book.findByIdAndDelete(req.params.id);
+  res.json({ message: "Book deleted" });
+});
+export const updateBook = asyncHandler(async (req, res) => {
+  const { title, author, description } = req.body;
+
+  const book = await Book.findById(req.params.id);
+  if (!book) return res.status(404).json({ message: "Book not found" });
+
+  book.title = title || book.title;
+  book.author = author || book.author;
+  book.description = description || book.description;
+
+  const updatedBook = await book.save();
+  res.json(updatedBook);
+});
+
+
+
+
+export const getAllReports = asyncHandler(async (req, res) => {
+  const reports = await Report.find().populate("user", "name email");
+  res.json(reports);
+});
+export const respondToReport = asyncHandler(async (req, res) => {
+  const { response } = req.body;
+  const report = await Report.findById(req.params.id);
+
+  if (!report) {
+    return res.status(404).json({ message: "Report not found" });
+  }
+
+  report.response = response;
+  report.respondedAt = new Date();
+  await report.save();
+
+  res.json({ message: "Response submitted", report });
+});
 
 export const uploadUsers = asyncHandler(async (req, res) => {
   const users = [];
@@ -73,81 +139,13 @@ export const uploadUsers = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "User upload failed.", error });
   }
 });
-
-export const getDashboardStats = asyncHandler(async (req, res) => {
-  const totalUsers = await User.countDocuments();
-  const totalBooks = await Book.countDocuments();
-  res.json({ totalUsers, totalBooks });
-});
-
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}, "name email role");
+  const users = await User.find({}, "name email role isSuspended");
   res.json(users);
-});
-
-export const changeUserRole = asyncHandler(async (req, res) => {
-  const { role } = req.body;
-
-  if (!["user", "admin"].includes(role)) {
-    return res.status(400).json({ message: "Invalid role" });
-  }
-
-  const user = await User.findById(req.params.id);
-  if (!user) throw new Error("User not found");
-
-  user.role = role;
-  await user.save();
-
-  res.json({ message: "User role updated", user });
-});
-
-export const deleteBook = asyncHandler(async (req, res) => {
-  await Book.findByIdAndDelete(req.params.id);
-  res.json({ message: "Book deleted" });
 });
 export const getAllBooks = asyncHandler(async (req, res) => {
   const books = await Book.find().sort({ createdAt: -1 });
   res.status(200).json(books);
-});
-
-export const updateBook = asyncHandler(async (req, res) => {
-  const { title, author, description } = req.body;
-
-  const book = await Book.findById(req.params.id);
-  if (!book) return res.status(404).json({ message: "Book not found" });
-
-  book.title = title || book.title;
-  book.author = author || book.author;
-  book.description = description || book.description;
-
-  const updatedBook = await book.save();
-  res.json(updatedBook);
-});
-export const getBookById = asyncHandler(async (req, res) => {
-  const book = await Book.findById(req.params.id).populate(
-    "uploadedBy",
-    "name email"
-  );
-  if (!book) return res.status(404).json({ message: "Book not found" });
-  res.json(book);
-});
-export const getAllReports = asyncHandler(async (req, res) => {
-  const reports = await Report.find().populate("user", "name email");
-  res.json(reports);
-});
-export const respondToReport = asyncHandler(async (req, res) => {
-  const { response } = req.body;
-  const report = await Report.findById(req.params.id);
-
-  if (!report) {
-    return res.status(404).json({ message: "Report not found" });
-  }
-
-  report.response = response;
-  report.respondedAt = new Date();
-  await report.save();
-
-  res.json({ message: "Response submitted", report });
 });
 export const UploadBook = asyncHandler(async (req, res) => {
   try {
@@ -201,5 +199,50 @@ export const UploadBook = asyncHandler(async (req, res) => {
     res.status(500).json({
       message: "Upload failed",
     });
+  }
+});
+export const suspendUser = asyncHandler( async (req, res) => {
+  const { id } = req.params;
+  const { isSuspended } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(id, { isSuspended }, { new: true });
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Unable to suspend user." });
+  }
+});
+export const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    await User.findByIdAndDelete(id);
+    res.status(200).json({ message: "User deleted successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Unable to delete user." });
+  }
+} 
+);
+export const uploadBlog = asyncHandler(async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    const thumbnailFile = req.files?.thumbnail?.[0];
+
+    if (!thumbnailFile) {
+      return res.status(400).json({ error: "Thumbnail is required." });
+    }
+
+    const newBlog = new News({
+      title,
+      description,
+      thumbnail: thumbnailFile.path, // this is Cloudinary URL from multer-storage-cloudinary
+      date: new Date(),
+    });
+
+    await newBlog.save();
+
+    res.status(201).json({ message: "Blog uploaded successfully." });
+  } catch (error) {
+    console.error("Error uploading blog:", error);
+    res.status(500).json({ error: "Failed to upload blog" });
   }
 });

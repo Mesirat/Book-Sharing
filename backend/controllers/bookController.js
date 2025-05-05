@@ -151,32 +151,26 @@ export const ratingBooks = asyncHandler(async (req, res) => {
 });
 
 export const bookSearch = asyncHandler(async (req, res) => {
-  const { query } = req.query;
-
-  if (!query) {
-    return res.status(400).json({ error: "Query parameter is required." });
-  }
-
   try {
-    
-    const response = await axios.get("https://www.googleapis.com/books/v1/volumes", {
-      params: {
-        q: query,
-        maxResults: 10,
-        key: process.env.GOOGLE_BOOKS_API_KEY, 
-      },
-    });
+    const { query } = req.query;
 
-    if (response.data.items) {
-      res.json(response.data); 
-    } else {
-      res.status(404).json({ error: "No books found for the given query." });
-    }
+    const searchFilter = query
+      ? {
+          $or: [
+            { title: { $regex: query, $options: "i" } },
+            { authors: { $regex: query, $options: "i" } },
+            { categories: { $regex: query, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const books = await Book.find(searchFilter);
+    res.json(books);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch books from Google Books API." });
+    res.status(500).json({ error: "Failed to fetch books" });
   }
-})
+});
+
 
 export const popularBooks = asyncHandler(async (req, res) => {
   try {
@@ -260,10 +254,10 @@ export const likeBook = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const { bookId, title, author, thumbnail } = req.body;
+    const { bookId, title, authors, thumbnail } = req.body;
     const userId = req.user._id;
 
-    if (!bookId || !title || !author || !thumbnail) {
+    if (!bookId || !title || !authors || !thumbnail) {
       return res.status(400).json({ message: "Missing book details" });
     }
 
@@ -287,7 +281,7 @@ export const likeBook = asyncHandler(async (req, res) => {
       });
     }
 
-    likedDoc.likedBooks.push({ bookId, title, author, thumbnail });
+    likedDoc.likedBooks.push({ bookId, title, authors, thumbnail });
     await likedDoc.save();
 
     res.status(200).json({
@@ -303,7 +297,7 @@ export const likeBook = asyncHandler(async (req, res) => {
 
 export const laterRead = asyncHandler(async (req, res) => {
   try {
-    const { bookId, title, author, thumbnail } = req.body;
+    const { bookId, title, authors, thumbnail } = req.body;
     const userId = req.user._id;
 
     if (!bookId) {
@@ -330,7 +324,7 @@ export const laterRead = asyncHandler(async (req, res) => {
       });
     } else {
       // If the book is not in the list, add it (toggle add)
-      laterReadDoc.laterReads.push({ bookId, title, author, thumbnail });
+      laterReadDoc.laterReads.push({ bookId, title, authors, thumbnail });
       await laterReadDoc.save();
       return res.status(200).json({
         message: "Book added to Later Reads",

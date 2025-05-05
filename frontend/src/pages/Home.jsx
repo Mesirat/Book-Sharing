@@ -36,7 +36,7 @@ const Home = () => {
             </p>
             <Link
               to="/signup"
-              className="mt-6 bg-button hover:bg-secondary text-lg font-medium px-8 py-3 rounded-lg shadow-md transition duration-300"
+              className="mt-6 bg-secondary hover:bg-gray-400 text-lg font-medium px-8 py-3 rounded-lg shadow-md transition duration-300"
             >
               Join Us
             </Link>
@@ -62,7 +62,7 @@ const Home = () => {
                 </h1>
                 <h1>Explore amazing places in space with these exciting stories.</h1>
               </div>
-              <div className="flex bg-button hover:bg-secondary flex-row items-center justify-center mx-2 rounded-lg shadow-md transition duration-300 px-8 py-2">
+              <div className="flex bg-secondary hover:bg-gray-500 flex-row items-center justify-center mx-2 rounded-lg shadow-md transition duration-300 px-8 py-2">
                 <Link to="/category" className="text-lg font-medium">
                   All Categories
                 </Link>
@@ -127,7 +127,7 @@ const Home = () => {
                         <p className="text-sm italic">Author: Unknown</p>
                       </div>
                       <div className="mt-4">
-                        <button className="px-4 py-2 bg-button hover:bg-secondary text-sm font-medium rounded-lg">
+                        <button className="px-4 py-2 bg-secondary hover:bg-gray-400 text-sm font-medium rounded-lg">
                           Read Now
                         </button>
                       </div>
