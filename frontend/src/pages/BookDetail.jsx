@@ -9,7 +9,7 @@ const API_URL = "http://localhost:5000/books";
 const BookDetail = () => {
   const location = useLocation();
   const { book } = location.state || {};
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
 
   const [likedBooks, setLikedBooks] = useState([]);
   const [laterReads, setLaterReads] = useState([]);
@@ -17,7 +17,7 @@ const BookDetail = () => {
   const [averageRating, setAverageRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
-  console.log(book._id);
+const token = useAuthStore.getState().token;
   if (!book) {
     return (
       <div className="text-center text-gray-500 mt-10">
@@ -61,7 +61,12 @@ const BookDetail = () => {
         {
           bookId: book._id,
           title: book.title,
-          authors: book.authors?.join(", ") || "Unknown Author",
+          authors: Array.isArray(book.authors)
+          ? book.authors.join(", ")
+          : typeof book.authors === "string"
+          ? book.authors
+          : "Unknown Author",
+        
           thumbnail:
             book.thumbnail || "/assets/6.jpg",
           publisher : book.publisher || "Unknown Publisher",
@@ -71,7 +76,7 @@ const BookDetail = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -108,7 +113,7 @@ const BookDetail = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

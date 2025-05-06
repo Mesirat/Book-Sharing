@@ -1,23 +1,28 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
+import { useAuthStore } from "../../store/authStore";
 
 const ReportManager = () => {
   const [reports, setReports] = useState([]);
   const [response, setResponse] = useState("");
   const [selectedReport, setSelectedReport] = useState(null);
-
+const token = useAuthStore.getState().token;
   const fetchReports = async () => {
-    const res = await axios.get("/api/admin/reports", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    const res = await api.get("/admin/reports", {
+       headers: {
+          Authorization: `Bearer ${token}`,
+        },
     });
     setReports(res.data);
   };
 
   const submitResponse = async () => {
-    await axios.put(
-      `/api/admin/reports/${selectedReport._id}/respond`,
+    await api.put(
+      `/admin/reports/${selectedReport._id}/respond`,
       { response },
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      {   headers: {
+          Authorization: `Bearer ${token}`,
+        },}
     );
     setResponse("");
     setSelectedReport(null);

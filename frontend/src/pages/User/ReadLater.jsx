@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import { Loader } from "lucide-react";
 import Cards from "../../components/Cards"; 
+import { useAuthStore } from "../../store/authStore";
 
-const API_URL = "http://localhost:5000/books";
-const POPULAR_BOOKS_API_URL = "http://localhost:5000/books/popularbooks";
+
 
 const ReadLater = () => {
   const [readLater, setReadLater] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+const token = useAuthStore.getState().token;
   useEffect(() => {
     const fetchReadLater = async () => {
       try {
-        const response = await axios.get(`${API_URL}/ReadLater`, {
+        const response = await api.get(`/books/ReadLater`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         setReadLater(response.data.laterReads);
@@ -30,7 +30,7 @@ const ReadLater = () => {
 
     const fetchPopularBooks = async () => {
       try {
-        const response = await axios.get(POPULAR_BOOKS_API_URL);
+        const response = await api.get("/books/popularbooks");
         setPopularBooks(response.data.books);
       } catch (err) {
         setError("Failed to fetch popular books.");
@@ -43,9 +43,9 @@ const ReadLater = () => {
 
   const handleLike = async (book) => {
     try {
-      await axios.put(`${API_URL}/Likebook`, book, {
+      await api.put(`/books/Likebook`, book, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       handleRemove(book.bookId);
@@ -56,12 +56,12 @@ const ReadLater = () => {
 
   const handleRemove = async (bookId) => {
     try {
-      const response = await axios.put(
-        `${API_URL}/ReadLater`,
+      const response = await api.put(
+        `/books/ReadLater`,
         { bookId },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

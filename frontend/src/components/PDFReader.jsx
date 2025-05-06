@@ -3,6 +3,7 @@ import axios from "axios";
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { useAuthStore } from "../store/authStore";
 
 const PDFReader = ({ fileURL, bookId }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,13 +16,14 @@ const PDFReader = ({ fileURL, bookId }) => {
   const scrollContainerRef = useRef(null);
   const pdfDocRef = useRef(null);
   const API_URL = "http://localhost:5000/users";
-
+const token = useAuthStore.getState().token;
   useEffect(() => {
     const fetchProgress = async () => {
       try {
         const res = await axios.get(`${API_URL}/getProgress/${bookId}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
           },
         });
 
@@ -30,9 +32,9 @@ const PDFReader = ({ fileURL, bookId }) => {
         if (bookProgress) {
           setCurrentPage(bookProgress.currentPage || 1);
         } else {
-          // If no progress exists, initialize it
+         
           await createProgress();
-          setCurrentPage(1); // Default to page 1
+          setCurrentPage(1); 
         }
       } catch (err) {
         console.error("Error fetching progress:", err);
@@ -107,7 +109,7 @@ const PDFReader = ({ fileURL, bookId }) => {
         { currentPage: pageNum, totalPages },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -126,9 +128,7 @@ const PDFReader = ({ fileURL, bookId }) => {
           totalPages,
         },
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+          withCredentials: true,
         }
       );
       console.log("Progress created for new book");

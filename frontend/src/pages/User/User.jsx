@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import Cards from "../../components/Cards";
 import SideBar from "../../components/headers/bars/SideBar";
 import { Outlet, useLocation, useSearchParams } from "react-router-dom";
@@ -28,7 +28,7 @@ const User = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get("http://localhost:5000/books/search", {
+        const response = await api.get("books/search", {
           params: { query: searchQuery },
         });
         const data = response.data;

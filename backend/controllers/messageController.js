@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import mongoose from "mongoose";
 import {uploadBookAssets} from "../middleware/uploadMiddleware.js";
+import { User } from "../models/userModel.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -14,89 +15,98 @@ const __dirname = path.dirname(__filename);
 
 
 export const createMessage = async (req, res) => {
-  const { groupName, sender, text = "", status = "sending" } = req.body;
-  const file = req.file;
-  const io = req.app.get("io");
-
-  console.log("Request Body:", req.body);
-  console.log("File:", req.file);
-
   try {
-    if (!text.trim() && !file) {
-      return res.status(400).json({ message: "Text or file must be provided." });
+    const { groupName, sender, text = "", status = "sending" } = req.body;
+    const thumbnailUrl = req.files?.thumbnail?.[0]?.path || null;
+    const pdfUrl = req.files?.pdf?.[0]?.path || null;
+console.log(thumbnailUrl);
+console.log(pdfUrl);
+    
+    const senderUser = await User.findById(sender);
+    if (!senderUser) {
+      return res.status(400).json({ success: false, message: "Sender not found." });
     }
 
     
-    const groupExists = await Group.findOne({ name: new RegExp(`^${groupName}$`, 'i') });
-    if (!groupExists) {
-      return res.status(404).json({ message: "Group not found." });
-    }
-
-
-    const senderId = mongoose.Types.ObjectId(sender);
-
-
-    let fileUrl = null;
-    let fileType = null;
-    let fileName = null;
-
-    if (file) {
-      fileUrl = `/uploads/message/${file.filename}`; 
-      fileType = file.mimetype;
-      fileName = file.originalname;
+    const group = await Group.findOne({ groupName });
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Group not found" });
     }
 
    
-    const messageText = text.trim() || null;
-
-    
     const newMessage = new Message({
-      groupName,
-      sender: senderId,
-      text: messageText,
-      status,
-      fileUrl, 
-      fileType,
-      fileName,
+      group: group._id,
+      sender: senderUser._id,
+      text: text.trim() || null,
+      status: "sent",
+      file: {
+        url: thumbnailUrl || pdfUrl || null,
+        type: thumbnailUrl ? "image" : pdfUrl ? "pdf" : null,
+        name: req.files?.thumbnail?.[0]?.originalname || req.files?.pdf?.[0]?.originalname || null,
+      }
     });
+    
 
-   
     await newMessage.save();
 
-   
-    newMessage.status = "sent";
+    newMessage.status = "sent"; 
     await newMessage.save();
 
   
+    const io = req.app.get("io");
     if (io) {
       io.to(groupName).emit("receiveMessage", newMessage);
     } else {
       console.error("Socket.io not initialized.");
     }
 
-    
-    return res.status(200).json(newMessage);
+    return res.status(200).json({ success: true, message: newMessage });
   } catch (error) {
     console.error("Error sending message:", error);
-    return res.status(500).json({ message: "Error sending message", error: error.message });
+    return res.status(500).json({ success: false, message: "Error sending message", error: error.message });
   }
 };
+
+
 
 
 export const getMessagesByGroup = async (req, res) => {
   const { groupName } = req.params;
-  const { page = 1, limit = 20 } = req.query;
 
   try {
-    const messages = await Message.find({ groupName })
+    const group = await Group.findOne({ groupName });
+    if (!group) {
+      return res.status(404).json({ success: false, message: "Group not found" });
+    }
+
+    // Get all messages for the group (as plain JS objects)
+    const messages = await Message.find({ group: group._id })
       .sort({ createdAt: 1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
-    res.status(200).json({ success: true, messages });
+      .lean();
+
+    // Extract unique sender IDs
+    const senderIds = [...new Set(messages.map(msg => msg.sender.toString()))];
+
+    // Fetch all senders in one query
+    const senders = await User.find({ _id: { $in: senderIds } }).lean();
+
+    // Create a map for quick lookup
+    const senderMap = Object.fromEntries(
+      senders.map(sender => [sender._id.toString(), { _id: sender._id, firstName: sender.firstName }])
+    );
+
+    // Attach sender info to messages
+    const updatedMessages = messages.map(msg => ({
+      ...msg,
+      sender: senderMap[msg.sender.toString()] || { _id: null, firstName: "Unknown" }
+    }));
+
+    res.status(200).json({ success: true, messages: updatedMessages });
   } catch (error) {
     res.status(500).json({ message: "Error retrieving messages", error: error.message });
   }
 };
+
 
 export const markMessageAsSeen = async (req, res) => {
   const { messageId } = req.params;

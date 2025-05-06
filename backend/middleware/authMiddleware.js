@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
-import asyncHandler from "express-async-handler";
 import { User } from "../models/userModel.js";
+import asyncHandler from "express-async-handler";
 
-
+// Middleware to protect routes (only authenticated users can access)
 export const protect = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -27,7 +27,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
-    next();
+    return next();
   } catch (error) {
     console.error("JWT Error:", error.message);
 
@@ -52,11 +52,13 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Restrict to admin users only
+// Middleware to allow only admin users
 export const adminOnly = (req, res, next) => {
   if (req.user?.role === "admin") {
     return next();
   }
+
+  console.warn(`Unauthorized admin access attempt by user ${req.user?._id}`);
 
   return res.status(403).json({
     success: false,

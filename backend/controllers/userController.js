@@ -13,7 +13,12 @@ import {
 } from "../mailtrap/emails.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
+import { LikedBook } from "../models/user/likedBookModel.js";
+import { LaterRead } from "../models/user/laterReadModel.js";
+import { Group } from "../models/groupModel.js";
+import {v2 as cloudinary} from "cloudinary";
+import { generateToken,generateRefreshToken } from "../utils/generateToken.js";
+import axios from "axios";
 const validateFields = (fields) => {
   for (const [key, value] of Object.entries(fields)) {
     if (!value) {
@@ -22,60 +27,9 @@ const validateFields = (fields) => {
   }
 };
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-
-if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-  console.error("JWT_SECRET or JWT_REFRESH_SECRET is not defined in .env");
-  process.exit(1);
-}
-
-const generateToken = (res, userId) => {
-  try {
-    const token = jwt.sign({ id: userId }, JWT_SECRET, {
-      expiresIn: "15m",
-    });
-    console.log("Generated access token:", token);
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 15 * 60 * 1000,
-      path: "/",
-    });
-
-    return token;
-  } catch (error) {
-    console.error("Error generating access token:", error);
-    throw new Error("Failed to generate access token");
-  }
-};
-
-const generateRefreshToken = (res, userId) => {
-  try {
-    const refreshToken = jwt.sign({ id: userId }, JWT_REFRESH_SECRET, {
-      expiresIn: "7d",
-    });
-    console.log("Generated refresh token:", refreshToken);
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
-
-    return refreshToken;
-  } catch (error) {
-    console.error("Error generating refresh token:", error);
-    throw new Error("Failed to generate refresh token");
-  }
-};
 
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { firstName,lastName, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
@@ -83,7 +37,7 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
-    const user = new User({ name, email, password });
+    const user = new User({ firstName,lastName, email, password });
     await user.save();
 
     const token = generateToken(res, user._id);
@@ -96,7 +50,7 @@ export const registerUser = async (req, res) => {
       success: true,
       user: {
         _id: user._id,
-        name: user.name,
+        name: user.firstName,
         email: user.email,
         role: user.role,
       },
@@ -135,27 +89,29 @@ export const logIn = asyncHandler(async (req, res) => {
 
     const token = generateToken(res, user._id);
     const refreshToken = generateRefreshToken(res, user._id);
-
+    
     user.lastLogin = new Date();
     user.refreshToken = refreshToken;
     await user.save();
 
-    console.log("Login successful for user:", user._id, "Role:", user.role, "Cookies set:", { token, refreshToken });
+  
 
     res.status(200).json({
       success: true,
       isLoggedIn: true,
+      token,
+      refreshToken,
       user: {
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
         email: user.email,
         role: user.role,
         lastLogin: user.lastLogin,
+        profileImage: user.profileImage,
       },
-      token,
-      refreshToken,
       mustChangePassword: user.mustChangePassword,
     });
+    
   } catch (error) {
     console.error("Login error:", error);
     res.status(400).json({ success: false, message: error.message });
@@ -199,7 +155,6 @@ export const logOut = asyncHandler(async (req, res) => {
 
 export const getAllProgress = asyncHandler(async (req, res) => {
   try {
-    console.log("getAllProgress called for user ID:", req.user._id);
     if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
       console.error("Invalid user ID in getAllProgress:", req.user._id);
       return res.status(400).json({ success: false, message: "Invalid user ID format" });
@@ -210,8 +165,8 @@ export const getAllProgress = asyncHandler(async (req, res) => {
       .lean();
 
     if (!progress || progress.length === 0) {
-      console.log("No progress found for user:", req.user._id);
-      return res.status(404).json({ success: false, message: "No progress found" });
+    
+      return res.status(200).json({ success: true, progress: [] });
     }
 
     res.json({ success: true, progress });
@@ -223,11 +178,7 @@ export const getAllProgress = asyncHandler(async (req, res) => {
 
 export const getAllBlogs = asyncHandler(async (req, res) => {
   try {
-    console.log("getAllBlogs called for user ID:", req.user._id);
-    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-      console.error("Invalid user ID in getAllBlogs:", req.user._id);
-      return res.status(400).json({ success: false, message: "Invalid user ID format" });
-    }
+    
 
     const blogs = await News.find().sort({ date: -1 });
     res.status(200).json({ success: true, blogs });
@@ -237,7 +188,7 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
   }
 });
 
-// ... other functions unchanged
+
 
 
 
@@ -290,7 +241,7 @@ export const getProfile = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = async (req, res) => {
-  const { userId, name, lastName, phone, email, country } = req.body;
+  const { userId, name, lastName, phone, email } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -385,7 +336,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
       refreshToken: newRefreshToken,
       user: {
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
         email: user.email,
         role: user.role,
       },
@@ -399,6 +350,36 @@ export const refreshToken = asyncHandler(async (req, res) => {
     });
   }
 });
+export const checkAuth = asyncHandler(async (req, res) => {
+  try {
+   
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error in checkAuth:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+});
+
 
 
 
@@ -461,29 +442,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-export const checkAuth = asyncHandler(async (req, res) => {
-  try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-
-    const user = await User.findById(req.user._id).select("-password");
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error("Error in checkAuth:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error. Please try again later.",
-    });
-  }
-});
 
 export const Contact = asyncHandler(async (req, res) => {
   const { name, email, message } = req.body;
@@ -526,7 +484,8 @@ export const Contact = asyncHandler(async (req, res) => {
 });
 
 export const updateProfilePicture = asyncHandler(async (req, res) => {
-  const localFilePath = req.file?.path;
+  const localFilePath = req.files?.thumbnail?.[0]?.path; 
+
 
   if (!req.user || !req.user._id) {
     return res.status(401).json({ success: false, message: "Not authorized" });
@@ -551,7 +510,7 @@ export const updateProfilePicture = asyncHandler(async (req, res) => {
         folder: "profile_pics",
       });
 
-      user.profilePic = uploaded.secure_url;
+      user.profileImage = uploaded.secure_url;
       user.cloudinaryPublicId = uploaded.public_id;
     }
 
@@ -563,7 +522,7 @@ export const updateProfilePicture = asyncHandler(async (req, res) => {
     res.json({
       success: true,
       message: "Profile image updated successfully",
-      profilePic: user.profilePic,
+      profileImage: user.profileImage,
       user: userObj,
     });
   } catch (error) {
@@ -571,11 +530,7 @@ export const updateProfilePicture = asyncHandler(async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server error: " + error.message });
-  } finally {
-    if (localFilePath && fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
-  }
+  } 
 });
 
 export const updateProgress = asyncHandler(async (req, res) => {
@@ -706,15 +661,22 @@ export const getUserStats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const liked = await LikedBook.findOne({ user: userId });
-    const likedBook = liked ? liked.likedBooks.length : 0;
+    const liked = await LikedBook.findOne({ _id: userId });
+    const likedBook = liked && liked.likedBooks ? liked.likedBooks.length : 0;
 
-    const later = await LaterRead.findOne({ user: userId });
-    const laterRead = later ? later.laterReads.length : 0;
+    const later = await LaterRead.findOne({ _id: userId });
+    const laterRead = later && later.laterReads ? later.laterReads.length : 0;
 
     const groupsJoined = await Group.countDocuments({ members: userId });
 
-    res.json({ success: true, stats: { likedBook, groupsJoined, laterRead } });
+    res.json({
+      success: true,
+      
+        likedBook,
+        groupsJoined,
+        laterRead,
+      
+    });
   } catch (error) {
     console.error("Get user stats error:", error);
     res
@@ -748,7 +710,8 @@ export const getUserById = async (req, res) => {
 };
 
 export const createUser = async ({
-  name,
+  firstName,
+  lastName,
   email,
   password,
   mustChangePassword,
@@ -759,7 +722,7 @@ export const createUser = async ({
     return { exists: true };
   }
 
-  const user = new User({ name, email, password, mustChangePassword });
+  const user = new User({ firstName, lastName, email, password, mustChangePassword });
   await user.save();
 
   return { exists: false, user };

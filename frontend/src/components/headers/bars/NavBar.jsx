@@ -15,7 +15,8 @@ import axios from "axios";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();

@@ -1,13 +1,23 @@
 import mongoose from "mongoose";
-const messageSchema = new mongoose.Schema({
-  groupName: { type: String, required: true },
-  sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  text: { type: String, required: false },
-  status: { type: String, default: "sending" },
-  fileUrl: String,
-  fileType: String,
-  fileName: String,
-  seenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-});
 
-export const Message = mongoose.model("message", messageSchema);
+const messageSchema = new mongoose.Schema(
+  {
+    group: { type: mongoose.Schema.Types.ObjectId, ref: "Group", required: true }, 
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    text: { type: String },
+    status: {
+      type: String,
+      enum: ["sending", "sent", "delivered", "read"],
+      default: "sending",
+    },
+    file: {
+      url: { type: String },
+      type: { type: String }, 
+      name: { type: String },
+    },
+    seenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  },
+  { timestamps: true } 
+);
+
+export const Message = mongoose.model("Message", messageSchema);

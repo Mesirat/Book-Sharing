@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
+import { useAuthStore } from "../../store/authStore";
 
 const MyReports =()=> {
   const [reports, setReports] = useState([]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const token = localStorage.getItem("token");
+  const token = useAuthStore.getState().token;
 
   const fetchReports = async () => {
-    const res = await axios.get("/api/user/my-reports", {
+    const res = await api.get("/user/my-reports", {
       headers: { Authorization: `Bearer ${token}` },
     });
     setReports(res.data);
   };
 
   const submitReport = async () => {
-    await axios.post(
+    await api.post(
       "/api/user/report",
       { subject, message },
       {

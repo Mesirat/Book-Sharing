@@ -12,7 +12,7 @@ const MessageInput = ({ onSendMessage }) => {
   const maxMessageLength = 1500;
   const { user } = useAuthStore();
   const inputRef = useRef(null);
-  const maxFileSize = 5 * 1024 * 1024; 
+  const maxFileSize = 20 * 1024 * 1024; //20MB
 
   const handleSend = () => {
     if (text.trim() || file) {
@@ -31,7 +31,13 @@ const MessageInput = ({ onSendMessage }) => {
         alert("File size exceeds the 5MB limit.");
       } else {
         setFile(selectedFile);
-        setPreview(URL.createObjectURL(selectedFile)); 
+        const ext = selectedFile.name.split(".").pop().toLowerCase();
+        const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+        if (imageExtensions.includes(ext)) {
+          setPreview(URL.createObjectURL(selectedFile));
+        } else {
+          setPreview(null);
+        }
       }
     }
   };
@@ -48,32 +54,55 @@ const MessageInput = ({ onSendMessage }) => {
 
   return (
     <div className="p-4 border-t bg-white relative">
-      
-      {preview && (
-        <div className="absolute top-[-200px] left-0 w-full h-full  bg-opacity-80 flex justify-center items-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-xs relative">
+
+     
+      {file && (
+        <div className="absolute top-[-220px] left-0 w-full flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-80 relative">
             <button
               className="absolute top-2 right-2 text-gray-500"
               onClick={handleCancelPreview}
             >
-              <X size={24} />
+              <X size={20} />
             </button>
-            <img
-              src={preview}
-              alt="Preview"
-              className="max-w-full max-h-60 mb-4 rounded"
-            />
+
+            {(() => {
+              const extension = file.name.split('.').pop().toLowerCase();
+              const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+
+              if (imageExtensions.includes(extension)) {
+                return (
+                  <img
+                    src={preview}
+                    alt="Image Preview"
+                    className="max-w-full max-h-60 mb-4 rounded"
+                  />
+                );
+              } else {
+                return (
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="text-6xl text-gray-400 mb-2">📄</div>
+                    <p className="text-sm text-center break-words">{file.name}</p>
+                  </div>
+                );
+              }
+            })()}
+
             <button
               onClick={handleSend}
-              className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+              className="bg-blue-600 text-white px-4 py-2 rounded w-full"
             >
-              Send Image
+              {(() => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+                return imageExtensions.includes(ext) ? "Send Image" : "Send File";
+              })()}
             </button>
           </div>
         </div>
       )}
 
-    
+     
       <div className="flex items-center">
         <label htmlFor="file-input" className="cursor-pointer mr-2">
           <Paperclip />
@@ -82,7 +111,7 @@ const MessageInput = ({ onSendMessage }) => {
           type="file"
           className="hidden"
           onChange={handleFileChange}
-          accept="image/*,application/pdf,.doc,.txt"
+          accept="image/*,application/pdf,.doc,.docx,.txt"
           id="file-input"
         />
         <input
@@ -105,7 +134,7 @@ const MessageInput = ({ onSendMessage }) => {
           }}
         />
 
-  
+      
         <div className="relative">
           <button
             className="text-xl cursor-pointer ml-2"
@@ -115,16 +144,16 @@ const MessageInput = ({ onSendMessage }) => {
             😊
           </button>
           {emojiPickerVisible && (
-            <div className="absolute bottom-12 right-[-80px] z-50">
+            <div className="absolute bottom-12 right-[-15px] z-50">
               <Picker data={data} onEmojiSelect={handleEmojiSelect} previewPosition="none" />
             </div>
           )}
         </div>
 
-      
+  
         <button
           className={`ml-2 p-2 rounded ${
-            text.trim() || file ? "  text-blue-600" : "hidden"
+            text.trim() || file ? "text-blue-600" : "hidden"
           }`}
           onClick={handleSend}
           disabled={!text.trim() && !file}
@@ -133,8 +162,11 @@ const MessageInput = ({ onSendMessage }) => {
         </button>
       </div>
 
-   
-      <p className={`text-xs mt-2 ${text.length > maxMessageLength ? "text-red-500" : "text-gray-500"}`}>
+      <p
+        className={`text-xs mt-2 ${
+          text.length > maxMessageLength ? "text-red-500" : "text-gray-500"
+        }`}
+      >
         {text.length}/{maxMessageLength} characters
       </p>
     </div>

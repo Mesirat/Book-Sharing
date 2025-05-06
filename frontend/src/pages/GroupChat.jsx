@@ -2,13 +2,13 @@ import { Loader } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import MessageInput from "../components/chat/MessageInput";
 import ChatArea from "../components/chat/ChatArea";
-// import GroupList from "../components/chat/GroupList";
 import { useAuthStore } from "../store/authStore";
-import axios from "axios";
+import api from "../Services/api";
 import { io } from "socket.io-client";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import MyGroup from "../components/chat/MyGroup";
+import GroupInfo from "../components/chat/GroupInfo"; 
 
 const GroupChat = () => {
   const [messages, setMessages] = useState([]);
@@ -16,28 +16,28 @@ const GroupChat = () => {
   const [error, setError] = useState(null);
   const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
   const [currentGroup, setCurrentGroup] = useState(null);
+  const [showGroupDetails, setShowGroupDetails] = useState(false);
 
+  const token = useAuthStore.getState().token;
   const { user } = useAuthStore();
   const socketRef = useRef(null);
 
   const fetchMessages = useCallback(async () => {
-    if (!currentGroup?.name || !user?._id) return;
+    if (!currentGroup?.groupName || !user?._id) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.get(
-        `http://localhost:5000/messages/${currentGroup.groupName}`
-      );
+      const response = await api.get(`/messages/${currentGroup.groupName}`);
       if (response.data.success && Array.isArray(response.data.messages)) {
         setMessages(response.data.messages);
       } else {
-        setError("Failed to load messages. Invalid data format.");
+        setError("Invalid message format.");
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
-      setError("Failed to load messages. Please try again.");
+      setError("Failed to load messages.");
     } finally {
       setLoading(false);
     }
@@ -52,15 +52,16 @@ const GroupChat = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?._id || !currentGroup?.name) return;
+    if (!user?._id || !currentGroup?.groupName) return;
 
     socketRef.current = io("http://localhost:5000", { withCredentials: true });
+
     socketRef.current.on("connect", () => {
-      console.log("Connected to server. Socket ID:", socketRef.current.id);
+     
     });
 
     socketRef.current.on("connect_error", (err) => {
-      console.error("Connection error:", err.message);
+      console.error("Socket error:", err.message);
     });
 
     socketRef.current.emit(
@@ -69,6 +70,7 @@ const GroupChat = () => {
       user._id,
       user.username
     );
+
     socketRef.current.on("receiveMessage", handleReceiveMessage);
 
     socketRef.current.on("messageSeen", ({ messageId, userId }) => {
@@ -84,19 +86,19 @@ const GroupChat = () => {
     fetchMessages();
 
     return () => {
-      socketRef.current.off("receiveMessage", handleReceiveMessage);
-      socketRef.current.disconnect();
+      socketRef.current?.off("receiveMessage", handleReceiveMessage);
+      socketRef.current?.disconnect();
     };
-  }, [currentGroup, user, handleReceiveMessage, fetchMessages]);
+  }, [currentGroup, user, fetchMessages, handleReceiveMessage]);
 
   useEffect(() => {
     if (!user?._id || !currentGroup?.groupName) return;
 
-    const unseenMessages = messages.filter(
+    const unseen = messages.filter(
       (msg) => !msg.seenBy?.includes(user._id) && msg.sender !== user.name
     );
 
-    unseenMessages.forEach((msg) => {
+    unseen.forEach((msg) => {
       socketRef.current.emit("markMessageSeen", {
         messageId: msg._id,
         userId: user._id,
@@ -105,47 +107,59 @@ const GroupChat = () => {
   }, [messages, user, currentGroup]);
 
   const handleSendMessage = async ({ text, file }) => {
-    if (!text.trim() && !file) {
-      console.error("Cannot send empty message");
-      return;
-    }
-
+    if (!text.trim() && !file) return;
+  
     const formData = new FormData();
     formData.append("groupName", currentGroup.groupName);
     formData.append("sender", user._id);
-
     if (text.trim()) formData.append("text", text.trim());
-    if (file) formData.append("file", file);
-
+  
+    if (file) {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) {
+        formData.append("thumbnail", file);
+      } else if (ext === "pdf") {
+        formData.append("pdf", file);
+      }
+    }
+  
     try {
-      const response = await axios.post(
-        "http://localhost:5000/messages/send",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        }
-      );
-      return response.status(200).json({ success: true });
-    } catch (error) {
-      console.error("Error sending message:", error);
+      const res = await api.post("/messages/send", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+ 
+      if (res.data.success && res.data.message) {
+        setMessages((prev) => [...prev, res.data.message]);
+      }
+    } catch (err) {
+      console.error("Message send error:", err);
     }
   };
+  
 
+  
   return (
     <div className="flex w-full max-h-[90vh] overflow-hidden mx-auto">
-      <div className="w-1/3  bg-gray-100 border-r max-h-[90vh] overflow-y-auto">
+      <div className="w-1/3 bg-gray-100 border-r max-h-[85vh] overflow-y-auto">
         <MyGroup
           userId={user._id}
           currentGroup={currentGroup}
           setCurrentGroup={setCurrentGroup}
         />
       </div>
-
-      <div className="w-2/3 flex flex-col  h-[88vh]">
+      {showGroupDetails && currentGroup && (
+    <GroupInfo group={currentGroup} onClose={() => setShowGroupDetails(false)} />
+  )}
+      <div className="w-2/3 flex flex-col h-[85vh]">
         {currentGroup ? (
           <>
-            <div className="sticky top-0 bg-white shadow-md z-10 p-2 rounded-t-lg">
+            <div 
+            className="sticky top-0 bg-white shadow-md z-10 p-2 rounded-t-lg"
+            onClick={showGroupDetails}
+            >
               <h2 className="text-md font-semibold">
                 {currentGroup?.groupName}
               </h2>
@@ -164,24 +178,16 @@ const GroupChat = () => {
               <div className="flex flex-col flex-grow mt-2 overflow-y-auto">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 mt-4">
-                    <p>No messages yet. Start the conversation!</p>
+                    No messages yet. Start the conversation!
                   </div>
                 ) : (
-                  <ChatArea messages={messages} currentUser={user?.name} />
-                )}
+                  <ChatArea messages={messages} currentUser={user} />
+                )} 
               </div>
             )}
 
             <div className="relative mt-4">
-              {emojiPickerVisible && (
-                <div className="absolute bottom-16 left-0 z-50">
-                  <Picker
-                    data={data}
-                    onEmojiSelect={(emoji) => console.log(emoji)}
-                    previewPosition="none"
-                  />
-                </div>
-              )}
+     
               <MessageInput
                 onSendMessage={handleSendMessage}
                 emojiPickerVisible={emojiPickerVisible}

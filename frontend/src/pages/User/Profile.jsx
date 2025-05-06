@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { TbCameraPlus } from "react-icons/tb";
 import { useAuthStore } from "../../store/authStore";
 import UpdateProfile from "./UpdateProfile";
-import axios from "axios";
+import api from "../../Services/api";
 import { Loader } from "lucide-react";
 
 const Profile = () => {
@@ -14,42 +14,42 @@ const Profile = () => {
     likedBook: 0,
   });
   const [preview, setPreview] = useState(null);
-  const [statsError, setStatsError] = useState(null); // To handle errors in stats fetching
-  console.log(user);
-
+  const [statsError, setStatsError] = useState(null);
+const token = useAuthStore.getState().token;
   useEffect(() => {
-    // Load stats for the user after user data is available
+  
+  
+
+   
     const fetchStats = async () => {
+      if (!user) return;
+
       try {
-        const res = await axios.get("http://localhost:5000/users/userStats", {
+        const res = await api.get("/users/userStats", {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         setStats(res.data);
-        setStatsError(null); // Reset error if fetch is successful
+        setStatsError(null);
       } catch (error) {
         console.error("Failed to load user stats:", error);
         setStatsError("Failed to load user stats.");
       }
     };
 
-    // Only fetch stats if user is logged in
-    if (user) {
-      fetchStats();
-    }
-  }, [user]);
+    fetchStats();
+  }, [user, setUser]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setPreview(URL.createObjectURL(file));
     setLoading(true);
 
     updateProfilePicture(file)
-      .then((updatedImage) => {
-        setUser(updatedImage); // Update user in the store and persist
+      .then(() => {
+        setPreview(URL.createObjectURL(file)); 
       })
       .catch((error) => {
         console.error("Profile image upload error:", error);
@@ -69,7 +69,7 @@ const Profile = () => {
         <div className="flex flex-col items-center">
           <div className="relative group">
             <img
-              src={preview || user.profilePic || "/default-avatar.png"}
+              src={preview || user.profileImage || "/default-avatar.png"}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
             />
@@ -86,7 +86,7 @@ const Profile = () => {
           {loading && <Loader className="text-blue-400 mt-4" />}
           {error && <p className="text-red-400 mt-2">{error}</p>}
           <h2 className="text-xl font-bold text-white mt-4">
-            {user?.name || "No name available"}
+            {user?.firstName || "No name available"}
           </h2>
           <p className="text-sm text-gray-300">{user?.email || "No email available"}</p>
 

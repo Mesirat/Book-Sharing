@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import { useNavigate } from "react-router-dom";
 import GroupChat from "../../pages/GroupChat";
 import { useAuthStore } from "../../store/authStore";
@@ -8,7 +8,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const token = useAuthStore.getState().token;
   const [filteredGroups, setFilteredGroups] = useState([]);
   const [joinedGroups, setJoinedGroups] = useState([]);
 
@@ -21,17 +21,13 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
 
   const fetchUserGroups = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/groups/mygroups/${user._id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await api.get(`/groups/mygroups/${user._id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = response.data;
       setGroups(data.groups);
       const joinedGroupIds = data.groups.map((group) => group._id);
       setJoinedGroups(joinedGroupIds);
@@ -42,6 +38,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (userId) {

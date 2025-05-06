@@ -105,9 +105,12 @@ export const uploadUsers = asyncHandler(async (req, res) => {
 
     for (const user of users) {
       const password = generatePassword();
-
+      const [firstName, ...rest] = user.name.trim().split(" ");
+      const lastName = rest.join(" ") || "";
+     
       const result = await createUser({
-        name: user.name,
+        firstName: firstName,
+        lastName:lastName,
         email: user.email,
         password,
         mustChangePassword: true,
@@ -115,13 +118,15 @@ export const uploadUsers = asyncHandler(async (req, res) => {
 
       if (result.exists) {
         results.push({
-          name: user.name,
+          firstName,
+          lastName,
           email: user.email,
           password: "skipped (already exists)",
         });
       } else {
         results.push({
-          name: user.name,
+          firstName,
+          lastName,
           email: user.email,
           password,
         });
@@ -140,7 +145,7 @@ export const uploadUsers = asyncHandler(async (req, res) => {
   }
 });
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}, "name email role isSuspended");
+  const users = await User.find({}, "firstName email role isSuspended");
   res.json(users);
 });
 export const getAllBooks = asyncHandler(async (req, res) => {

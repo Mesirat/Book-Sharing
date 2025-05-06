@@ -8,7 +8,7 @@ const UserRegistration = () => {
   const [error, setError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const uploadUsers = useAuthStore((state) => state.uploadUsers);
-
+  
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
     setUploadSuccess(false);
@@ -48,7 +48,7 @@ const UserRegistration = () => {
     <div className="bg-white p-6 rounded-xl text-text shadow-lg max-w-2xl mx-auto mt-6">
       <h2 className="text-2xl font-semibold mb-4 ">Upload User CSV</h2>
 
-      {/* 📘 Admin Instructions */}
+     
       <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mb-6 text-sm">
         <p className="font-medium">Instructions:</p>
         <ul className="list-disc list-inside space-y-1 mt-2">
@@ -76,7 +76,7 @@ const UserRegistration = () => {
 
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
 
-      {/* ✅ Success Summary */}
+     
       {uploadSuccess && generatedUsers.length > 0 && (
         <div className="mt-6 bg-green-50 border-l-4 border-green-500 p-4 text-green-700 rounded">
           <p className="font-semibold">Success!</p>

@@ -4,7 +4,7 @@ import { Loader } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import GroupCreate from "./GroupCreate";
 import { toast, ToastContainer } from "react-toastify";
-
+import api from "../../Services/api";
 const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,38 +15,31 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const debounceTimeout = useRef(null);
-
+const token = useAuthStore.getState().token;
   const socket = useRef(null);
 
   const fetchGroups = async (search = "") => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/groups?search=${search}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-
-      if (response.status === 404) {
-        setGroups([]);
-        return;
-      }
-
-      if (!response.ok) throw new Error("Failed to fetch groups");
-
-      const data = await response.json();
-      setGroups(data.groups || []);
+      const response = await api.get(`/groups?search=${search}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      setGroups(response.data.groups || []);
     } catch (error) {
-      console.error("Error fetching groups:", error);
-      setError("Failed to load groups. Please try again later.");
+      if (error.response?.status === 404) {
+        setGroups([]);
+      } else {
+        console.error("Error fetching groups:", error);
+        setError("Failed to load groups. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (!socket.current) {
@@ -112,7 +105,7 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ userId: user._id }),
         }
@@ -152,7 +145,7 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ userId: user._id }),
         }

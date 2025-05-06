@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-
+import Cookies from 'js-cookie';
+import { useAuthStore } from "../../store/authStore";
 const BookManager = () => {
   const [books, setBooks] = useState([]);
   const [editingBook, setEditingBook] = useState(null);
@@ -10,28 +11,35 @@ const BookManager = () => {
   const [selectedCategory, setSelectedCategory] = useState(""); // Filter by category
   const [selectedAuthor, setSelectedAuthor] = useState(""); // Filter by author
   const API_URL = "http://localhost:5000";
+ 
+  const token = useAuthStore.getState().token;
 
-  const fetchBooks = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/admin/books`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
-      setBooks(res.data);
-    } catch (err) {
-      console.error("Error fetching books:", err);
-    }
-  };
+
+const fetchBooks = async () => {
+  try {
+    const res = await api.get(`/admin/books`, {
+      headers: {
+        Authorization: `Bearer ${token}`,  
+      },
+      withCredentials: true,
+    });
+    setBooks(res.data);
+  } catch (err) {
+    console.error("Error fetching books:", err);
+  }
+};
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this book?")) return;
     try {
-      await axios.delete(`${API_URL}/admin/books/${id}`, {
+      await api.delete(`/admin/books/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${token}`,
         },
+        withCredentials: true,
       });
+      
       fetchBooks();
     } catch (err) {
       console.error("Error deleting book:", err);
@@ -44,15 +52,17 @@ const BookManager = () => {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(
-        `${API_URL}/admin/books/${editingBook._id}`,
+      await api.put(
+        `/admin/books/${editingBook._id}`,
         editingBook,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
+          withCredentials: true,
         }
       );
+      
       setEditingBook(null);
       fetchBooks();
     } catch (err) {

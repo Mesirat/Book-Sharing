@@ -6,7 +6,7 @@ import SideBar from "../components/headers/bars/SideBar";
 import GroupList from "../components/chat/GroupList.jsx";
 import GroupCreate from "../components/chat/GroupCreate.jsx";
 import { useAuthStore } from "../store/authStore";
-import { bookCategories } from "./utils/data.js";
+import { bookCategories } from "../utils/data.js";
 
 const Home = () => {
   const { isAuthenticated } = useAuthStore();

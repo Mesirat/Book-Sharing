@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../../Services/api";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/users";
 
 const UserReadingProgress = () => {
   const [progressData, setProgressData] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const token = useAuthStore.getState().token;
   const navigate = useNavigate();
   useEffect(() => {
     const fetchAllProgress = async () => {
       try {
-        const res = await axios.get(`${API_URL}/getAllProgress`, {
+        const res = await api.get(`/users/getAllProgress`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        setProgressData(res.data);
+        setProgressData(res.data.progress);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching reading progress:", err);
@@ -32,16 +33,18 @@ const UserReadingProgress = () => {
 
     const fetchBlogs = async () => {
       try {
-        const res = await axios.get(`${API_URL}/getBlogs`, {
+        const res = await api.get(`/users/getBlogs`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-        setBlogs(res.data);
+       
+        setBlogs(Array.isArray(res.data.blogs) ? res.data.blogs : []);
       } catch (err) {
         console.error("Error fetching blogs:", err);
       }
     };
+    
 
     fetchAllProgress();
     fetchBlogs();
@@ -54,14 +57,16 @@ const UserReadingProgress = () => {
       </div>
     );
   if (error) return <p className="text-center text-red-500">{error}</p>;
-
-  const completedBooks = progressData.filter(
+  const completedBooks = Array.isArray(progressData) ? progressData.filter(
     (item) => Math.floor((item.currentPage / item.totalPages) * 100) === 100
-  );
+  ) : [];
+  
+  
 
-  const inProgressBooks = progressData.filter(
+  const inProgressBooks = Array.isArray(progressData) ? progressData.filter(
     (item) => Math.floor((item.currentPage / item.totalPages) * 100) < 100
-  );
+  ) : [];
+  
 
   return (
     <div className="">
@@ -73,7 +78,9 @@ const UserReadingProgress = () => {
           ) : (
             inProgressBooks.map((item) => {
               const progressPercent = Math.floor(
+                
                 (item.currentPage / item.totalPages) * 100
+                
               );
 
               return (
@@ -116,7 +123,7 @@ const UserReadingProgress = () => {
                       </div>
 
                       <Link
-                        to={`/readBook/${item.book._id}`}
+                        to={`/readBook/${item.book?._id}`}
                         className="text-sm px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-600"
                       >
                         {progressPercent === 100
@@ -132,7 +139,7 @@ const UserReadingProgress = () => {
         </div>
 
         <div className="flex-2 space-y-4 px-1  h-[89vh] overflow-y-auto ">
-          {blogs.length === 0 ? (
+          {Array.isArray(blogs) && blogs.length === 0 ? (
             <p>No news or updates yet. Stay tuned!</p>
           ) : (
             blogs.map((blog, index) => (

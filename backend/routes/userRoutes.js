@@ -39,11 +39,9 @@ const loginLimiter = rateLimit({
 
 router.post("/login", loginLimiter, logIn);
 router.post("/logout", logOut);
-router.post("/verifyEmail", verifyEmail);
-router.post("/forgotPassword", forgotPassword);
-router.post("/resetPassword/:token", resetPassword);
-router.get('/', protect, getUserById);
 router.get("/check-auth", checkAuth);
+
+router.put("/updateUser", protect , updateProfile)
 router.put("/updateProfilePicture", protect, uploadBookAssets.fields([{name:"thumbnail",maxCount:1}]), updateProfilePicture);
 router.post("/refreshToken", refreshToken);
 router.get("/getBlogs",getAllBlogs)
@@ -54,14 +52,13 @@ router.get("/getProgress/:bookId", protect, getProgress);
 router.put("/updateProgress/:bookId", protect, updateProgress);
 router.get("/getAllProgress", protect, getAllProgress);
 
-router.get("/:id", getUserById);
+router.get("/:id",protect, getUserById);
 router.post("/contact", Contact);
 router.put("/changePassword", protect, changePassword);
 router.get("/pdf/:publicId(*)", streamPDF);
-// router.put(
-//   "/updateProfilePicture",
-//   uploadBookAssets.single("userProfile"),
-//   updateProfilePicture
-// );
 
+
+router.post("/verifyEmail", verifyEmail);
+router.post("/forgotPassword", forgotPassword);
+router.post("/resetPassword/:token", resetPassword);
 export default router;

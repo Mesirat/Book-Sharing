@@ -1,9 +1,11 @@
 import { useState } from "react";
-import axios from "axios";
-import genres from "../utils/genres";
+import api from "../../Services/api.js";
+
+import genres from "../../utils/genres";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BookPlus } from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
 
 const UploadBook = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +18,7 @@ const UploadBook = () => {
     thumbnail: "",
     pdf: "",
   });
-
+const token = useAuthStore.getState().token;
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
@@ -35,13 +37,16 @@ const UploadBook = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/admin/uploadBooks",
+      const response = await api.post(
+        "/admin/uploadBooks",
         data,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          
+              withCredentials: true, 
+              Authorization: `Bearer ${token}`,
+            
           },
         }
       );

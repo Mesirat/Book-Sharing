@@ -156,11 +156,11 @@ const UpdateProfile = () => {
           )}
         </div>
 
-        <div className="ml-64">
+        <div className="mx-auto">
           <button
             type="submit"
             disabled={Loading}
-            className={`w-full md:w-auto px-6 py-2 rounded-md text-white font-semibold shadow transition ${
+            className={`w-full  px-4 py-2 rounded-full text-white font-semibold shadow transition ${
               Loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-gray-800 hover:bg-gray-900 hover:text-green-400"

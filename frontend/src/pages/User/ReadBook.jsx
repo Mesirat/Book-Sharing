@@ -1,7 +1,8 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import PDFReader from "../../components/PDFReader";
-
+import { useAuthStore } from "../../store/authStore";
+import api from "../../Services/api";
 const ReadBook = () => {
   const { bookId } = useParams();
   
@@ -9,25 +10,23 @@ const ReadBook = () => {
 
   useEffect(() => {
     const fetchBook = async () => {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`http://localhost:5000/books/${bookId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    
-      if (!res.ok) {
-        console.error("Failed to fetch book", await res.text());
-        return;
+      try {
+        const token = useAuthStore.getState().token;
+        const res = await api.get(`/books/${bookId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        setFileURL(res.data.pdfLink);
+      } catch (error) {
+        console.error("Failed to fetch book", error?.response?.data || error.message);
       }
-    
-      const data = await res.json();
-      setFileURL(data.pdfLink);
-     
     };
-    
+  
     fetchBook();
   }, [bookId]);
+  
 
   return (
     <div className="min-h-screen">

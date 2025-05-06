@@ -1,47 +1,85 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
+import { useAuthStore } from "../../store/authStore";
 
-const ChatArea = ({ messages = [], currentUser }) => {
-  const chatEndRef = useRef(null);
+const ChatArea = ({ messages }) => {
+  const { user: currentUser } = useAuthStore();
+  const lastMessageRef = useRef(null);
 
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div
-      className="flex-1 overflow-y-auto p-4 bg-gray-100 rounded-lg shadow-inner"
-      role="region"
-      aria-live="polite"
-      aria-label="Chat area, messages appear below"
-    >
-      <h2 className="text-xl font-bold mb-4 text-center">Chat</h2>
-      {messages.length === 0 ? (
-        <p className="text-gray-500 text-center">No messages yet. Start the conversation!</p>
-      ) : (
-        <ul className="space-y-4" role="list">
-          {messages.map((msg, index) => (
+    <div className="flex-1 overflow-y-auto p-4">
+      <ul className="space-y-2">
+        {messages.map((msg, index) => {
+          const senderId =
+            typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+          const isCurrentUser = senderId?.toString() === currentUser?._id?.toString();
+
+          const senderName =
+            typeof msg.sender === "object" ? msg.sender.firstName : "You";
+
+          return (
             <li
-              key={msg.id || index}
-              className={`flex items-start space-x-2 ${msg.user === currentUser ? 'justify-end' : 'justify-start'}`}
-              aria-label={`Message from ${msg.user}`}
+              key={msg._id || index}
+              className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+              aria-label={`Message from ${senderName}`}
             >
               <div
-                className={`p-3 rounded-lg shadow-md w-3/4 ${msg.user === currentUser ? 'bg-blue-100' : 'bg-white'} break-words`}
+                ref={index === messages.length - 1 ? lastMessageRef : null}
+                className={`p-3 rounded-xl shadow-md max-w-[70%] break-words ${
+                  isCurrentUser ? "bg-blue-100" : "bg-white"
+                }`}
               >
-                <p className="text-sm text-gray-600">
-                  <strong className="text-blue-500">{msg.user}:</strong> {msg.text}
-                </p>
+                <div className="text-sm text-gray-600">
+                  {!isCurrentUser && typeof msg.sender === "object" && (
+                    <strong className="text-blue-500">
+                      {msg.sender.firstName}
+                    </strong>
+                  )}
+
+                
+                  {msg.text && <p>{msg.text}</p>}
+
+                
+                  {msg.file?.type === "image" && msg.file?.url && (
+                    <img
+                      src={msg.file.url}
+                      alt={msg.file.name || "sent image"}
+                      className="mt-2 max-w-full rounded-md border"
+                    />
+                  )}
+
+                
+                  {msg.file?.type === "pdf" && msg.file?.url && (
+                    <div className="mt-2">
+                      <a
+                        href={msg.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline flex items-center space-x-1"
+                      >
+                        <span>📄</span>
+                        <span>{msg.file.name || "View PDF"}</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+
                 <span className="text-xs text-gray-400 block text-right">
-                  {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                  {msg.createdAt
+                    ? new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Just now"}
                 </span>
               </div>
             </li>
-          ))}
-          <div ref={chatEndRef} />
-        </ul>
-      )}
+          );
+        })}
+      </ul>
     </div>
   );
 };

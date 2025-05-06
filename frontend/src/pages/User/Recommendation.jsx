@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import Modals from "../../components/Modals.jsx";
 import Cards from "../../components/Cards.jsx";
 import { Loader } from "lucide-react";
@@ -25,8 +25,8 @@ const Recommendation = ({ user }) => {
           setError(null);    
 
           if (query) {
-            const booksResponse = await axios.get(
-              'http://localhost:5000/books/search', {
+            const booksResponse = await api.get(
+              '/books/search', {
                 params: { query, page }
               }
             );

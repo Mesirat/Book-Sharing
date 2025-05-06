@@ -30,7 +30,7 @@ const Login = () => {
         const result = await login(email, password, isAdmin, ); 
         
         if (result) {
-          console.log(result.mustChangePassword);
+          
           if (result.mustChangePassword===true) {
             navigate("/changePassword");// Redirect to change password page for first-time login
           }
@@ -114,7 +114,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={Loading}
-              className={`bg-button text-text w-full py-3 text-xl font-bold rounded-full ${
+              className={`bg-secondary text-text w-full py-3 text-xl font-bold rounded-full ${
                 Loading
                   ? " opacity-50 cursor-not-allowed"
                   : " transition duration-300"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import { Slash, Undo, Trash2, Pencil, Check, TriangleAlert } from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -8,7 +9,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editedRole, setEditedRole] = useState("");
-
+const token = useAuthStore.getState().token;
   const API = "http://localhost:5000";
 
   useEffect(() => {
@@ -18,9 +19,9 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/admin/users`, {
+      const res = await api.get(`/admin/users`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       setUsers(res.data);
@@ -37,7 +38,9 @@ const UserManagement = () => {
         { isSuspended: !currentStatus },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            withCredentials: true, 
+            "Content-Type": "multipart/form-data", 
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -54,7 +57,8 @@ const UserManagement = () => {
         { role: newRole },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            withCredentials: true, 
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -71,7 +75,8 @@ const UserManagement = () => {
     try {
       await axios.delete(`${API}/admin/users/${id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          withCredentials: true, 
+          Authorization: `Bearer ${token}`,
         },
       });
       setUsers(users.filter((u) => u._id !== id));
@@ -82,8 +87,8 @@ const UserManagement = () => {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
+      (user.firstName?.toLowerCase() || "").includes(search.toLowerCase()) ||
+    (user.email?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
@@ -114,11 +119,11 @@ const UserManagement = () => {
               <div className="flex items-center gap-4 flex-1">
                 <img
                   src={user.profile || "/default-profile.png"}
-                  alt={user.name}
+                  alt={user.firstName}
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div>
-                  <h3 className="font-semibold">{user.name}</h3>
+                  <h3 className="font-semibold">{user.firstName}</h3>
                   <p className="text-sm text-gray-600">{user.email}</p>
                 </div>
               </div>

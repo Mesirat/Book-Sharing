@@ -3,7 +3,11 @@ import bcrypt from "bcryptjs";
 
 const userSchema = mongoose.Schema(
   {
-    name: {
+    firstName: {
+      type: String,
+      required: true,
+    },
+    lastName: {
       type: String,
       required: true,
     },
@@ -28,6 +32,10 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    refreshToken: {
+      type: String,
+      default: null, 
     },
     lastLogin: {
       type: Date,
@@ -61,15 +69,5 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
-
-userSchema.methods.isPasswordResetTokenValid = function () {
-  return this.resetPasswordExpiresAt > Date.now();
-};
-
-
-// userSchema.methods.isEmailVerificationTokenValid = function () {
-//   return this.verificationTokenExpiresAt > Date.now();
-// };
 
 export const User = mongoose.model("User", userSchema);

@@ -35,6 +35,10 @@ import BookManager from "./pages/Admin/BookManager.jsx";
 import RoleManager from "./pages/Admin/RoleManager.jsx";
 import Report from "./pages/Admin/ReportManager.jsx";
 import ChangePassword from "./pages/Auth/ChangePassword.jsx";
+import UploadBlogs from "./pages/Admin/UploadBlogs.jsx";
+// import { setupAxiosInterceptors } from "./utils/setupAxios";
+
+
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   if (!isAuthenticated) {
@@ -51,7 +55,7 @@ const AdminProtectedRoute = ({ children }) => {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -66,29 +70,11 @@ const RedirectAuthUser = ({ children }) => {
 };
 
 function App() {
-  const { set, refreshToken, checkAuth } = useAuthStore();
-
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const refreshTokenStored = localStorage.getItem("refreshToken");
-
-    if (token && refreshTokenStored) {
-      set({
-        isAuthenticated: true,
-        token,
-        user: JSON.parse(localStorage.getItem("user")) || {},
-      });
-    }
-  }, [set, checkAuth]);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
     checkAuth();
-    const interval = setInterval(() => {
-      refreshToken();
-    }, 14 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [checkAuth, refreshToken]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -195,6 +181,7 @@ function InnerApp() {
         <Route path="addUsers" element={<UserRegistration />} />
         <Route path="userManagement" element={<UserRegistration />} />
         <Route path="uploadBook" element={<UploadBook />} />
+        <Route path="uploadBlog" element={<UploadBlogs />} />
         <Route path="settings" element={<UploadBook />} />
       </Route>
 
