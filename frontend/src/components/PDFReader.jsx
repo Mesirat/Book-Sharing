@@ -43,26 +43,34 @@ const token = useAuthStore.getState().token;
 
     fetchProgress();
   }, [bookId]);
-
   useEffect(() => {
+    if (!fileURL) return;
+  
+    setRenderedPages([]);
+    setThumbnails([]);
+    setTotalPages(0);
+  
     const loadPDF = async () => {
       try {
+        const publicId = fileURL;
         const loadingTask = pdfjsLib.getDocument(
-          `http://localhost:5000/users/pdf/${fileURL}`
+          `http://localhost:5000/users/pdf/${publicId}`
         );
         const pdf = await loadingTask.promise;
         pdfDocRef.current = pdf;
         setTotalPages(pdf.numPages);
-
         renderAllPages(pdf, scale);
         renderThumbnails(pdf);
       } catch (err) {
         console.error("Error loading PDF:", err);
       }
     };
-
+  
     loadPDF();
   }, [fileURL]);
+  
+  
+  
 
   useEffect(() => {
     if (pdfDocRef.current) {

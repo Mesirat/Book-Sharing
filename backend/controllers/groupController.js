@@ -7,13 +7,14 @@ import { User } from "../models/userModel.js";
 import { fileURLToPath } from "url";
 import asyncHandler from "express-async-handler";
 import { v2 as cloudinary } from "cloudinary";
+import { Message } from "../models/messageModel.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const CreateGroup = async (req, res) => {
   const io = req.app.get("io");
-  const { groupName, description, creator } = req.body;
+  const { groupName, creator } = req.body;
 
   if (!groupName || groupName.trim().length === 0) {
     return res.status(400).json({
@@ -54,7 +55,6 @@ export const CreateGroup = async (req, res) => {
 
     const newGroup = new Group({
       groupName: normalizedGroupName,
-      description,
       profilePic,
       creator: new mongoose.Types.ObjectId(creator),
       members: [creator],
@@ -84,7 +84,7 @@ export const CreateGroup = async (req, res) => {
 };
 
 export const GetGroups = async (req, res) => {
-  const { page, limit, search } = req.query;
+  const { search } = req.query;
 
   const searchFilter = search
     ? { name: { $regex: search.trim(), $options: "i" } }
@@ -213,13 +213,25 @@ export const GetGroupDetails = async (req, res) => {
   const { groupId, userId } = req.params;
 
   try {
-    const group = await Group.findById(groupId).populate("members", "userId");
+    const group = await Group.findById(groupId)
+      .populate("members", "_id firstName  email profilePic")
+      .populate("creator", "_id firstName email profilePic");
+
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
 
+    const creator = group.creator
+      ? {
+          _id: group.creator._id,
+          name: group.creator.firstNname,
+          email: group.creator.email,
+          profilePic: group.creator.profilePic,
+        }
+      : null;
+
     const isMember = group.members.some(
-      (member) => member.userId.toString() === userId.toString()
+      (member) => member._id.toString() === userId.toString()
     );
 
     if (!isMember) {
@@ -229,12 +241,21 @@ export const GetGroupDetails = async (req, res) => {
     }
 
     const members = group.members.map((member) => ({
-      userId: member.userId,
-      username: member.username,
+      _id: member._id,
+      name: member.firstName,
+      email: member.email,
+      profilePic: member.profilePic,
     }));
 
     res.status(200).json({
-      group: { id: group._id, name: group.name, profilePic: group.profilePic },
+      group: {
+        id: group._id,
+        name: group.groupName,
+        description: group.description,
+        profilePic: group.profilePic,
+        memberCount: group.members.length,
+        creator,
+      },
       members,
     });
   } catch (error) {
@@ -242,6 +263,7 @@ export const GetGroupDetails = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export const checkMembership = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -281,5 +303,63 @@ export const getMyGroups = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error retrieving user groups", error: error.message });
+  }
+};
+
+export const updateGroup = async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    const group = await Group.findById(groupId);
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const updates = {};
+
+    if (req.body.groupName) {
+      updates.groupName = req.body.groupName;
+    }
+
+
+    if (req.file) {
+     
+      if (group.cloudinaryPublicId) {
+        await cloudinary.uploader.destroy(group.cloudinaryPublicId);
+      }
+
+      const uploaded = await cloudinary.uploader.upload(req.file.path, {
+        folder: "group_profiles",
+      });
+
+      updates.profilePic = uploaded.secure_url;
+      updates.cloudinaryPublicId = uploaded.public_id;
+    }
+
+    const updatedGroup = await Group.findByIdAndUpdate(groupId, updates, {
+      new: true,
+    });
+
+    res.status(200).json(updatedGroup);
+  } catch (err) {
+    console.error("Error updating group:", err);
+    res.status(500).json({ error: "Failed to update group" });
+  }
+};
+
+
+export const deleteGroup = async (req, res) => {
+  try {
+    const groupId = req.params.id;
+
+    const deleted = await Group.findByIdAndDelete(groupId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    res.status(200).json({ message: "Group deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete group" });
   }
 };

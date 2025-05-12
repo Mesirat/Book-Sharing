@@ -3,6 +3,8 @@ import api from "../../Services/api";
 import { useNavigate } from "react-router-dom";
 import GroupChat from "../../pages/GroupChat";
 import { useAuthStore } from "../../store/authStore";
+import GroupCreate from "./GroupCreate";
+import { Plus } from "lucide-react";
 const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,10 +13,11 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
   const token = useAuthStore.getState().token;
   const [filteredGroups, setFilteredGroups] = useState([]);
   const [joinedGroups, setJoinedGroups] = useState([]);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuthStore();
   const navigate = useNavigate();
-
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -38,7 +41,26 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
       setLoading(false);
     }
   };
-  
+  const fetchGroups = async (search = "") => {
+    try {
+      const response = await api.get(`/groups?search=${search}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setGroups(response.data.groups || []);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setGroups([]);
+      } else {
+        console.error("Error fetching groups:", error);
+        setError("Failed to load groups. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -86,14 +108,20 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
 
   return (
     <div>
-      <div className="sticky top-0 text-text z-10  p-1">
+      <div className="sticky flex justify-around top-0 text-text z-10  p-1">
         <input
           type="text"
           placeholder="Search groups..."
           value={searchTerm}
           onChange={handleSearchChange}
-          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-md"
+          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full "
         />
+          <button
+          onClick={openModal}
+          className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:text-green-500 transition-all"
+        >
+        <Plus />
+        </button>
       </div>
 
       {filteredGroups.length === 0 ? (
@@ -132,6 +160,12 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
               </div>
             </div>
           ))}
+           <GroupCreate
+                  onClose={closeModal}
+                  isModalOpen={isModalOpen}
+                  fetchGroups={fetchGroups}
+                  searchTerm={searchTerm}
+                />
         </div>
       )}
     </div>

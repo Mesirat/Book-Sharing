@@ -10,6 +10,7 @@ import {
   BookHeart,
   BookOpenText,
   X,
+  House,
 } from "lucide-react";
 import { LuLayoutDashboard } from "react-icons/lu";
 
@@ -18,11 +19,12 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
   const location = useLocation();
 
   const navLinks = [
+    { to: "/", label: "Home", Icon: House },
     { to: "/user", label: "Dashboard", Icon: LuLayoutDashboard },
-    { to: "/user/history", label: "History", Icon: History },
+  
     { to: "/user/laterReads", label: "Read Later", Icon: Clock3 },
     { to: "/user/likedBooks", label: "Liked Books", Icon: BookHeart },
-    { to: "/user/chat", label: "Groups", Icon: MessageSquareMore },
+    { to: "/user/chat", label: "Group Chat", Icon: MessageSquareMore },
     { to: "/user/profile", label: "Account", Icon: CircleUserRound },
     { to: "/logout", label: "Log Out", Icon: LogOut },
   ];
@@ -70,11 +72,11 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
                   to={to}
                   className={`flex items-center p-2 transition-all duration-3 ${
                     expanded
-                      ? "hover:bg-secondary  rounded-md px-2"
+                      ? "hover:bg-gray-400  rounded-md px-2"
                       : ""
                   } ${
                     isActive && expanded
-                      ? "bg-button rounded-md shadow-md"
+                      ? "bg-secondary rounded-md shadow-md"
                       : ""
                   }`}
                   aria-current={isActive ? "page" : undefined}

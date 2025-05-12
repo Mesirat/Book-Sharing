@@ -12,6 +12,7 @@ const laterReadSchema = new mongoose.Schema({
       title: { type: String, required: true },
       authors: { type: String, required: true },
       thumbnail: { type: String, required: true },
+      description:{type:String,required:true},
       addedAt: {
         type: Date,
         default: Date.now,

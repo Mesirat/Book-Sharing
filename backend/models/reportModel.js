@@ -1,11 +1,24 @@
 import mongoose from "mongoose";
 
-const reportSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  subject: String,
-  message: String,
-  response: String,
-  respondedAt: Date,
-}, { timestamps: true });
+const reportSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    type: {
+      type: String,
+      enum: ["bug", "content", "feedback"],
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    screenshotUrl: String,
+    cloudinaryPublicId: String,
+  },
+  { timestamps: true }
+);
 
-export const Report= mongoose.model("Report", reportSchema);
+export const Report = mongoose.model("Report", reportSchema);

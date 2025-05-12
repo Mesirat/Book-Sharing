@@ -10,8 +10,8 @@ const ChatArea = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
-      <ul className="space-y-2">
+    <div className="flex-1 overflow-y-auto px-4 py-1 hide-scrollbar">
+      <ul className="space-y-4">
         {messages.map((msg, index) => {
           const senderId =
             typeof msg.sender === "object" ? msg.sender._id : msg.sender;

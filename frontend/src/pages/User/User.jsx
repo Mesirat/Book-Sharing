@@ -49,7 +49,7 @@ const User = () => {
         <div
           className={`flex-1 py-3 px-4   ${
             location.pathname === "/user/chat"
-              ? "ml-6"
+              ? "ml-8"
               : "ml-12 md:ml-16 lg:ml-16"
           }`}
         >
@@ -58,12 +58,12 @@ const User = () => {
               {!query && (
                 <>
                   <UserReadingProgress />
-                  {/* <div className="overflow-x-auto hide-scrollbar px-1 py-2">
+                  <div className="overflow-x-auto hide-scrollbar px-1 py-2">
                     <GroupList />
-                  </div> */}
+                  </div>
                 </>
               )}
-              <Cards books={books} />
+              <Cards books={books}  />
             </>
           )}
 

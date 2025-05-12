@@ -1,13 +1,14 @@
-import { Book } from '../models/bookModel.js';
-import asyncHandler from 'express-async-handler';
-import dotenv from 'dotenv';
+import { Book } from "../models/bookModel.js";
+import asyncHandler from "express-async-handler";
+import dotenv from "dotenv";
 dotenv.config();
-import axios from "axios"
-import mongoose from 'mongoose';
-import {LikedBook} from '../models/user/likedBookModel.js';
-import {LaterRead} from '../models/user/laterReadModel.js';
-const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
+import axios from "axios";
+import mongoose from "mongoose";
+import { LikedBook } from "../models/user/likedBookModel.js";
+import { LaterRead } from "../models/user/laterReadModel.js";
+import { BookRead } from "../models/bookReadModel.js";
 
+const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
 export const getBooks = asyncHandler(async (req, res) => {
   const { title, author } = req.query;
@@ -16,11 +17,11 @@ export const getBooks = asyncHandler(async (req, res) => {
     let query = {};
 
     if (title) {
-      query.title = { $regex: title, $options: 'i' }; 
+      query.title = { $regex: title, $options: "i" };
     }
 
     if (author) {
-      query.authors = { $in: [author] }; 
+      query.authors = { $in: [author] };
     }
 
     const books = await Book.find(query);
@@ -28,38 +29,52 @@ export const getBooks = asyncHandler(async (req, res) => {
     res.status(200).json(books);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
-
 
 export const getBookById = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
   try {
-    const book = await Book.findOne({ bookId });
+    // Convert bookId to a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ message: "Invalid book ID" });
+    }
+
+    const book = await Book.findById(bookId);
 
     if (!book) {
-      return res.status(404).json({ message: 'Book not found!' });
+      return res.status(404).json({ message: "Book not found!" });
     }
 
     res.status(200).json(book);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
-
 export const updateBook = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
-  const { title, authors, publisher, publishedDate, description, pageCount, categories, thumbnail, previewLink, isbn } = req.body;
+  const {
+    title,
+    authors,
+    publisher,
+    publishedDate,
+    description,
+    pageCount,
+    categories,
+    thumbnail,
+    previewLink,
+    isbn,
+  } = req.body;
 
   try {
     const book = await Book.findOne({ bookId });
 
     if (!book) {
-      return res.status(404).json({ message: 'Book not found!' });
+      return res.status(404).json({ message: "Book not found!" });
     }
 
     // Update the book fields
@@ -76,13 +91,12 @@ export const updateBook = asyncHandler(async (req, res) => {
 
     await book.save();
 
-    res.status(200).json({ message: 'Book updated successfully!', book });
+    res.status(200).json({ message: "Book updated successfully!", book });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
-
 
 export const deleteBook = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
@@ -91,18 +105,17 @@ export const deleteBook = asyncHandler(async (req, res) => {
     const book = await Book.findOne({ bookId });
 
     if (!book) {
-      return res.status(404).json({ message: 'Book not found!' });
+      return res.status(404).json({ message: "Book not found!" });
     }
 
     await book.remove();
 
-    res.status(200).json({ message: 'Book deleted successfully!' });
+    res.status(200).json({ message: "Book deleted successfully!" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
-
 
 export const getUserRating = asyncHandler(async (req, res) => {
   const { volumeId } = req.params;
@@ -123,10 +136,9 @@ export const getUserRating = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
-
 
 export const ratingBooks = asyncHandler(async (req, res) => {
   const { volumeId, userId, rating } = req.body;
@@ -137,16 +149,16 @@ export const ratingBooks = asyncHandler(async (req, res) => {
     if (userRating) {
       userRating.rating = rating;
       await userRating.save();
-      return res.status(200).json({ message: 'Rating updated successfully!' });
+      return res.status(200).json({ message: "Rating updated successfully!" });
     }
 
     userRating = new Book({ volumeId, userId, rating });
     await userRating.save();
 
-    res.status(201).json({ message: 'Rating submitted successfully!' });
+    res.status(201).json({ message: "Rating submitted successfully!" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
@@ -172,31 +184,6 @@ export const bookSearch = asyncHandler(async (req, res) => {
 });
 
 
-export const popularBooks = asyncHandler(async (req, res) => {
-  try {
-    
-    const query = 'bestseller'; 
-
-    const response = await axios.get(GOOGLE_BOOKS_API_URL, {
-      params: {
-        q: query, 
-        maxResults: 12, 
-      }
-    });
-
-    const books = response.data.items.map(item => ({
-      id: item.id,
-      title: item.volumeInfo.title,
-      author: item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Unknown Author',
-      thumbnail: item.volumeInfo.imageLinks?.thumbnail || '/fallback-image.jpg', // Fallback if no thumbnail is found
-    }));
-
-    res.json({ books });
-  } catch (error) {
-    console.error('Error fetching books:', error);
-    res.status(500).json({ message: 'Failed to fetch popular books' });
-  }
-});
 
 export const getLaterReads = asyncHandler(async (req, res) => {
   try {
@@ -235,7 +222,7 @@ export const getLikedBooks = asyncHandler(async (req, res) => {
     const likedDoc = await LikedBook.findById(userId).select("likedBooks");
 
     if (!likedDoc) {
-      return res.status(200).json({ likedBooks: [] }); // Return empty if none
+      return res.status(200).json({ likedBooks: [] });
     }
 
     res.status(200).json({ likedBooks: likedDoc.likedBooks });
@@ -247,14 +234,13 @@ export const getLikedBooks = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const likeBook = asyncHandler(async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const { bookId, title, authors, thumbnail } = req.body;
+    const { bookId, title, authors, thumbnail ,description } = req.body;
     const userId = req.user._id;
 
     if (!bookId || !title || !authors || !thumbnail) {
@@ -272,7 +258,7 @@ export const likeBook = asyncHandler(async (req, res) => {
     );
 
     if (existingIndex !== -1) {
-      likedDoc.likedBooks.splice(existingIndex, 1); // Remove if already liked
+      likedDoc.likedBooks.splice(existingIndex, 1);
       await likedDoc.save();
 
       return res.status(200).json({
@@ -281,7 +267,7 @@ export const likeBook = asyncHandler(async (req, res) => {
       });
     }
 
-    likedDoc.likedBooks.push({ bookId, title, authors, thumbnail });
+    likedDoc.likedBooks.push({ bookId, title, authors, thumbnail ,description});
     await likedDoc.save();
 
     res.status(200).json({
@@ -294,10 +280,9 @@ export const likeBook = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const laterRead = asyncHandler(async (req, res) => {
   try {
-    const { bookId, title, authors, thumbnail } = req.body;
+    const { bookId, title, authors, thumbnail,description } = req.body;
     const userId = req.user._id;
 
     if (!bookId) {
@@ -315,7 +300,7 @@ export const laterRead = asyncHandler(async (req, res) => {
     );
 
     if (existingIndex !== -1) {
-      // If the book is already in the list, remove it (toggle remove)
+    
       laterReadDoc.laterReads.splice(existingIndex, 1);
       await laterReadDoc.save();
       return res.status(200).json({
@@ -323,8 +308,8 @@ export const laterRead = asyncHandler(async (req, res) => {
         laterReads: laterReadDoc.laterReads,
       });
     } else {
-      // If the book is not in the list, add it (toggle add)
-      laterReadDoc.laterReads.push({ bookId, title, authors, thumbnail });
+    
+      laterReadDoc.laterReads.push({ bookId, title, authors, thumbnail,description });
       await laterReadDoc.save();
       return res.status(200).json({
         message: "Book added to Later Reads",
@@ -336,5 +321,58 @@ export const laterRead = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error: " + error.message });
   }
 });
+export const markBookAsRead = asyncHandler(async (req, res) => {
+  const { bookId } = req.params;
+  const userId = req.user._id;
 
+  try {
+    const alreadyRead = await BookRead.findOne({ userId, bookId });
 
+    if (!alreadyRead) {
+      await Book.findByIdAndUpdate(bookId, { $inc: { readCount: 1 } });
+
+      await BookRead.create({ userId, bookId });
+    }
+
+    res.status(200).json({ message: "Marked as read (if not already)" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to mark as read", error: error.message });
+  }
+});
+export const getTopRead = asyncHandler(async (req, res) => {
+  try {
+    const topBooks = await Book.find().sort({ readCount: -1 }).limit(4);
+
+  
+    res.json(topBooks);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch Top Reads" });
+  }
+});
+
+export const getMostLikedBooks = asyncHandler(async (req, res) => {
+  try {
+    const result = await LikedBook.aggregate([
+      { $unwind: "$likedBooks" },
+      {
+        $group: {
+          _id: "$likedBooks.bookId",
+          title: { $first: "$likedBooks.title" },
+          authors: { $first: "$likedBooks.authors" },
+          thumbnail: { $first: "$likedBooks.thumbnail" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 8 }, 
+    ]);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Failed to fetch most liked book:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});

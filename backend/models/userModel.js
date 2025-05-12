@@ -24,6 +24,12 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "default-avatar.jpg",
     },
+    phone: {
+      type: String,
+     
+      unique: true,   
+    },
+    
     cloudinaryPublicId: {
       type: String,
       default: null,

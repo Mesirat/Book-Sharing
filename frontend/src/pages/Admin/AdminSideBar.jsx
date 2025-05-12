@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LuLayoutDashboard } from "react-icons/lu"; // Example import, replace with your actual icon imports
+import { LuLayoutDashboard } from "react-icons/lu";
 import {
   CircleUserRound,
   LogOut,
@@ -12,10 +12,11 @@ import {
   BookPlus,
   FileCog,
   Newspaper,
-} from "lucide-react"; // Example imports
+  Users,
+} from "lucide-react"; 
 
 const SideBar = () => {
-  const location = useLocation(); // Get the current location (for active link)
+  const location = useLocation(); 
 
   const navLinks = [
     { to: "/admin", label: "Dashboard", Icon: LuLayoutDashboard },
@@ -25,16 +26,17 @@ const SideBar = () => {
       Icon: UserRoundCog,
     },
     { to: "/admin/bookManagement", label: "Book Management", Icon: FileCog },
+    { to: "/admin/groupManagement", label: "Group Management", Icon: Users },
     { to: "/admin/uploadBook", label: "Book Upload", Icon: BookPlus },
     { to: "/admin/addUsers", label: "Add Users", Icon: UserPlus },
     { to: "/admin/uploadBlog", label: "Anouncement", Icon: Newspaper },
     { to: "/admin/report", label: "User Reports", Icon: ClipboardList },
-    { to: "/admin/settings", label: "Settings", Icon: Settings },
+    
     { to: "/logout", label: "Logout", Icon: LogOut },
   ];
 
   return (
-    <div className="w-64 bg-gray-800 text-white p-4">
+    <div className="w-64 bg-gray-800 text-white p-4 mr-4">
       <h2 className="text-2xl font-bold mb-4">Admin Panel</h2>
       <ul>
         {navLinks.map(({ to, label, Icon }) => {

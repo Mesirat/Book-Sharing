@@ -7,7 +7,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
   const bookList = Array.isArray(books) ? books : [books];
 
   const handleCardClick = (book) => {
-    navigate(`/bookDetail`, { state: { book } });
+    navigate(`/bookDetail`,{state:{book}});
   };
 
   return (
@@ -20,7 +20,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
           ? book.authors.join(", ")
           : book.authors || "Unknown Author";
 
-        const bookId = book.bookId;
+        const bookId = book.bookId ? book.bookId : book._id;
 
         return (
           <div
@@ -60,7 +60,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRemove(book.bookId || book.id);
+                      onRemove(book.bookId || book._id);
                     }}
                     title="Remove from Read Later"
                     className="bg-white p-1 rounded-full hover:bg-red-100"

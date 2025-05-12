@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const JWT_EXPIRES_IN = "15m";
+const JWT_EXPIRES_IN = "2h";
 const REFRESH_TOKEN_EXPIRES_IN = "7d";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -38,7 +38,7 @@ const generateRefreshToken = (res, userId) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
     return refreshToken;

@@ -35,8 +35,13 @@ const token = useAuthStore.getState().token;
 
     const fetchPopularBooks = async () => {
       try {
-        const response = await api.get("/books/popularbooks");
-        setPopularBooks(response.data.books);
+        const response = await api.get("/books/mostLiked",{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response);
+        setPopularBooks(response.data);
       } catch (error) {
         console.error("Failed to fetch popular books.");
       }
@@ -58,16 +63,18 @@ const token = useAuthStore.getState().token;
 
   return (
     <div className="w-full container mx-auto ">
-      <h2 className="text-3xl font-bold mb-6 px-4">Liked Books</h2>
+     {likedBooks.length > 0 ? (
+  <div className="text-center mb-6">
+    <h2 className="text-3xl font-bold mb-2">❤️ Your Liked Books</h2>
+    <p className="text-lg text-gray-600">All the books you've liked in one place.</p>
+  </div>
+) : (
+  <div className="text-center mb-6">
+    <h2 className="text-3xl font-bold mb-2">📚 No Liked Books Yet</h2>
+    <p className="text-lg text-gray-600">You haven’t liked any books yet. Here are some popular ones you might enjoy:</p>
+  </div>
+)}
 
-      {likedBooks.length === 0 ? (
-        <>
-          <p className="text-center text-gray-700 mb-6">You haven’t liked any books yet. Here are some popular ones you might enjoy:</p>
-          <Cards books={popularBooks} /> 
-        </>
-      ) : (
-        <Cards books={likedBooks} /> 
-      )}
     </div>
   );
 };

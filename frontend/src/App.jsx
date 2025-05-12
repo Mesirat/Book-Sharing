@@ -36,6 +36,7 @@ import RoleManager from "./pages/Admin/RoleManager.jsx";
 import Report from "./pages/Admin/ReportManager.jsx";
 import ChangePassword from "./pages/Auth/ChangePassword.jsx";
 import UploadBlogs from "./pages/Admin/UploadBlogs.jsx";
+import GroupManager from "./pages/Admin/GroupManagement.jsx";
 // import { setupAxiosInterceptors } from "./utils/setupAxios";
 
 
@@ -176,6 +177,7 @@ function InnerApp() {
         }
       >
         <Route path="bookManagement" element={<BookManager />} />
+        <Route path="groupManagement" element={<GroupManager />} />
         <Route path="report" element={<Report />} />
         <Route path="roleManagement" element={<RoleManager />} />
         <Route path="addUsers" element={<UserRegistration />} />

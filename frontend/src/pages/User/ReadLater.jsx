@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../../Services/api";
 import { Loader } from "lucide-react";
-import Cards from "../../components/Cards"; 
+import Cards from "../../components/Cards";
 import { useAuthStore } from "../../store/authStore";
-
-
 
 const ReadLater = () => {
   const [readLater, setReadLater] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
   useEffect(() => {
     const fetchReadLater = async () => {
       try {
@@ -30,8 +28,12 @@ const token = useAuthStore.getState().token;
 
     const fetchPopularBooks = async () => {
       try {
-        const response = await api.get("/books/popularbooks");
-        setPopularBooks(response.data.books);
+        const response = await api.get("/books/topRead", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setPopularBooks(response.data);
       } catch (err) {
         setError("Failed to fetch popular books.");
       }
@@ -91,11 +93,20 @@ const token = useAuthStore.getState().token;
 
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-3xl font-bold mb-6 text-center">
-        {readLater.length > 0
-          ? "Your Later Read Books"
-          : "No books saved yet. Check out these popular books!"}
-      </h2>
+      {readLater.length > 0 ? (
+        <div className="text-center mb-6">
+        <h2 className="text-3xl font-bold mb-2">📖 Your Later Read Books</h2>
+        <p className="text-lg text-gray-600">Easily access the books you've saved to read later.</p>
+      </div>
+      
+      ) : (
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold mb-2">📚 Your Library is Empty</h2>
+          <p className="text-lg text-gray-600">
+            Check out some popular books to get started!
+          </p>
+        </div>
+      )}
 
       <Cards
         books={displayBooks}

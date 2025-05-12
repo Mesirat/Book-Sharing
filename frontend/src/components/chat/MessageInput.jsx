@@ -57,7 +57,7 @@ const MessageInput = ({ onSendMessage }) => {
 
      
       {file && (
-        <div className="absolute top-[-220px] left-0 w-full flex justify-center items-center z-50">
+        <div className="absolute top-[-200px] left-0 w-full flex justify-center items-center z-50">
           <div className="bg-white p-4 rounded-lg shadow-lg w-80 relative">
             <button
               className="absolute top-2 right-2 text-gray-500"

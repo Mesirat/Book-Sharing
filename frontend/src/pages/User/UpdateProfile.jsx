@@ -3,13 +3,13 @@ import { useAuthStore } from "../../store/authStore";
 import { Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-
+import api from "../../Services/api"
 const UpdateProfile = () => {
-  const { user, updateProfile, error, message, Loading, resetError } =
+  const { user, updateProfile, error, message, loading, resetError } =
     useAuthStore();
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
-    name: user?.name || "",
+    firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     phone: user?.phone || "",
     email: user?.email || "",
@@ -21,26 +21,25 @@ const UpdateProfile = () => {
     resetError();
   }, [resetError]);
 
+  useEffect(() => {
+    if (message) {
+      const timeout = setTimeout(() => {
+        navigate("/user/profile"); 
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [message, navigate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData({ ...formData, [name]: value });
 
-    if (name === "phone") {
-      const sanitizedPhone = value.replace(/[^0-9]/g, "");
-      const phoneNumber = parsePhoneNumberFromString(sanitizedPhone, "ET");
-      if (phoneNumber) {
-        setFormData((prev) => ({
-          ...prev,
-          country: phoneNumber.country || "",
-        }));
-      }
-    }
+    
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = "First name is required.";
+    if (!formData.firstName) newErrors.firstName = "First name is required.";
     if (!formData.email) newErrors.email = "Email is required.";
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Please enter a valid email.";
@@ -51,31 +50,40 @@ const UpdateProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       return;
     }
-
+  
     const formDataToSend = new FormData();
-    formDataToSend.append("userId", user._id);
-    formDataToSend.append("name", formData.name);
+   
+    formDataToSend.append("firstName", formData.firstName);
     formDataToSend.append("lastName", formData.lastName);
     formDataToSend.append("phone", formData.phone);
     formDataToSend.append("email", formData.email);
-
+  
     try {
-      await updateProfile(formDataToSend);
-      setFormData({
-        name: "",
-        lastName: "",
-        phone: "",
-        email: "",
+      useAuthStore.setState({ loading: true, error: null });
+      const token = useAuthStore.getState().token;
+ 
+      const response = await api.put(`users/updateProfile`, formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-      navigate("/user/profile");
+  
+      useAuthStore.setState({
+        user: response.data.user,
+        message: "Profile updated successfully!",
+        loading: false,
+      });
     } catch (err) {
-      console.error("Profile update failed:", err);
+      useAuthStore.setState({
+        loading: false,
+        error: err?.response?.data?.message || "Error updating profile",
+      });
     }
   };
 
@@ -84,6 +92,10 @@ const UpdateProfile = () => {
       <h1 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-2">
         Edit Profile
       </h1>
+
+      {message && <p className="text-green-600 mb-4 text-center">{message}</p>}
+      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+
       <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded mb-3 text-sm">
         <ul className="list-disc list-inside space-y-1 mt-2">
           <li>Use this form to update your profile information.</li>
@@ -94,7 +106,6 @@ const UpdateProfile = () => {
           </li>
         </ul>
       </div>
-      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -103,12 +114,14 @@ const UpdateProfile = () => {
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          {errors.firstName && (
+            <p className="text-red-500 text-sm">{errors.firstName}</p>
+          )}
         </div>
 
         <div>
@@ -159,14 +172,14 @@ const UpdateProfile = () => {
         <div className="mx-auto">
           <button
             type="submit"
-            disabled={Loading}
-            className={`w-full  px-4 py-2 rounded-full text-white font-semibold shadow transition ${
-              Loading
+            disabled={loading}
+            className={`w-full px-4 py-2 rounded-full text-white font-semibold shadow transition ${
+              loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-gray-800 hover:bg-gray-900 hover:text-green-400"
             }`}
           >
-            {Loading ? (
+            {loading ? (
               <Loader className="animate-spin mx-auto" size={20} />
             ) : (
               "Update Profile"

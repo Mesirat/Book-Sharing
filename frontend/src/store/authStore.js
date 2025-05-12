@@ -264,27 +264,7 @@ export const useAuthStore = create(
         }
       },
 
-      updateProfile: async (updatedFields) => {
-        set({ loading: true, error: null });
-        try {
-          const response = await get().makeRequest(
-            "put",
-            `${API_URL}/updateProfile`,
-            updatedFields
-          );
-          set({
-            user: response.data.user,
-            message: "Profile updated successfully!",
-            loading: false,
-          });
-        } catch (error) {
-          set({
-            loading: false,
-            error:
-              error?.response?.data?.message || "Error updating profile",
-          });
-        }
-      },
+
 
       updateProfilePicture: async (file) => {
         set({ loading: true, error: null });

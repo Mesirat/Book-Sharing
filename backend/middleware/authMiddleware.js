@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
 
-// Middleware to protect routes (only authenticated users can access)
+
 export const protect = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -52,7 +52,7 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Middleware to allow only admin users
+
 export const adminOnly = (req, res, next) => {
   if (req.user?.role === "admin") {
     return next();

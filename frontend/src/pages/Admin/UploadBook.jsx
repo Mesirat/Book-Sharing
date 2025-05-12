@@ -14,7 +14,7 @@ const UploadBook = () => {
     categories: "",
     description: "",
     publisher: "",
-    publishYear: "",
+    publishedYear: "",
     thumbnail: "",
     pdf: "",
   });

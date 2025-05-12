@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../Services/api";
 import { Loader } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { io } from "socket.io-client"; // Import Socket.io client
+import { io } from "socket.io-client";
 
-const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTerm }) => {
+const GroupCreate = ({
+  onClose,
+  isModalOpen,
+  fetchGroups,
+  currentPage,
+  searchTerm,
+}) => {
   const [groupName, setGroupName] = useState("");
-  const [description, setDescription] = useState("");
+
   const [profilePic, setProfilePic] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { user } = useAuthStore();
-
+  const token = useAuthStore.getState().token;
   const socket = io("http://localhost:5000");
 
   useEffect(() => {
@@ -24,7 +30,7 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "groupName") setGroupName(value);
-    if (name === "description") setDescription(value);
+
     setError("");
   };
 
@@ -39,38 +45,39 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!groupName.trim() || !description.trim() || !profilePic) {
+    if (!groupName.trim() || !profilePic) {
       setError("All fields are required.");
       return;
     }
-  
+
     setLoading(true);
     const formData = new FormData();
-    formData.append('groupName', groupName);
-    formData.append('description', description);
-    formData.append('creator', user?._id);
-    formData.append('profilePic', profilePic);
-  
+    formData.append("groupName", groupName);
+    formData.append("creator", user?._id);
+    formData.append("profilePic", profilePic);
+
     try {
-      const response = await axios.post("http://localhost:5000/groups/createGroup", formData, {
+      const response = await api.post("/groups/createGroup", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-  
+
       socket.emit("newGroupAdded", response.data);
 
       fetchGroups(currentPage, searchTerm);
-  
+
       setGroupName("");
-      setDescription("");
+
       setProfilePic("");
       setError("");
       setSuccess("Group created successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error creating group");
+      setError(
+        err.response?.data?.message || err.message || "Error creating group"
+      );
     } finally {
       setLoading(false);
     }
@@ -78,24 +85,28 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
 
   const handleCancel = () => {
     setGroupName("");
-    setDescription("");
+
     setProfilePic(null);
     setError("");
     setSuccess("");
     onClose();
   };
 
-  // Conditionally render the modal based on `isModalOpen`
   if (!isModalOpen) return null;
 
   return (
     <div className="group-create-modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-        <h2 className="text-3xl font-semibold text-center mb-6">Create a New Group</h2>
+        <h2 className="text-3xl font-semibold text-center mb-6">
+          Create a New Group
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="groupName" className="block text-lg font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="groupName"
+              className="block text-lg font-medium text-gray-700 mb-1"
+            >
               Group Name
             </label>
             <input
@@ -105,27 +116,17 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
               value={groupName}
               onChange={handleInputChange}
               placeholder="Enter group name"
-              className={`w-full p-3 border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${error ? "border-red-500" : "border-gray-300"}`}
+              className={`w-full p-3 border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                error ? "border-red-500" : "border-gray-300"
+              }`}
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-lg font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={description}
-              onChange={handleInputChange}
-              placeholder="Enter group description"
-              rows="4"
-              className={`w-full p-3 border-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${error ? "border-red-500" : "border-gray-300"}`}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="profilePic" className="block text-lg font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="profilePic"
+              className="block text-lg font-medium text-gray-700 mb-1"
+            >
               Profile Picture
             </label>
             <input
@@ -150,7 +151,11 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
               className="w-full py-3 bg-blue-500 text-white text-lg font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
             >
-              {loading ? <Loader className="animate-spin mx-auto" /> : "Create Group"}
+              {loading ? (
+                <Loader className="animate-spin mx-auto" />
+              ) : (
+                "Create Group"
+              )}
             </button>
           </div>
         </form>
@@ -163,4 +168,3 @@ const GroupCreate = ({ onClose, isModalOpen ,fetchGroups, currentPage, searchTer
 };
 
 export default GroupCreate;
-

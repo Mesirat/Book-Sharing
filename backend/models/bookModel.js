@@ -31,6 +31,9 @@ const bookSchema = new mongoose.Schema(
       type: String,
       default: "/assets/default-thumbnail.jpg",
     },
+    cloudinaryPublicId: {
+      type: String, // Store Cloudinary public ID for thumbnail image
+    },
     averageRating: {
       type: Number,
       default: 0,
@@ -50,13 +53,5 @@ const bookSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-bookSchema.methods.incrementReadCount = async function () {
-  try {
-    this.readCount += 1;
-    await this.save();
-  } catch (err) {
-    console.error("Error incrementing read count:", err);
-  }
-};
 
 export const Book = mongoose.model("Book", bookSchema);

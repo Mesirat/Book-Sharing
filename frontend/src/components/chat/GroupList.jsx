@@ -5,17 +5,18 @@ import { useAuthStore } from "../../store/authStore";
 import GroupCreate from "./GroupCreate";
 import { toast, ToastContainer } from "react-toastify";
 import api from "../../Services/api";
+
 const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joinedGroup, setJoinedGroup] = useState([]);
   const [isJoining, setIsJoining] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [error, setError] = useState(null);
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const debounceTimeout = useRef(null);
-const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
   const socket = useRef(null);
 
   const fetchGroups = async (search = "") => {
@@ -26,7 +27,6 @@ const token = useAuthStore.getState().token;
           Authorization: `Bearer ${token}`,
         },
       });
-  
       setGroups(response.data.groups || []);
     } catch (error) {
       if (error.response?.status === 404) {
@@ -39,7 +39,6 @@ const token = useAuthStore.getState().token;
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     if (!socket.current) {
@@ -84,32 +83,16 @@ const token = useAuthStore.getState().token;
     };
   }, [searchTerm, user._id]);
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(
-      () => fetchGroups(e.target.value),
-      500
-    );
-  };
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-
   const handleJoinGroup = async (groupId, groupName) => {
     try {
       setIsJoining(groupId);
-      const response = await fetch(
-        `http://localhost:5000/groups/join/${groupId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ userId: user._id }),
-        }
-      );
+      const response = await api.post(`/groups/join/${groupId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user._id }),
+      });
 
       if (!response.ok) throw new Error("Failed to join group");
 
@@ -139,17 +122,13 @@ const token = useAuthStore.getState().token;
   const handleLeaveGroup = async (groupId, groupName) => {
     try {
       setIsJoining(groupId);
-      const response = await fetch(
-        `http://localhost:5000/groups/leave/${groupId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ userId: user._id }),
-        }
-      );
+      const response = await api.delete(`/groups/leave/${groupId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user._id }),
+      });
 
       if (!response.ok) throw new Error("Failed to leave group");
 
@@ -189,94 +168,76 @@ const token = useAuthStore.getState().token;
     return <div className="text-red-500">{error}</div>;
   }
 
+  const groupsNotJoined = groups.filter(
+    (group) => !group.members?.includes(user._id)
+  );
+
   return (
-    <div className="bg-gray-100 rounded-lg w-[90vw] shadow-lg mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">Groups</h2>
-
-      <div className="flex justify-end mb-6">
-        <button
-          onClick={openModal}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all"
-        >
-          Create Group
-        </button>
+    <div className="bg-gray-100  w-[90vw]   p-6">
+      <div className="p-4">
+        <h1 className="text-2xl">Suggested Groups for You</h1>
       </div>
 
-      <div className="flex justify-center mb-6">
-        <input
-          type="text"
-          placeholder="Search groups..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-md"
-        />
-      </div>
+      {groupsNotJoined.length > 0 ? (
+        <div className="w-full overflow-x-auto hide-scrollbar">
+          <div className="flex w-max space-x-10 pb-4 px-1 hide-scrollbar">
+            {groupsNotJoined.map((group) => {
+              const isMember = group.members?.includes(user._id);
+              const memberCount = group.memberCount || 0;
 
-      {groups.length > 0 ? (
-        <div className="flex overflow-x-auto space-x-4 pb-4 px-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
-          {groups.map((group) => {
-            const isMember = group.members?.includes(user._id);
-            const memberCount = group.memberCount || 0;
-
-            return (
-              <div
-                key={group._id}
-                className="min-w-[300px] flex flex-col justify-between p-4 bg-white border rounded-lg shadow-md hover:shadow-xl transition-all"
-              >
+              return (
                 <div
-                  className="flex items-center space-x-4 cursor-pointer"
-                  onClick={() => handleGroupClick(group)}
+                  key={group._id}
+                  className="flex-shrink-0 w-[220px] flex flex-col justify-between p-4 bg-white border rounded-lg shadow-md hover:shadow-xl transition-all"
                 >
-                  <img
-                    src={`${group.profilePic}`}
-                    alt={group.groupName}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="flex flex-col">
+                  <div
+                    className="flex flex-col items-center space-x-4 cursor-pointer"
+                    onClick={() => handleGroupClick(group)}
+                  >
+                    <img
+                      src={`${group.profilePic}`}
+                      alt={group.groupName}
+                      className="w-36 h-36 rounded-full object-cover"
+                    />
+
                     <span className="font-semibold text-lg">
                       {group.groupName}
                     </span>
                     <span className="text-gray-500">{memberCount} members</span>
                   </div>
+                  <div className="mt-2">
+                    {!isMember ? (
+                      <button
+                        onClick={() =>
+                          handleJoinGroup(group._id, group.groupName)
+                        }
+                        disabled={isJoining === group._id}
+                        className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:text-green-500 transition-all disabled:opacity-50"
+                      >
+                        Join
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleLeaveGroup(group._id, group.groupName)
+                        }
+                        disabled={isJoining === group._id}
+                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all disabled:opacity-50"
+                      >
+                        Leave
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-4">
-                  {isMember ? (
-                    <button
-                      onClick={() =>
-                        handleLeaveGroup(group._id, group.groupName)
-                      }
-                      disabled={isJoining === group._id}
-                      className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all disabled:opacity-50"
-                    >
-                      Leave
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        handleJoinGroup(group._id, group.groupName)
-                      }
-                      disabled={isJoining === group._id}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all disabled:opacity-50"
-                    >
-                      Join
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : (
         <p className="text-center text-gray-500">No groups found.</p>
       )}
 
       <ToastContainer />
-      <GroupCreate
-        onClose={closeModal}
-        isModalOpen={isModalOpen}
-        fetchGroups={fetchGroups}
-        searchTerm={searchTerm}
-      />
     </div>
   );
 };

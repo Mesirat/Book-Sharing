@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import {Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Check, ThumbsUp, Star } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
@@ -9,6 +9,7 @@ const API_URL = "http://localhost:5000/books";
 const BookDetail = () => {
   const location = useLocation();
   const { book } = location.state || {};
+  
   const user = useAuthStore((state) => state.user);
 
   const [likedBooks, setLikedBooks] = useState([]);
@@ -17,7 +18,8 @@ const BookDetail = () => {
   const [averageRating, setAverageRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
-const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
+
   if (!book) {
     return (
       <div className="text-center text-gray-500 mt-10">
@@ -59,20 +61,19 @@ const token = useAuthStore.getState().token;
       const response = await axios.put(
         `${API_URL}/${endpoint}`,
         {
-          bookId: book._id,
+           bookId : book.bookId ? book.bookId : book._id,
           title: book.title,
           authors: Array.isArray(book.authors)
-          ? book.authors.join(", ")
-          : typeof book.authors === "string"
-          ? book.authors
-          : "Unknown Author",
-        
-          thumbnail:
-            book.thumbnail || "/assets/6.jpg",
-          publisher : book.publisher || "Unknown Publisher",
-          publishYear : book.publishedYear?.split("-")[0] || "N/A",
-          description :
-              book.description || "No description available.",
+            ? book.authors.join(", ")
+            : typeof book.authors === "string"
+            ? book.authors
+            : "Unknown Author",
+
+          thumbnail: book.thumbnail || "/assets/6.jpg",
+          publisher: book.publisher || "Unknown Publisher",
+          publishYear: book.publishedYear?.split("-")[0] || "N/A",
+          description: book.description || "No description available.",
+          
         },
         {
           headers: {
@@ -100,14 +101,12 @@ const token = useAuthStore.getState().token;
     handleAction("laterReads", book, "ReadLater", setLaterReads, "laterReads");
   };
 
- 
-
   const handleRating = async (rating) => {
     try {
       await axios.post(
         `${API_URL}/rate`,
         {
-          bookId: book._id,
+           bookId : book.bookId ? book.bookId : book._id,
           userId: user._id,
           rating,
         },
@@ -127,17 +126,19 @@ const token = useAuthStore.getState().token;
   };
 
   const thumbnail = book.thumbnail;
-  const title =  book.title;
+  const title = book.title;
   const authors = Array.isArray(book.authors)
-  ? book.authors.join(", ")
-  : book.authors || "Unknown Author";
-  const publisher =  book.publisher;
-  const publishYear =  book.publishYear?.split("-")[0] || "N/A";
-  const description = book.description || "No description available."  ;
+    ? book.authors.join(", ")
+    : book.authors || "Unknown Author";
+  const publisher = book.publisher;
+  const publishYear = book.publishYear?.split("-")[0] || "N/A";
+  const description = book.description || "No description available.";
 
-  const isLiked = likedBooks.some((likedBook) => likedBook.bookId === book._id);
+  const isLiked = likedBooks.some(
+    (likedBook) => likedBook.bookId === book.bookId ||likedBook.bookId ===  book._id
+  );
   const isLaterRead = laterReads.some(
-    (laterRead) => laterRead.bookId === book._id
+    (laterRead) => laterRead.bookId === book.bookId ||laterRead.bookId === book._id
   );
 
   return (
@@ -165,19 +166,19 @@ const token = useAuthStore.getState().token;
               <button
                 onClick={handleLike}
                 disabled={isProcessing}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
+                className={`flex items-center gap-2 p-2  transition
                   ${
                     isLiked
-                      ? "bg-red-100 text-red-700 border border-red-400"
-                      : "bg-white text-gray-800 border border-gray-300 hover:bg-red-200"
-                  } disabled:opacity-50 shadow-sm`}
+                      ? " text-red-700 "
+                      : " text-gray-800  hover:bg-red-200"
+                  } disabled:opacity-50 `}
               >
                 <ThumbsUp
                   className="w-5 h-5"
                   fill={isLiked ? "red" : "none"}
                   strokeWidth={1.5}
                 />
-                {isLiked ? "Liked" : "Like"}
+                {isLiked ? "Liked" : ""}
               </button>
 
               <button
@@ -186,8 +187,8 @@ const token = useAuthStore.getState().token;
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
                   ${
                     isLaterRead
-                      ? "bg-green-100 text-green-700 border border-green-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
+                      ? "bg-gray-100 text- border border-green-400 cursor-not-allowed"
+                      : "bg-secondary  hover:bg-gray-700 hover:text-white"
                   } disabled:opacity-50 shadow-sm`}
               >
                 {isLaterRead && <Check className="w-4 h-4" />}
@@ -195,8 +196,8 @@ const token = useAuthStore.getState().token;
               </button>
 
               <Link
-                to={`/readbook/${book._id}`}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                to={`/readbook/${book.bookId ? book.bookId : book._id}`}
+                className="px-4 py-2 bg-secondary  rounded hover:bg-gray-600 hover:text-white"
               >
                 Read Now
               </Link>

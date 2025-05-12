@@ -16,9 +16,10 @@ import nodemailer from "nodemailer";
 import { LikedBook } from "../models/user/likedBookModel.js";
 import { LaterRead } from "../models/user/laterReadModel.js";
 import { Group } from "../models/groupModel.js";
-import {v2 as cloudinary} from "cloudinary";
-import { generateToken,generateRefreshToken } from "../utils/generateToken.js";
+import { v2 as cloudinary } from "cloudinary";
+import { generateToken, generateRefreshToken } from "../utils/generateToken.js";
 import axios from "axios";
+import {Report} from "../models/reportModel.js";
 const validateFields = (fields) => {
   for (const [key, value] of Object.entries(fields)) {
     if (!value) {
@@ -27,17 +28,18 @@ const validateFields = (fields) => {
   }
 };
 
-
 export const registerUser = async (req, res) => {
-  const { firstName,lastName, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "User already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     }
 
-    const user = new User({ firstName,lastName, email, password });
+    const user = new User({ firstName, lastName, email, password });
     await user.save();
 
     const token = generateToken(res, user._id);
@@ -59,7 +61,11 @@ export const registerUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Register error:", error);
-    res.status(400).json({ success: false, message: "User registration failed.", error: error.message });
+    res.status(400).json({
+      success: false,
+      message: "User registration failed.",
+      error: error.message,
+    });
   }
 };
 
@@ -73,28 +79,32 @@ export const logIn = asyncHandler(async (req, res) => {
 
     if (!user) {
       console.error("Login failed: User not found for email:", email);
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
     }
 
     if (isAdmin && user.role !== "admin") {
       console.error("Login failed: User is not an admin:", email);
-      return res.status(403).json({ success: false, message: "Access denied: Admins only" });
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied: Admins only" });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      console.error("Login failed: Invalid password for email:", email);
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      console.error("Login failed: Invalid Credentials ");
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
     }
 
     const token = generateToken(res, user._id);
     const refreshToken = generateRefreshToken(res, user._id);
-    
+
     user.lastLogin = new Date();
     user.refreshToken = refreshToken;
     await user.save();
-
-  
 
     res.status(200).json({
       success: true,
@@ -111,7 +121,6 @@ export const logIn = asyncHandler(async (req, res) => {
       },
       mustChangePassword: user.mustChangePassword,
     });
-    
   } catch (error) {
     console.error("Login error:", error);
     res.status(400).json({ success: false, message: error.message });
@@ -130,7 +139,12 @@ export const logOut = asyncHandler(async (req, res) => {
         console.warn("User not found for ID:", req.user._id);
       }
     } else {
-      console.warn("No user in logout request, clearing cookies only. Headers:", req.headers, "Cookies:", req.cookies);
+      console.warn(
+        "No user in logout request, clearing cookies only. Headers:",
+        req.headers,
+        "Cookies:",
+        req.cookies
+      );
     }
 
     res.clearCookie("token", {
@@ -157,7 +171,9 @@ export const getAllProgress = asyncHandler(async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
       console.error("Invalid user ID in getAllProgress:", req.user._id);
-      return res.status(400).json({ success: false, message: "Invalid user ID format" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid user ID format" });
     }
 
     const progress = await ReadingProgress.find({ user: req.user._id })
@@ -165,21 +181,20 @@ export const getAllProgress = asyncHandler(async (req, res) => {
       .lean();
 
     if (!progress || progress.length === 0) {
-    
       return res.status(200).json({ success: true, progress: [] });
     }
 
     res.json({ success: true, progress });
   } catch (error) {
     console.error("Get all progress error:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch reading progress" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch reading progress" });
   }
 });
 
 export const getAllBlogs = asyncHandler(async (req, res) => {
   try {
-    
-
     const blogs = await News.find().sort({ date: -1 });
     res.status(200).json({ success: true, blogs });
   } catch (error) {
@@ -187,11 +202,6 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch blogs" });
   }
 });
-
-
-
-
-
 
 export const verifyEmail = asyncHandler(async (req, res) => {
   try {
@@ -227,8 +237,6 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 export const getProfile = asyncHandler(async (req, res) => {
   const user = {
     _id: req.user._id,
@@ -241,7 +249,8 @@ export const getProfile = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = async (req, res) => {
-  const { userId, name, lastName, phone, email } = req.body;
+  const { firstName, lastName, phone, email } = req.body;
+  const userId = req.user._id;
 
   try {
     const user = await User.findById(userId);
@@ -258,38 +267,40 @@ export const updateProfile = async (req, res) => {
           .status(400)
           .json({ success: false, message: "Email already in use." });
       }
-      user.email = email;
     }
 
-    if (name && name.trim()) user.name = name.trim();
-    if (lastName && lastName.trim()) user.LastName = lastName.trim();
-    if (phone && phone.trim()) user.phone = phone.trim();
-    if (country && country.trim()) user.country = country.trim();
+    const updateData = {};
+    if (firstName && firstName.trim()) updateData.firstName = firstName.trim();
+    if (lastName && lastName.trim()) updateData.lastName = lastName.trim();
+    if (phone && phone.trim()) updateData.phone = phone.trim();
+    if (email && email.trim()) updateData.email = email.trim();
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       success: true,
       user: {
-        _id: user._id,
-        name: user.name,
-        lastName: user.LastName,
-        email: user.email,
-        phone: user.phone,
-        country: user.country,
-        role: user.role,
+        _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        country: updatedUser.country,
+        role: updatedUser.role,
+        profilePic: updatedUser.profileImage,
       },
       message: "Profile updated successfully!",
     });
   } catch (err) {
     console.error("Update profile error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to update profile",
-        error: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
+      error: err.message,
+    });
   }
 };
 
@@ -352,13 +363,11 @@ export const refreshToken = asyncHandler(async (req, res) => {
 });
 export const checkAuth = asyncHandler(async (req, res) => {
   try {
-   
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    
     const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded || !decoded.id) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -366,10 +375,11 @@ export const checkAuth = asyncHandler(async (req, res) => {
 
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    
     res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Error in checkAuth:", error);
@@ -379,9 +389,6 @@ export const checkAuth = asyncHandler(async (req, res) => {
     });
   }
 });
-
-
-
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -442,7 +449,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const Contact = asyncHandler(async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -473,19 +479,16 @@ export const Contact = asyncHandler(async (req, res) => {
       .json({ success: true, message: "Message sent successfully!" });
   } catch (error) {
     console.error("Contact error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to send message",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Failed to send message",
+      error: error.message,
+    });
   }
 });
 
 export const updateProfilePicture = asyncHandler(async (req, res) => {
-  const localFilePath = req.files?.thumbnail?.[0]?.path; 
-
+  const localFilePath = req.files?.thumbnail?.[0]?.path;
 
   if (!req.user || !req.user._id) {
     return res.status(401).json({ success: false, message: "Not authorized" });
@@ -530,7 +533,7 @@ export const updateProfilePicture = asyncHandler(async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Server error: " + error.message });
-  } 
+  }
 });
 
 export const updateProgress = asyncHandler(async (req, res) => {
@@ -574,7 +577,6 @@ export const getProgress = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Failed to fetch reading progress" });
   }
 });
-
 
 export const changePassword = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -622,6 +624,9 @@ export const streamPDF = asyncHandler(async (req, res) => {
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=${publicId}.pdf`);
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     response.data.pipe(res);
   } catch (err) {
@@ -671,11 +676,10 @@ export const getUserStats = asyncHandler(async (req, res) => {
 
     res.json({
       success: true,
-      
-        likedBook,
-        groupsJoined,
-        laterRead,
-      
+
+      likedBook,
+      groupsJoined,
+      laterRead,
     });
   } catch (error) {
     console.error("Get user stats error:", error);
@@ -684,9 +688,6 @@ export const getUserStats = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Failed to fetch user stats" });
   }
 });
-
-
-
 
 export const getUserById = async (req, res) => {
   try {
@@ -722,8 +723,44 @@ export const createUser = async ({
     return { exists: true };
   }
 
-  const user = new User({ firstName, lastName, email, password, mustChangePassword });
+  const user = new User({
+    firstName,
+    lastName,
+    email,
+    password,
+    mustChangePassword,
+  });
   await user.save();
 
   return { exists: false, user };
 };
+export const submitReport = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ success: false, message: "Not authorized" });
+  }
+
+  const uploaded = req.files?.thumbnail?.[0]?.path || null;
+
+
+  try {
+    const newReport = await Report.create({
+      user: req.user._id,
+      type: req.body.type,
+      description: req.body.description,
+      screenshotUrl: uploaded,
+     
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Report submitted successfully",
+      report: newReport,
+    });
+  } catch (error) {
+    console.error("Error submitting report:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error: " + error.message });
+  }
+});
+

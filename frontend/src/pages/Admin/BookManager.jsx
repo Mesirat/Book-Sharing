@@ -1,34 +1,29 @@
 import { useEffect, useState } from "react";
 import api from "../../Services/api";
-import { Link } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-import Cookies from 'js-cookie';
 import { useAuthStore } from "../../store/authStore";
+
 const BookManager = () => {
   const [books, setBooks] = useState([]);
   const [editingBook, setEditingBook] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [selectedCategory, setSelectedCategory] = useState(""); // Filter by category
-  const [selectedAuthor, setSelectedAuthor] = useState(""); // Filter by author
+  const [searchQuery, setSearchQuery] = useState(""); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const API_URL = "http://localhost:5000";
- 
   const token = useAuthStore.getState().token;
 
-
-const fetchBooks = async () => {
-  try {
-    const res = await api.get(`/admin/books`, {
-      headers: {
-        Authorization: `Bearer ${token}`,  
-      },
-      withCredentials: true,
-    });
-    setBooks(res.data);
-  } catch (err) {
-    console.error("Error fetching books:", err);
-  }
-};
-
+  const fetchBooks = async () => {
+    try {
+      const res = await api.get(`/admin/books`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+      setBooks(res.data);
+    } catch (err) {
+      console.error("Error fetching books:", err);
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this book?")) return;
@@ -39,7 +34,6 @@ const fetchBooks = async () => {
         },
         withCredentials: true,
       });
-      
       fetchBooks();
     } catch (err) {
       console.error("Error deleting book:", err);
@@ -48,22 +42,53 @@ const fetchBooks = async () => {
 
   const handleEdit = (book) => {
     setEditingBook({ ...book });
+    setIsModalOpen(true); 
+  };
+
+  const handleChange = (e) => {
+    const { name, files, value } = e.target;
+    if (files) {
+      setEditingBook({
+        ...editingBook,
+        [name]: files[0], 
+      });
+    } else {
+      setEditingBook({
+        ...editingBook,
+        [name]: value,
+      });
+    }
   };
 
   const handleUpdate = async () => {
     try {
-      await api.put(
-        `/admin/books/${editingBook._id}`,
-        editingBook,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
+      const formData = new FormData();
+
+      Object.entries(editingBook).forEach(([key, value]) => {
+        if (key !== "thumbnail" && key !== "pdfLink") {
+          formData.append(key, value);
         }
-      );
-      
+      });
+
+      if (editingBook.thumbnail) {
+        formData.append("thumbnail", editingBook.thumbnail);
+      }
+
+      if (editingBook.pdfLink) {
+        formData.append("pdf", editingBook.pdfLink);
+      }
+  
+
+      await api.put(`/admin/books/${editingBook._id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
+
       setEditingBook(null);
+      setIsModalOpen(false);
       fetchBooks();
     } catch (err) {
       console.error("Error updating book:", err);
@@ -105,61 +130,88 @@ const fetchBooks = async () => {
           className="w-full p-2 border rounded"
         />
       </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-md w-1/2">
+            <h3 className="font-semibold text-lg mb-2">Edit Book</h3>
+            {Object.entries(editingBook).map(([key, value]) => {
+              if (
+                [
+                  "_id",
+                  "__v",
+                  "createdAt",
+                  "updatedAt",
+                  "readCount",
+                  "ratingsCount",
+                  "averageRating",
+                  "cloudinaryPublicId",
+                ].includes(key)
+              ) {
+                return null;
+              }
 
-      {editingBook && (
-        <div className="border p-4 mb-4 bg-gray-100 rounded">
-          <h3 className="font-semibold text-lg mb-2">Edit Book</h3>
-          {Object.entries(editingBook).map(([key, value]) => {
-            if (["_id", "__v", "createdAt", "updatedAt"].includes(key))
-              return null;
+              return (
+                <div key={key} className="mb-2">
+                  <label className="block mb-1 font-medium">
+                    {key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (s) => s.toUpperCase())}
+                  </label>
 
-            return (
-              <div key={key} className="mb-2">
-                <label className="block mb-1 font-medium">
-                  {key
-                    .replace(/([A-Z])/g, " $1")
-                    .replace(/^./, (s) => s.toUpperCase())}
-                </label>
+                  {key === "thumbnail" ? (
+                    <div>
+                      <input
+                        type="file"
+                        name="thumbnail"
+                        accept="image/*"
+                        onChange={handleChange}
+                        className="w-full file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                    </div>
+                  ) : key === "pdfLink" ? (
+                    <div>
+                      <input
+                        type="file"
+                        name="pdfLink"
+                        accept=".pdf"
+                        onChange={handleChange}
+                        className="w-full file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={Array.isArray(value) ? value.join(", ") : value}
+                      onChange={(e) =>
+                        setEditingBook({
+                          ...editingBook,
+                          [key]: Array.isArray(value)
+                            ? e.target.value.split(",").map((s) => s.trim())
+                            : e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border rounded"
+                    />
+                  )}
+                </div>
+              );
+            })}
 
-                {Array.isArray(value) ? (
-                  <input
-                    type="text"
-                    value={value.join(", ")}
-                    onChange={(e) =>
-                      setEditingBook({
-                        ...editingBook,
-                        [key]: e.target.value.split(",").map((s) => s.trim()),
-                      })
-                    }
-                    className="w-full p-2 border rounded"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={(e) =>
-                      setEditingBook({ ...editingBook, [key]: e.target.value })
-                    }
-                    className="w-full p-2 border rounded"
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-4">
             <button
-              onClick={handleUpdate}
-              className="px-4 py-1 bg-green-600 text-white rounded"
-            >
-              Update
-            </button>
-            <button
-              onClick={() => setEditingBook(null)}
-              className="px-4 py-1 bg-gray-500 text-white rounded"
-            >
-              Cancel
-            </button>
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-1 bg-gray-500 text-white rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-1 bg-gray-800 text-white rounded"
+              >
+                Update
+              </button>
+             
+            </div>
           </div>
         </div>
       )}
@@ -208,12 +260,14 @@ const fetchBooks = async () => {
                   </button>
                 </div>
                 {book.pdfLink && (
-                  <Link
-                    to={`/readbook/${book._id}`}
+                  <a
+                    href={book.pdfLink}
                     className="mt-16 px-4 py-2 bg-gray-800 text-white rounded hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Read Now
-                  </Link>
+                  </a>
                 )}
               </div>
             </div>
