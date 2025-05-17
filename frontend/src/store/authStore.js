@@ -78,12 +78,12 @@ export const useAuthStore = create(
         { headers: { "Content-Type": "application/json" } }
       );
   
-      const { success, user, token, refreshToken } = response.data;
-  
+      const { success, user, token, refreshToken, mustChangePassword } = response.data;
+
       if (success && user && token && refreshToken) {
         Cookies.set("token", token, { expires: 1 });
         Cookies.set("refreshToken", refreshToken, { expires: 7 });
-  
+      
         set({
           user,
           isAuthenticated: true,
@@ -93,9 +93,11 @@ export const useAuthStore = create(
           loading: false,
           error: null,
         });
-  
-        return { user, token, mustChangePassword: response.data.mustChangePassword };
-      } else {
+      
+     
+        return { user, token, mustChangePassword };
+      }
+      else {
         throw new Error("Login failed: Missing response data");
       }
     } catch (error) {

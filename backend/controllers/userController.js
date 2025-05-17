@@ -5,12 +5,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { ReadingProgress } from "../models/user/readingProgressModel.js";
 import { News } from "../models/user/newsModel.js";
-import {
-  sendPasswordResetEmail,
-  sendResetSuccessEmail,
-  sendVerificationEmail,
-  sendWelcomeEmail,
-} from "../mailtrap/emails.js";
+
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { LikedBook } from "../models/user/likedBookModel.js";
@@ -114,10 +109,12 @@ export const logIn = asyncHandler(async (req, res) => {
       user: {
         _id: user._id,
         firstName: user.firstName,
+        lastName:user.lastName,
         email: user.email,
         role: user.role,
         lastLogin: user.lastLogin,
         profileImage: user.profileImage,
+        phone:user.phone,
       },
       mustChangePassword: user.mustChangePassword,
     });
@@ -237,16 +234,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   }
 });
 
-export const getProfile = asyncHandler(async (req, res) => {
-  const user = {
-    _id: req.user._id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-    profilePic: req.user.profileImage,
-  };
-  res.status(200).json({ success: true, user });
-});
+
 
 export const updateProfile = async (req, res) => {
   const { firstName, lastName, phone, email } = req.body;
@@ -390,102 +378,8 @@ export const checkAuth = asyncHandler(async (req, res) => {
   }
 });
 
-export const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
 
-    const resetToken = crypto.randomBytes(20).toString("hex");
-    const resetTokenExpiresAt = Date.now() + 15 * 60 * 1000;
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpiresAt = resetTokenExpiresAt;
 
-    await user.save({ validateBeforeSave: false });
-
-    await sendPasswordResetEmail(
-      user.email,
-      `http://localhost:3000/resetPassword/${resetToken}`
-    );
-
-    res
-      .status(200)
-      .json({ success: true, message: "Password reset email sent" });
-  } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(400).json({ success: false, message: error.message });
-  }
-});
-
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { token } = req.params;
-  const { password } = req.body;
-  try {
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpiresAt: { $gt: Date.now() },
-    });
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid or expired reset token" });
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpiresAt = undefined;
-    await user.save();
-    await sendResetSuccessEmail(user.email);
-    res
-      .status(200)
-      .json({ success: true, message: "Password reset successfully" });
-  } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-export const Contact = asyncHandler(async (req, res) => {
-  const { name, email, message } = req.body;
-
-  if (!name || !email || !message) {
-    return res
-      .status(400)
-      .json({ success: false, message: "All fields are required" });
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: email,
-      to: process.env.EMAIL_RECEIVER,
-      subject: `Contact Form Submission from ${name}`,
-      text: message,
-    });
-
-    res
-      .status(200)
-      .json({ success: true, message: "Message sent successfully!" });
-  } catch (error) {
-    console.error("Contact error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to send message",
-      error: error.message,
-    });
-  }
-});
 
 export const updateProfilePicture = asyncHandler(async (req, res) => {
   const localFilePath = req.files?.thumbnail?.[0]?.path;

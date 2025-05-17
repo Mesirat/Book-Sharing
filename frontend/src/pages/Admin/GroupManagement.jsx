@@ -8,6 +8,7 @@ const GroupManager = () => {
   const [editingGroup, setEditingGroup] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [profilePicPreview, setProfilePicPreview] = useState(null); // For image preview
+  const [loading, setLoading] = useState(false);
 
   const token = useAuthStore.getState().token;
 
@@ -19,7 +20,7 @@ const GroupManager = () => {
         },
         withCredentials: true,
       });
-    
+
       setGroups(Array.isArray(res.data.groups) ? res.data.groups : []);
     } catch (err) {
       console.error("Error fetching groups:", err);
@@ -44,24 +45,22 @@ const GroupManager = () => {
   const handleEdit = (group) => {
     setEditingGroup({ ...group });
     if (group.profilePic) {
-      setProfilePicPreview(group.profilePic); 
+      setProfilePicPreview(group.profilePic);
     }
   };
 
   const handleUpdate = async () => {
     try {
       const formData = new FormData();
-  
-    
+
       if (editingGroup.groupName) {
         formData.append("groupName", editingGroup.groupName);
       }
-  
-     
+
       if (editingGroup.profilePic instanceof File) {
         formData.append("thumbnail", editingGroup.profilePic);
       }
-  
+      setLoading(true);
       await api.put(`/groups/${editingGroup._id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -69,15 +68,15 @@ const GroupManager = () => {
         },
         withCredentials: true,
       });
-  
+
       setEditingGroup(null);
       setProfilePicPreview(null);
       fetchGroups();
+      setLoading(false);
     } catch (err) {
       console.error("Error updating group:", err);
     }
   };
-  
 
   const filteredGroups = groups.filter((group) => {
     const query = searchQuery.toLowerCase();
@@ -104,68 +103,107 @@ const GroupManager = () => {
           className="w-full p-2 border rounded"
         />
       </div>
-
       {editingGroup && (
-        <div className="border p-4 mb-4 bg-gray-100 rounded">
-          <h3 className="font-semibold text-lg mb-2">Edit Group</h3>
-          {Object.entries(editingGroup).map(([key, value]) => {
-            if (["_id", "__v", "createdAt", "updatedAt", "members", "creator", "description", "memberCount","cloudinaryPublicId"].includes(key))
-              return null;
-            return (
-              <div key={key} className="mb-2">
-                <label className="block mb-1 font-medium capitalize">{key}</label>
-                {key === "profilePic" ? (
-                  <div>
-                    {profilePicPreview && (
-                      <img
-                        src={profilePicPreview}
-                        alt="Profile Preview"
-                        className="w-20 h-20 object-cover rounded-full border mb-2"
-                      />
-                    )}
-                    <input
-                      type="file"
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setEditingGroup({ ...editingGroup, [key]: file });
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setProfilePicPreview(reader.result);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="w-full p-2 border rounded"
-                    />
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={(e) =>
-                      setEditingGroup({ ...editingGroup, [key]: e.target.value })
-                    }
-                    className="w-full p-2 border rounded"
-                  />
-                )}
-              </div>
-            );
-          })}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              Edit Group
+            </h3>
 
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={handleUpdate}
-              className="px-4 py-1 bg-green-600 text-white rounded"
-            >
-              Update
-            </button>
-            <button
-              onClick={() => setEditingGroup(null)}
-              className="px-4 py-1 bg-gray-500 text-white rounded"
-            >
-              Cancel
-            </button>
+            {Object.entries(editingGroup).map(([key, value]) => {
+              if (
+                [
+                  "_id",
+                  "__v",
+                  "createdAt",
+                  "updatedAt",
+                  "members",
+                  "creator",
+                  "description",
+                  "memberCount",
+                  "cloudinaryPublicId",
+                ].includes(key)
+              )
+                return null;
+
+              return (
+                <div key={key} className="mb-5">
+                  <label className="block mb-2 font-semibold text-gray-700 capitalize">
+                    {key.replace(/([A-Z])/g, " $1")}
+                  </label>
+
+                  {key === "profilePic" ? (
+                    <div>
+                      {profilePicPreview && (
+                        <img
+                          src={profilePicPreview}
+                          alt="Profile Preview"
+                          className="w-24 h-24 object-cover rounded-full border mb-3"
+                        />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setEditingGroup({ ...editingGroup, [key]: file });
+                            const reader = new FileReader();
+                            reader.onloadend = () =>
+                              setProfilePicPreview(reader.result);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={value}
+                      onChange={(e) =>
+                        setEditingGroup({
+                          ...editingGroup,
+                          [key]: e.target.value,
+                        })
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                      placeholder={`Enter ${key
+                        .replace(/([A-Z])/g, " $1")
+                        .toLowerCase()}`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setEditingGroup(null);
+                  setProfilePicPreview(null);
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                {" "}
+                {loading ? (
+                  <>
+                    <div className="flex justify-center items-center h-6">
+                      <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-6 h-6"></div>
+                      Update
+                    </div>
+                  </>
+                ) : (
+                  "Update"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -189,8 +227,12 @@ const GroupManager = () => {
                 />
                 <div>
                   <h3 className="text-lg font-semibold">{group.groupName}</h3>
-                  <p><strong>Member Count:</strong> {group.memberCount}</p>
-                  <p><strong>Creator:</strong> {group.creator?.email || "N/A"}</p>
+                  <p>
+                    <strong>Member Count:</strong> {group.memberCount}
+                  </p>
+                  <p>
+                    <strong>Creator:</strong> {group.creator?.email || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -198,12 +240,15 @@ const GroupManager = () => {
                 <button
                   onClick={() => handleEdit(group)}
                   className="px-3 py-1 text-green-800 rounded"
+                  title="Edit Group"
                 >
-                  <Pencil className="w-5 h-5" />
+                  <Pencil className="w-5 h-5" 
+                  />
                 </button>
                 <button
                   onClick={() => handleDelete(group._id)}
                   className="px-3 py-1 text-red-600 rounded"
+                  title="Delete Group"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>

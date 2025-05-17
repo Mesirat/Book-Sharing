@@ -11,13 +11,12 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const [loading, setLoading] = useState(true);
   const [joinedGroup, setJoinedGroup] = useState([]);
   const [isJoining, setIsJoining] = useState(null);
-
   const [error, setError] = useState(null);
-  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
   const debounceTimeout = useRef(null);
-  const token = useAuthStore.getState().token;
   const socket = useRef(null);
+
+  const { user, token } = useAuthStore.getState();
 
   const fetchGroups = async (search = "") => {
     try {
@@ -86,15 +85,16 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const handleJoinGroup = async (groupId, groupName) => {
     try {
       setIsJoining(groupId);
-      const response = await api.post(`/groups/join/${groupId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId: user._id }),
-      });
 
-      if (!response.ok) throw new Error("Failed to join group");
+      const response = await api.post(
+        `/groups/join/${groupId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setJoinedGroup((prev) => [...prev, String(groupId)]);
       setGroups((prevGroups) =>
@@ -122,15 +122,12 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   const handleLeaveGroup = async (groupId, groupName) => {
     try {
       setIsJoining(groupId);
+
       const response = await api.delete(`/groups/leave/${groupId}`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId: user._id }),
       });
-
-      if (!response.ok) throw new Error("Failed to leave group");
 
       setJoinedGroup((prev) => prev.filter((id) => id !== String(groupId)));
       setGroups((prevGroups) =>
@@ -173,9 +170,13 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   );
 
   return (
-    <div className="bg-gray-100  w-[90vw]   p-6">
-      <div className="p-4">
-        <h1 className="text-2xl">Suggested Groups for You</h1>
+    <div className="bg-gray-100 w-[90vw] px-6">
+      <div className=" mb-12">
+        <h1 className="text-5xl mb-4">Groups You Might Like</h1>
+        <p className="text-lg text-gray-600">
+          Discover communities based on your favorite books and genres to start
+          meaningful conversations and grow your reading network.
+        </p>
       </div>
 
       {groupsNotJoined.length > 0 ? (
@@ -195,11 +196,10 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
                     onClick={() => handleGroupClick(group)}
                   >
                     <img
-                      src={`${group.profilePic}`}
+                      src={group.profilePic}
                       alt={group.groupName}
                       className="w-36 h-36 rounded-full object-cover"
                     />
-
                     <span className="font-semibold text-lg">
                       {group.groupName}
                     </span>
@@ -214,7 +214,7 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
                         disabled={isJoining === group._id}
                         className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:text-green-500 transition-all disabled:opacity-50"
                       >
-                        Join
+                        {isJoining === group._id ? "Joining..." : "Join"}
                       </button>
                     ) : (
                       <button
@@ -224,7 +224,7 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
                         disabled={isJoining === group._id}
                         className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all disabled:opacity-50"
                       >
-                        Leave
+                        {isJoining === group._id ? "Leaving..." : "Leave"}
                       </button>
                     )}
                   </div>

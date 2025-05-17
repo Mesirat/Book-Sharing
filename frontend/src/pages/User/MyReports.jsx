@@ -10,7 +10,7 @@ const MyReports =()=> {
   const token = useAuthStore.getState().token;
 
   const fetchReports = async () => {
-    const res = await api.get("/user/my-reports", {
+    const res = await api.get("/users/my-reports", {
       headers: { Authorization: `Bearer ${token}` },
     });
     setReports(res.data);
@@ -18,7 +18,7 @@ const MyReports =()=> {
 
   const submitReport = async () => {
     await api.post(
-      "/api/user/report",
+      "/users/report",
       { subject, message },
       {
         headers: { Authorization: `Bearer ${token}` },

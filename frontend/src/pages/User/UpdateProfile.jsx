@@ -7,6 +7,7 @@ import api from "../../Services/api"
 const UpdateProfile = () => {
   const { user, updateProfile, error, message, loading, resetError } =
     useAuthStore();
+    
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",

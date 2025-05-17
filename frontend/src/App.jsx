@@ -18,7 +18,7 @@ import Profile from "./pages/User/Profile.jsx";
 import LogOut from "./pages/Auth/LogOut.jsx";
 
 import Login from "./pages/Auth/Login.jsx";
-import SignUp from "./pages/Auth/SignUp.jsx";
+
 import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 import BookDetail from "./pages/BookDetail.jsx";
@@ -27,7 +27,7 @@ import { useAuthStore } from "./store/authStore.js";
 import NotFound from "./pages/NotFound.jsx";
 import ReadBook from "./pages/User/ReadBook.jsx";
 import GroupChat from "./pages/GroupChat.jsx";
-import History from "./pages/User/History.jsx";
+
 import UploadBook from "./pages/Admin/UploadBook.jsx";
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 import UserRegistration from "./pages/Admin/UserRegistration.jsx";
@@ -37,7 +37,7 @@ import Report from "./pages/Admin/ReportManager.jsx";
 import ChangePassword from "./pages/Auth/ChangePassword.jsx";
 import UploadBlogs from "./pages/Admin/UploadBlogs.jsx";
 import GroupManager from "./pages/Admin/GroupManagement.jsx";
-// import { setupAxiosInterceptors } from "./utils/setupAxios";
+
 
 
 const ProtectedRoute = ({ children }) => {
@@ -63,12 +63,19 @@ const AdminProtectedRoute = ({ children }) => {
 };
 
 const RedirectAuthUser = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, mustChangePassword } = useAuthStore();
+
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    if (mustChangePassword) {
+      return <Navigate to="/changePassword" replace />;
+    } else {
+      return <Navigate to="/user" replace />;
+    }
   }
+
   return children;
 };
+
 
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -110,19 +117,12 @@ function InnerApp() {
       <Route
         path="/changePassword"
         element={
-          <RedirectAuthUser>
+          <ProtectedRoute>
             <ChangePassword />
-          </RedirectAuthUser>
+          </ProtectedRoute>
         }
       />
-      <Route
-        path="/signup"
-        element={
-          <RedirectAuthUser>
-            <SignUp />
-          </RedirectAuthUser>
-        }
-      />
+   
       <Route
         path="/forgotPassword"
         element={
@@ -162,7 +162,7 @@ function InnerApp() {
         <Route path="recommendation" element={<Recommendation />} />
         <Route path="updateProfile" element={<UpdateProfile />} />
         <Route path="chat" element={<GroupChat />} />
-        <Route path="history" element={<History />} />
+       
         <Route path="laterReads" element={<ReadLater />} />
         <Route path="likedBooks" element={<LikedBooks />} />
         <Route path="profile" element={<Profile />} />

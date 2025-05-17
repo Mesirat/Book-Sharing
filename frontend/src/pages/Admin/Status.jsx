@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../Services/api";
 import StatsCard from "./StatsCard";
-import { Users, BookCopy } from "lucide-react";
+import { Users,User, BookCopy } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useLocation } from "react-router-dom";
 import {
@@ -60,7 +60,7 @@ const Status = () => {
       }`}
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 ">
-        <StatsCard title="Total Users" count={stats.users} icon={Users} />
+        <StatsCard title="Total Users" count={stats.users} icon={User} />
         <StatsCard title="Total Books" count={stats.books} icon={BookCopy} />
         <StatsCard title="Total Groups" count={stats.groups} icon={Users} />
       </div>
@@ -95,7 +95,7 @@ const Status = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#BFDBFE" />
+                <Bar dataKey="value" fill="#5D8AA8" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -135,7 +135,7 @@ const Status = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#BFDBFE" />
+                <Bar dataKey="value" fill="#5D8AA8" />
               </BarChart>
             </ResponsiveContainer>
           </div>

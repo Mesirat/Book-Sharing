@@ -109,7 +109,7 @@ export const JoinGroup = async (req, res) => {
   const io = req.app.get("io");
 
   let { groupId } = req.params;
-  const { userId } = req.body;
+  const userId = req.user._id;
 
   if (!userId) {
     return res.status(400).json({ message: "Missing required fields" });

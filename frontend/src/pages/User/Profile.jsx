@@ -3,6 +3,7 @@ import { TbCameraPlus } from "react-icons/tb";
 import { useAuthStore } from "../../store/authStore";
 import UpdateProfile from "./UpdateProfile";
 import api from "../../Services/api";
+import { Link } from "react-router-dom";
 import { Loader } from "lucide-react";
 
 const Profile = () => {
@@ -15,12 +16,9 @@ const Profile = () => {
   });
   const [preview, setPreview] = useState(null);
   const [statsError, setStatsError] = useState(null);
-const token = useAuthStore.getState().token;
-  useEffect(() => {
-  
-  
+  const token = useAuthStore.getState().token;
 
-   
+  useEffect(() => {
     const fetchStats = async () => {
       if (!user) return;
 
@@ -39,7 +37,7 @@ const token = useAuthStore.getState().token;
     };
 
     fetchStats();
-  }, [user, setUser]);
+  }, [user]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -49,7 +47,7 @@ const token = useAuthStore.getState().token;
 
     updateProfilePicture(file)
       .then(() => {
-        setPreview(URL.createObjectURL(file)); 
+        setPreview(URL.createObjectURL(file));
       })
       .catch((error) => {
         console.error("Profile image upload error:", error);
@@ -60,11 +58,16 @@ const token = useAuthStore.getState().token;
   };
 
   if (!user) {
-    return <Loader className="text-blue-400 mt-4" />;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader className="text-blue-400 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100 p-4">
+      {/* Left Panel */}
       <div className="w-full md:w-1/3 lg:w-1/4 bg-gray-800 p-6 rounded-lg shadow-lg mb-4 mr-4 md:mb-0">
         <div className="flex flex-col items-center">
           <div className="relative group">
@@ -83,27 +86,35 @@ const token = useAuthStore.getState().token;
               <TbCameraPlus size={18} />
             </label>
           </div>
-          {loading && <Loader className="text-blue-400 mt-4" />}
+
+          {loading && <Loader className="text-blue-400 mt-4 animate-spin" />}
           {error && <p className="text-red-400 mt-2">{error}</p>}
+
           <h2 className="text-xl font-bold text-white mt-4">
             {user?.firstName || "No name available"}
           </h2>
-          <p className="text-sm text-gray-300">{user?.email || "No email available"}</p>
+          <p className="text-sm text-gray-300">
+            {user?.email || "No email available"}
+          </p>
 
           <div className="mt-6 w-full">
             <div className="space-y-3">
-              <Stat label="Liked Books" value={stats.likedBook} color="text-blue-400" />
-              <Stat label="Groups Joined" value={stats.groupsJoined} color="text-green-400" />
-              <Stat label="Later Read" value={stats.laterRead} color="text-orange-400" />
+              <Link to="/user/likedBooks">
+                <Stat label="Liked Books" value={stats.likedBook} color="text-blue-400" />
+              </Link>
+              <Link to="/user/chat">
+                <Stat label="Groups Joined" value={stats.groupsJoined} color="text-green-400" />
+              </Link>
+              <Link to="/user/laterReads">
+                <Stat label="Later Read" value={stats.laterRead} color="text-orange-400" />
+              </Link>
             </div>
-            {statsError && (
-              <p className="text-red-400 mt-4">{statsError}</p>
-            )}
+            {statsError && <p className="text-red-400 mt-4">{statsError}</p>}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
+     
       <div className="w-full md:w-2/3 lg:w-3/4 p-4 md:p-8 bg-white rounded-lg shadow-md">
         <UpdateProfile />
       </div>

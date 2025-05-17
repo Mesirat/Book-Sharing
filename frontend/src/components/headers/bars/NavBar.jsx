@@ -35,14 +35,14 @@ const Navbar = () => {
   };
 
   return (
-    <header className={`${location.pathname==="/user"|| location.pathname==="/" ?  "bg-white shadow-md sticky top-0 z-40": "hidden" }`}>
+    <header className={`${location.pathname==="/user"|| location.pathname==="/" ?  "bg-white shadow-md p-1 sticky top-0 z-40": "hidden" }`}>
       <div className="max-w-7xl mx-auto  sm:px-6 py-2 flex items-center justify-between">
         <Link to="/" className="hidden xl:flex items-center space-x-2 z-50 ">
           <BookOpenText className="w-6 h-6" />
           <span className="font-bold text-2xl text-gray-700">Bookish</span>
         </Link>
 
-        <div className="flex items-center w-full max-w-2xl mx-12 border border-gray-300 rounded-full  p-2">
+        <div className={`${isAuthenticated ? "flex items-center w-full max-w-2xl mx-12 border border-gray-300 rounded-full  p-2":"hidden"}`}>
           <Search className="text-gray-500" />
           <input
             type="text"

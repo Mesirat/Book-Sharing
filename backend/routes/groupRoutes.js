@@ -27,8 +27,9 @@ router.post(
 
 router.post("/join/:groupId", protect, JoinGroup);
 router.delete("/leave/:groupId", protect, LeaveGroup);
-router.get("/:id/members", protect, getUsersInGroup);
 router.get("/mygroups/:userId", protect, getMyGroups);
+router.get("/:id/members", protect, getUsersInGroup);
+
 router.get("/:groupId/:userId", protect, GetGroupDetails)
 
 

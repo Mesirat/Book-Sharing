@@ -6,21 +6,33 @@ import { useAuthStore } from "../../store/authStore";
 
 const ReadLater = () => {
   const [readLater, setReadLater] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
   const [popularBooks, setPopularBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = useAuthStore.getState().token;
   useEffect(() => {
-    const fetchReadLater = async () => {
+    const fetchReadLater = async (currentPage = 1) => {
       try {
-        const response = await api.get(`/books/ReadLater`, {
+        const response = await api.get(`/books/ReadLater?page=${currentPage}&limi=8`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setReadLater(response.data.laterReads);
+        setTotalPages(response.data.totalPages);
+        setPage(currentPage);
       } catch (error) {
-        setError("Failed to fetch Read Later books.");
+        if (error.response) {
+          setError(
+            error.response.data.message || "Failed to fetch laterReads"
+          );
+        } else if (error.request) {
+          setError("Network error. Please try again later.");
+        } else {
+          setError("An unexpected error occurred.");
+        }
       } finally {
         setLoading(false);
       }
@@ -39,7 +51,7 @@ const ReadLater = () => {
       }
     };
 
-    fetchReadLater();
+    fetchReadLater(page);
     fetchPopularBooks();
   }, []);
 
@@ -114,6 +126,27 @@ const ReadLater = () => {
         onRemove={readLater.length > 0 ? handleRemove : undefined}
         showActions={readLater.length > 0}
       />
+        {totalPages > 1 && (
+            <div className="flex justify-center mt-6 space-x-2">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span className="px-4 py-2 font-semibold">{`Page ${page} of ${totalPages}`}</span>
+              <button
+                onClick={() =>
+                  setPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={page === totalPages}
+                className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
     </div>
   );
 };

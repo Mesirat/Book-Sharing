@@ -14,6 +14,7 @@ import groupRouter from './routes/groupRoutes.js';
 import messageRouter from './routes/messageRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { initSocket } from './socket.js';
+import recommendationRouter from "./routes/recommendationRoutes.js"
 
 dotenv.config();
 connectDB();
@@ -46,6 +47,8 @@ app.use('/users', userRouter);
 app.use('/books', bookrouter);
 app.use('/groups', groupRouter);
 app.use('/messages', messageRouter);
+
+app.use("/recommendation", recommendationRouter);
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/dist/build')));

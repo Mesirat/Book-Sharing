@@ -11,9 +11,10 @@ import TopRead from "../components/TopRead.jsx";
 import Categories from "../components/Categories.jsx";
 import MostLikedBooks from "../components/MostLikedBooks.jsx";
 import ReportButton from "../components/ReportButton.jsx";
+import Recommendation from "./User/Recommendation.jsx";
 const Home = () => {
   const { isAuthenticated } = useAuthStore();
-  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const {user} = useAuthStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -60,6 +61,7 @@ const Home = () => {
           <TopRead />
           <Categories />
           <MostLikedBooks />
+          <Recommendation user={user}/>
           
           </>
           

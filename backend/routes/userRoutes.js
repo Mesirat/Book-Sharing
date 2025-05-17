@@ -1,16 +1,15 @@
 import express from "express";
 import {
   logOut,
-  getProfile,
+
   getUserById,
   verifyEmail,
   logIn,
-  forgotPassword,
-  resetPassword,
+
   checkAuth,
   refreshToken,
   updateProfile,
-  Contact,
+
   getProgress,
   updateProgress,
   getAllProgress,
@@ -32,7 +31,7 @@ const router = express.Router();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 10,
   message: "Too many login attempts. Please try again later.",
 });
 
@@ -58,11 +57,10 @@ router.get("/getAllProgress", protect, getAllProgress);
 router.post("/report", uploadBookAssets.fields([{ name: "thumbnail", maxCount: 1 }]), protect,submitReport )
 
 router.get("/:id", protect, getUserById);
-router.post("/contact", Contact);
+
 router.put("/changePassword", protect, changePassword);
 router.get("/pdf/:publicId(*)", streamPDF);
 
 router.post("/verifyEmail", verifyEmail);
-router.post("/forgotPassword", forgotPassword);
-router.post("/resetPassword/:token", resetPassword);
+
 export default router;

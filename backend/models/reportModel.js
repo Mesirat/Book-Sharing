@@ -17,6 +17,10 @@ const reportSchema = new mongoose.Schema(
     },
     screenshotUrl: String,
     cloudinaryPublicId: String,
+    response:{
+      type:String,
+      default:null
+    },
   },
   { timestamps: true }
 );

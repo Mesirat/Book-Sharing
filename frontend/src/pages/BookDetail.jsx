@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../Services/api";
 import { Check, ThumbsUp, Star } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 
@@ -9,7 +9,7 @@ const API_URL = "http://localhost:5000/books";
 const BookDetail = () => {
   const location = useLocation();
   const { book } = location.state || {};
-  
+
   const user = useAuthStore((state) => state.user);
 
   const [likedBooks, setLikedBooks] = useState([]);
@@ -19,7 +19,7 @@ const BookDetail = () => {
   const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const token = useAuthStore.getState().token;
-
+  const bookId = book.bookId ? book.bookId : book._id;
   if (!book) {
     return (
       <div className="text-center text-gray-500 mt-10">
@@ -37,7 +37,11 @@ const BookDetail = () => {
 
     const fetchRatings = async () => {
       try {
-        const response = await axios.get(`${API_URL}/${book.id}/ratings`);
+        const response = await api.get(`/books/rate/${bookId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setAverageRating(response.data.averageRating);
       } catch (error) {
         console.error("Error fetching book ratings:", error.message);
@@ -58,10 +62,10 @@ const BookDetail = () => {
   ) => {
     setIsProcessing(true);
     try {
-      const response = await axios.put(
-        `${API_URL}/${endpoint}`,
+      const response = await api.put(
+        `/books/${endpoint}`,
         {
-           bookId : book.bookId ? book.bookId : book._id,
+          bookId,
           title: book.title,
           authors: Array.isArray(book.authors)
             ? book.authors.join(", ")
@@ -73,7 +77,6 @@ const BookDetail = () => {
           publisher: book.publisher || "Unknown Publisher",
           publishYear: book.publishedYear?.split("-")[0] || "N/A",
           description: book.description || "No description available.",
-          
         },
         {
           headers: {
@@ -103,10 +106,10 @@ const BookDetail = () => {
 
   const handleRating = async (rating) => {
     try {
-      await axios.post(
-        `${API_URL}/rate`,
+      await api.post(
+        `books/rate`,
         {
-           bookId : book.bookId ? book.bookId : book._id,
+          bookId,
           userId: user._id,
           rating,
         },
@@ -116,9 +119,14 @@ const BookDetail = () => {
           },
         }
       );
+
       setUserRating(rating);
 
-      const response = await axios.get(`${RATING_API_URL}/${book.id}/ratings`);
+      const response = await api.get(`/books/rate/${bookId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setAverageRating(response.data.averageRating);
     } catch (error) {
       console.error("Error submitting rating:", error.message);
@@ -135,10 +143,12 @@ const BookDetail = () => {
   const description = book.description || "No description available.";
 
   const isLiked = likedBooks.some(
-    (likedBook) => likedBook.bookId === book.bookId ||likedBook.bookId ===  book._id
+    (likedBook) =>
+      likedBook.bookId === book.bookId || likedBook.bookId === book._id
   );
   const isLaterRead = laterReads.some(
-    (laterRead) => laterRead.bookId === book.bookId ||laterRead.bookId === book._id
+    (laterRead) =>
+      laterRead.bookId === book.bookId || laterRead.bookId === book._id
   );
 
   return (
@@ -183,16 +193,16 @@ const BookDetail = () => {
 
               <button
                 onClick={handleLaterRead}
-                disabled={isLaterRead || isProcessing}
+                disabled={isProcessing}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
                   ${
                     isLaterRead
-                      ? "bg-gray-100 text- border border-green-400 cursor-not-allowed"
+                      ? "bg-gray-100 text- border border-green-400 "
                       : "bg-secondary  hover:bg-gray-700 hover:text-white"
                   } disabled:opacity-50 shadow-sm`}
               >
-                {isLaterRead && <Check className="w-4 h-4" />}
-                {isLaterRead ? "Added" : "Later Read"}
+                
+                {isLaterRead ? "Remove" : "Later Read"}
               </button>
 
               <Link
@@ -203,22 +213,30 @@ const BookDetail = () => {
               </Link>
             </div>
 
-            <div className="mt-4 w-full">
-              <p className="font-semibold text-center lg:text-left">
-                Average Rating: {averageRating.toFixed(1)}
-              </p>
-              <div className="flex justify-center lg:justify-start mt-2 gap-1">
-                {[1, 2, 3, 4, 5].map((value) => (
+            <div className="flex justify-center lg:justify-start mt-2 gap-1">
+              {[1, 2, 3, 4, 5].map((value) => {
+                const isFull = value <= averageRating;
+                const isHalf = !isFull && value - 0.5 <= averageRating;
+                return (
                   <Star
                     key={value}
                     className="w-6 h-6 cursor-pointer"
                     fill={
-                      value <= (userRating || averageRating) ? "gold" : "white"
+                      isFull ? "gold" : isHalf ? "url(#halfGradient)" : "white"
                     }
+                    stroke="gold"
                     onClick={() => handleRating(value)}
                   />
-                ))}
-              </div>
+                );
+              })}
+              <svg width="0" height="0">
+                <defs>
+                  <linearGradient id="halfGradient">
+                    <stop offset="50%" stopColor="gold" />
+                    <stop offset="50%" stopColor="white" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
           </div>
 

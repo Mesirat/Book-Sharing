@@ -51,7 +51,7 @@ const MostLikedBooks = () => {
             <p className="text-center text-red-500 font-medium">{error}</p>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 mt-6 mb-8">
             {books.map((book, index) => (
               <div
                 key={index}

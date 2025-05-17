@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../../Services/api";
-import { Slash, Undo, Trash2, Pencil, Check, TriangleAlert } from "lucide-react";
+import {
+  Slash,
+  Undo,
+  Trash2,
+  Pencil,
+  Check,
+  TriangleAlert,
+} from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import { toast, ToastContainer } from "react-toastify";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -9,12 +17,44 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editedRole, setEditedRole] = useState("");
-const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().token;
   const API = "http://localhost:5000";
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const confirmResetPassword = (userId) => {
+    toast.info(
+      ({ closeToast }) => (
+        <div>
+          <p className="mb-2 font-medium">
+            Reset this user's password to default (12345678)?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={closeToast}
+              className="bg-red-400 text-white px-3 py-1 rounded hover:bg-red-300 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                handleResetConfirmed(userId);
+                closeToast();
+              }}
+              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-500 text-sm"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+      }
+    );
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -32,14 +72,15 @@ const token = useAuthStore.getState().token;
   };
 
   const toggleSuspend = async (id, currentStatus) => {
+    
     try {
-      await axios.put(
-        `${API}/admin/suspend/${id}`,
+      await api.put(
+        `/admin/suspend/${id}`,
         { isSuspended: !currentStatus },
         {
           headers: {
-            withCredentials: true, 
-            "Content-Type": "multipart/form-data", 
+            withCredentials: true,
+         "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -52,12 +93,12 @@ const token = useAuthStore.getState().token;
 
   const updateRole = async (id, newRole) => {
     try {
-      await axios.put(
-        `${API}/admin/users/${id}/role`,
+      await api.put(
+        `/admin/users/${id}/role`,
         { role: newRole },
         {
           headers: {
-            withCredentials: true, 
+            withCredentials: true,
             Authorization: `Bearer ${token}`,
           },
         }
@@ -75,7 +116,7 @@ const token = useAuthStore.getState().token;
     try {
       await axios.delete(`${API}/admin/users/${id}`, {
         headers: {
-          withCredentials: true, 
+          withCredentials: true,
           Authorization: `Bearer ${token}`,
         },
       });
@@ -84,11 +125,25 @@ const token = useAuthStore.getState().token;
       console.error("Error deleting user:", err);
     }
   };
+  const handleResetConfirmed = async (id) => {
+    try {
+      await api.put(`/admin/users/${id}/resetPassword`, null, {
+        headers: {
+          withCredentials: true,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Password has been reset to : 12345678");
+    } catch (err) {
+      console.error("Error resetting password:", err);
+      toast.error("Failed to reset password.");
+    }
+  };
 
   const filteredUsers = users.filter(
     (user) =>
       (user.firstName?.toLowerCase() || "").includes(search.toLowerCase()) ||
-    (user.email?.toLowerCase() || "").includes(search.toLowerCase())
+      (user.email?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
@@ -100,11 +155,11 @@ const token = useAuthStore.getState().token;
         placeholder="Search by name or email..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full px-4 py-2 border border-gray-300 rounded-lg"
+        className="mb-6 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
       {loading ? (
-        <div className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-60">
           <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16"></div>
         </div>
       ) : (
@@ -112,80 +167,75 @@ const token = useAuthStore.getState().token;
           {filteredUsers.map((user) => (
             <div
               key={user._id}
-              className={`bg-white p-4 rounded-xl shadow flex items-center justify-between ${
-                user.isSuspended ? "opacity-70 bg-red-50" : ""
+              className={`bg-white p-4 md:p-6 rounded-2xl shadow-md flex flex-col md:flex-row items-start md:items-center justify-between transition-all duration-300 ${
+                user.isSuspended ? "opacity-70 bg-red-50" : "hover:shadow-lg"
               }`}
             >
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-start md:items-center gap-4 flex-1 mb-4 md:mb-0">
                 <img
                   src={user.profile || "/default-profile.png"}
                   alt={user.firstName}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-14 h-14 rounded-full object-cover shadow"
                 />
                 <div>
-                  <h3 className="font-semibold">{user.firstName}</h3>
+                  <h3 className="font-semibold text-lg">{user.firstName}</h3>
                   <p className="text-sm text-gray-600">{user.email}</p>
+
+                  <div className="flex items-center gap-2 mt-1">
+                    <label className="text-sm text-gray-700 font-medium">
+                      Role:
+                    </label>
+                    {editingUserId === user._id ? (
+                      <select
+                        value={editedRole}
+                        onChange={(e) => setEditedRole(e.target.value)}
+                        className="text-sm border px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    ) : (
+                      <span className="text-sm capitalize text-blue-500 font-medium">
+                        {user.role}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-1 w-32 text-sm font-medium">
+                    {user.isSuspended ? (
+                      <span className="text-red-500">Suspended</span>
+                    ) : (
+                      <span className="text-green-600">Active</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-48">
-                <label className="text-sm text-gray-700">Role:</label>
+              <div className="flex flex-col gap-5 items-end mr-6">
                 {editingUserId === user._id ? (
-                  <>
-                    <select
-                      value={editedRole}
-                      onChange={(e) => setEditedRole(e.target.value)}
-                      className="text-sm border px-2 py-1 rounded"
-                    >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                   
-                  </>
+                  <button
+                    onClick={() => updateRole(user._id, editedRole)}
+                    className="text-green-600 hover:text-green-800 transition-transform hover:scale-110"
+                    title="Save Role"
+                  >
+                    <Check className="w-5 h-5" />
+                  </button>
                 ) : (
-                  <span className="text-sm capitalize text-blue-500">
-                    {user.role}
-                  </span>
+                  <button
+                    onClick={() => {
+                      setEditingUserId(user._id);
+                      setEditedRole(user.role);
+                    }}
+                    className="text-blue-600 hover:text-blue-800 transition-transform hover:scale-110"
+                    title="Edit Role"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
                 )}
-              </div>
 
-              <div className="w-32 text-sm font-medium">
-                {user.isSuspended ? (
-                  <span className="text-red-500">Suspended</span>
-                ) : (
-                  <span className="text-green-600">Active</span>
-                )}
-              </div>
-
-              <div className="flex gap-3 w-32 justify-end">
-                {editingUserId === user._id ? (
-                  
-                    <button
-                      onClick={() => {
-                        updateRole(user._id, editedRole);
-                      }}
-                      className="text-green-600 hover:text-green-800"
-                      title="Save Role"
-                    >
-                      <Check className="w-5 h-5" />
-                    </button>
-                    ):(
-                      <button
-                      onClick={() => {
-                        setEditingUserId(user._id);
-                        setEditedRole(user.role);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Edit Role"
-                    >
-                      <Pencil className="w-5 h-5" />
-                    </button>
-                  )}
-                
-               
                 <button
                   onClick={() => toggleSuspend(user._id, user.isSuspended)}
-                  className={`${
+                  className={`transition-transform hover:scale-110 ${
                     user.isSuspended
                       ? "text-green-600 hover:text-green-800"
                       : "text-yellow-600 hover:text-yellow-800"
@@ -195,21 +245,31 @@ const token = useAuthStore.getState().token;
                   {user.isSuspended ? (
                     <Undo className="w-5 h-5" />
                   ) : (
-                    <TriangleAlert className="w-5 h-5"/>
+                    <TriangleAlert className="w-5 h-5" />
                   )}
                 </button>
+
                 <button
                   onClick={() => handleDelete(user._id)}
-                  className="text-red-600 hover:text-red-800"
+                  className="text-red-600 hover:text-red-800 transition-transform hover:scale-110"
                   title="Delete User"
                 >
                   <Trash2 className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={() => confirmResetPassword(user._id)}
+                  className="text-purple-600 hover:text-purple-800 transition-transform hover:scale-110"
+                  title="Reset Password"
+                >
+                  <Slash className="w-5 h-5" />
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

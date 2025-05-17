@@ -15,6 +15,7 @@ import {
   updateBook,
   uploadBlog,
   getAdminStats,
+  resetPassword,
 } from "../controllers/adminController.js";
 import { uploadBookAssets } from "../middleware/uploadMiddleware.js";
 import {uploadCSV}  from "../middleware/localUpload.js";
@@ -50,5 +51,6 @@ router.post(
     ]),
     UploadBook
   );
-router.post("/uploadBlog",uploadBookAssets.fields([{name:"thumbnail",maxCount:1}]),uploadBlog)
+router.post("/uploadBlog",uploadBookAssets.fields([{name:"thumbnail",maxCount:1}]),uploadBlog);
+router.put('/users/:id/resetPassword',resetPassword);
 export default router;

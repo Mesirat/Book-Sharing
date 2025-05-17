@@ -11,7 +11,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
   };
 
   return (
-    <div className="w-full px-4 mt-8 mb-24 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
+    <div className="w-full px-4 mt-8 mb-6 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
       {bookList.map((book) => {
         const thumbnail = book.thumbnail || "/fallback-image.jpg";
 
@@ -31,15 +31,15 @@ const Cards = ({ books = [], onLike, onRemove }) => {
               src={thumbnail}
               alt={title || "Book Cover"}
               onClick={() => handleCardClick(book)}
-              className="w-full h-[60vh] cursor-pointer object-cover transition-transform duration-300 hover:scale-105 ease-in-out"
+              className="w-full h-[55vh] cursor-pointer object-cover transition-transform duration-300 hover:scale-105 ease-in-out"
             />
 
             <div
               onClick={() => handleCardClick(book)}
-              className="mt-3 text-md text-center cursor-pointer"
+              className="mt-3 text-xl text-center cursor-pointer"
             >
-              <p className="text-grayish">By {author}</p>
               <h3>{title || "Unknown Title"}</h3>
+              <p className="text-grayish">By {author}</p>
             </div>
 
             {(onLike || onRemove) && (

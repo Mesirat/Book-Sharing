@@ -58,17 +58,27 @@ export const updateBook = asyncHandler(async (req, res) => {
   try {
     const { title, description, publisher, publishedYear } = req.body;
 
-    // Parse authors and categories if they exist in the body
-    const authors = req.body.authors ? req.body.authors.split(",").map(s => s.trim()) : undefined;
-    const categories = req.body.categories ? req.body.categories.split(",").map(s => s.trim()) : undefined;
-
-    // Find the existing book to update
+    const parseField = (field) => {
+      if (!field) return undefined;
+      if (typeof field === "string") {
+        return field.split(",").map(s => s.trim());
+      }
+      if (Array.isArray(field)) {
+        return field.map(s => s.trim());
+      }
+      return undefined;
+    };
+    
+    const authors = parseField(req.body.authors);
+    const categories = parseField(req.body.categories);
+    
+    
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ message: "Book not found" });
 
     const updates = {};
 
-    // Apply updates from the body to the updates object
+   
     if (title) updates.title = title;
     if (authors) updates.authors = authors;
     if (description) updates.description = description;
@@ -76,40 +86,39 @@ export const updateBook = asyncHandler(async (req, res) => {
     if (publishedYear) updates.publishedYear = publishedYear;
     if (categories) updates.categories = categories;
 
-    // Handle thumbnail update (if a new one is uploaded)
+    
     if (req.files?.thumbnail) {
-      // If the book already has a cloudinary public ID, delete the old thumbnail
+     
       if (book.cloudinaryPublicId) {
         await cloudinary.uploader.destroy(book.cloudinaryPublicId);
       }
 
-      // Upload the new thumbnail to Cloudinary
+      
       const uploadedThumbnail = await cloudinary.uploader.upload(req.files.thumbnail[0].path, {
         folder: "book_thumbnails",
       });
 
-      // Update the thumbnail and cloudinary public ID
+      
       updates.thumbnail = uploadedThumbnail.secure_url;
       updates.cloudinaryPublicId = uploadedThumbnail.public_id;
     }
 
-    // Handle PDF update (if a new one is uploaded)
     if (req.files?.pdfLink) {
       const pdfFile = req.files.pdfLink[0];
 
-      // Validate PDF file type
+      
       if (pdfFile.mimetype !== "application/pdf") {
         return res.status(400).json({ message: "Invalid file format for PDF. Only .pdf files allowed." });
       }
 
-      // Update the PDF link (can store the file path or cloud storage URL)
+      
       updates.pdfLink = pdfFile.path;
     }
 
-    // Update the book document in the database
+  
     const updatedBook = await Book.findByIdAndUpdate(req.params.id, updates, { new: true });
 
-    // Return the updated book
+   
     res.status(200).json(updatedBook);
   } catch (err) {
     console.error("Update Book Error:", err);
@@ -257,6 +266,7 @@ export const UploadBook = asyncHandler(async (req, res) => {
 export const suspendUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { isSuspended } = req.body;
+
   try {
     const user = await User.findByIdAndUpdate(
       id,
@@ -331,3 +341,16 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Failed to fetch stats" });
   }
 });
+export const resetPassword = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+  const defaultPassword = '12345678';
+
+  try {
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    await User.findByIdAndUpdate(userId, { password: hashedPassword,mustChangePassword:true });
+    res.status(200).json({ message: 'Password reset to default.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+});
+

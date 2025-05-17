@@ -1,4 +1,18 @@
 export const bookCategories = {
+  "Educational": [
+    {
+      image: "https://i.pinimg.com/736x/98/e3/7d/98e37dda773cee472b1e69a08455eaa1.jpg",
+      text: "Support your studies with academic resources and research.",
+      grades: ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+    },
+  ],
+  "Reference": [
+    {
+      image: "https://m.media-amazon.com/images/I/71uMLTd6LiL._AC_UF1000,1000_QL80_.jpg",
+      text: "Access valuable facts, data, and practical knowledge.",
+      grades: ["Grade 9", "Grade 10", "Grade 11", "Grade 12"]
+    },
+  ],
   "Fiction": [
     {
       image: "https://i.pinimg.com/736x/71/cf/bb/71cfbb812493b8e9503815d3b2f77e92.jpg",
@@ -17,12 +31,6 @@ export const bookCategories = {
       text: "Explore faith, philosophy, and inner peace through sacred texts."
     },
   ],
-  "Reference": [
-    {
-      image: "https://m.media-amazon.com/images/I/71uMLTd6LiL._AC_UF1000,1000_QL80_.jpg",
-      text: "Access valuable facts, data, and practical knowledge."
-    },
-  ],
   "Professional & Technical": [
     {
       image: "https://i.pinimg.com/736x/2e/62/86/2e6286c8409f0255308c512085756178.jpg",
@@ -33,12 +41,6 @@ export const bookCategories = {
     {
       image: "https://clipart-library.com/img/753246.png",
       text: "Gain real-world perspectives and explore true events."
-    },
-  ],
-  "Educational / Academic": [
-    {
-      image: "https://i.pinimg.com/736x/98/e3/7d/98e37dda773cee472b1e69a08455eaa1.jpg",
-      text: "Support your studies with academic resources and research."
     },
   ],
   "Children & Young Readers": [

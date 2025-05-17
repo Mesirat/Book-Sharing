@@ -9,7 +9,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const { login, loading: Loading } = useAuthStore();  
+  const { login, loading: Loading } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -26,44 +26,42 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        
-        const result = await login(email, password, isAdmin, ); 
-        
-        if (result) {
-          
-          if (result.mustChangePassword===true) {
-            navigate("/changePassword");// Redirect to change password page for first-time login
-          }
-          else if (result.user.role === 'admin') {
-                navigate("/admin");  // Redirect to admin dashboard
-            } else {
-                navigate("/user");  // Redirect to user dashboard
-            }
+      const result = await login(email, password, isAdmin);
+
+      if (result) {
+        if (result.mustChangePassword === true) {
+         navigate("/changePassword"); 
+        } else if (result.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/user");
         }
+      }
     } catch (err) {
-        let message = "Login failed. Please try again.";
-        const status = err?.response?.status;
+      let message = "Login failed. Please try again.";
+      const status = err?.response?.status;
 
-        if (status === 401) {
-            message = "Invalid credentials. Please check your email and password.";
-        } else if (status === 429) {
-            message = "Too many login attempts. Please try again later.";
-        } else if (err?.response?.data?.message) {
-            message = err.response.data.message;
-        }
+      if (status === 401) {
+        message = "Invalid credentials. Please check your email and password.";
+      } else if (status === 429) {
+        message = "Too many login attempts. Please try again later.";
+      } else if (err?.response?.data?.message) {
+        message = err.response.data.message;
+      }
 
-        setError(message);
+      setError(message);
     }
-};
-
-  
+  };
 
   return (
     <>
       <NavBar />
       <div className="font-serif  flex justify-center items-center min-h-screen bg-gray-100">
         <div className="relative w-full max-w-md mx-auto bg-opacity-90 bg-white rounded-lg shadow-xl p-8 sm:p-10 md:p-12">
-          <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col items-center space-y-6"
+          >
             <h1 className="text-3xl font-semibold text-center text-text  mb-6">
               Welcome Back
             </h1>
@@ -103,12 +101,17 @@ const Login = () => {
               </div>
             </div>
 
-            <Link to="/forgotPassword" className="text-black hover:underline mb-4">
+            <Link
+              to="/forgotPassword"
+              className="text-black hover:underline mb-4"
+            >
               Forgot Password?
             </Link>
 
             {error && (
-              <p className="text-red-500 text-center font-semibold mb-4">{error}</p>
+              <p className="text-red-500 text-center font-semibold mb-4">
+                {error}
+              </p>
             )}
 
             <button
@@ -118,7 +121,7 @@ const Login = () => {
                 Loading
                   ? " opacity-50 cursor-not-allowed"
                   : " transition duration-300"
-              }  transform hover:bg-secondary ` }
+              }  transform hover:bg-secondary `}
             >
               {Loading ? (
                 <Loader className="w-6 h-6 animate-spin mx-auto" />
@@ -127,12 +130,12 @@ const Login = () => {
               )}
             </button>
 
-            <p className="mt-6 text-sm text-gray-500">
+            {/* <p className="mt-6 text-sm text-gray-500">
               Don't have an account?
               <Link to="/signup" className="text-black font-bold hover:underline mx-2">
                 Sign Up
               </Link>
-            </p>
+            </p> */}
           </form>
         </div>
       </div>

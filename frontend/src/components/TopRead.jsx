@@ -3,7 +3,6 @@ import api from "../Services/api";
 import { useAuthStore } from "../store/authStore";
 import { Link, useNavigate } from "react-router-dom";
 
-
 const TopRead = () => {
   const [topBooks, setTopBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,14 +12,14 @@ const TopRead = () => {
   useEffect(() => {
     const fetchTopBooks = async () => {
       try {
-        const response = await api.get(`/books/topRead`,{
+        const response = await api.get(`/books/topRead`, {
           headers: {
             Authorization: `Bearer ${token}`,
             withCredentials: true,
           },
         });
         const topBooksData = response.data;
-     
+
         setTopBooks(Array.isArray(topBooksData) ? topBooksData : []);
       } catch (err) {
         console.error("Fetch error:", err);
@@ -34,7 +33,7 @@ const TopRead = () => {
     fetchTopBooks();
   }, []);
   const handleCardClick = (book) => {
-    navigate(`/bookDetail`,{state:{book}});
+    navigate(`/bookDetail`, { state: { book } });
   };
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
@@ -43,7 +42,7 @@ const TopRead = () => {
   return (
     <section className="w-full mx-auto p-4 md:p-10 mb-8 ">
       <div className="text-center mb-12">
-      <h1 className="text-4xl md:text-5xl font-sans">Top Read This Week</h1>
+        <h1 className="text-4xl md:text-5xl font-sans">Top Read This Week</h1>
         <p className="text-lg mt-4 text-gray-600">
           This week’s most-read books are here! See what readers can’t put down.
         </p>
@@ -74,20 +73,22 @@ const TopRead = () => {
                     Discover compelling stories, inspiring characters, and
                     insightful journeys.
                   </p>
-         
+
                   <p className="text-sm italic text-gray-600">
                     Author:{" "}
-                    {book.authors && book.authors.length > 0 ? book.authors.join(", ") : "Unknown"}
-
+                    {book.authors && book.authors.length > 0
+                      ? book.authors.join(", ")
+                      : "Unknown"}
                   </p>
                 </div>
                 <div className="mt-4 flex justify-end">
-                <Link
-                to={`/readbook/${book._id}`}
-                className="px-4 py-2 bg-secondary  rounded hover:bg-gray-600"
-              >
-                Read Now
-              </Link>
+                  <Link
+                    to={`/readbook/${book._id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 bg-secondary rounded hover:bg-gray-600"
+                  >
+                    Read Now
+                  </Link>
                 </div>
               </div>
             </div>
