@@ -20,6 +20,7 @@ import {
   getUserStats,
   updateProfilePicture,
   submitReport,
+  getMyReports,
 } from "../controllers/userController.js";
 
 import rateLimit from "express-rate-limit";
@@ -55,7 +56,7 @@ router.get("/getProgress/:bookId", protect, getProgress);
 router.put("/updateProgress/:bookId", protect, updateProgress);
 router.get("/getAllProgress", protect, getAllProgress);
 router.post("/report", uploadBookAssets.fields([{ name: "thumbnail", maxCount: 1 }]), protect,submitReport )
-
+router.get("/myreports",protect,getMyReports)
 router.get("/:id", protect, getUserById);
 
 router.put("/changePassword", protect, changePassword);

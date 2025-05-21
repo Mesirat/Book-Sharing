@@ -11,9 +11,10 @@ import {
   BookOpenText,
   X,
   House,
+
 } from "lucide-react";
 import { LuLayoutDashboard } from "react-icons/lu";
-
+import {MdFeedback} from "react-icons/md";
 const SideBar = ({ setIsOpen, IsOpen }) => {
   const [expanded, setExpanded] = useState(false);
   const location = useLocation();
@@ -25,6 +26,7 @@ const SideBar = ({ setIsOpen, IsOpen }) => {
     { to: "/user/laterReads", label: "Read Later", Icon: Clock3 },
     { to: "/user/likedBooks", label: "Liked Books", Icon: BookHeart },
     { to: "/user/chat", label: "Group Chat", Icon: MessageSquareMore },
+    { to: "/user/myfeedbacks", label: "Feedback & Replies", Icon: MdFeedback },
     { to: "/user/profile", label: "Account", Icon: CircleUserRound },
     { to: "/logout", label: "Log Out", Icon: LogOut },
   ];

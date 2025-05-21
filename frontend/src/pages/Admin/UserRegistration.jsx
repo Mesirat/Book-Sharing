@@ -102,7 +102,8 @@ const UserRegistration = () => {
             {generatedUsers.map((u, idx) => (
               <li key={idx} className="px-4 py-2 flex justify-between items-center">
                 <div>
-                  <p className="font-medium text-gray-700">{u.name}</p>
+                  <p className="font-medium text-gray-700">{u.username}</p>
+                  <p className="text-sm text-gray-500">{u.firstName+" "+u.lastName}</p>
                   <p className="text-sm text-gray-500">{u.email}</p>
                 </div>
                 <span className="font-mono text-gray-600 text-sm">{u.password}</span>

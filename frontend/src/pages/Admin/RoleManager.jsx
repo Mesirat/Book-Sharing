@@ -12,57 +12,26 @@ import { useAuthStore } from "../../store/authStore";
 import { toast, ToastContainer } from "react-toastify";
 
 const UserManagement = () => {
+  const token = useAuthStore((state) => state.token);
+
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editedRole, setEditedRole] = useState("");
-  const token = useAuthStore.getState().token;
-  const API = "http://localhost:5000";
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({});
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const confirmResetPassword = (userId) => {
-    toast.info(
-      ({ closeToast }) => (
-        <div>
-          <p className="mb-2 font-medium">
-            Reset this user's password to default (12345678)?
-          </p>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={closeToast}
-              className="bg-red-400 text-white px-3 py-1 rounded hover:bg-red-300 text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                handleResetConfirmed(userId);
-                closeToast();
-              }}
-              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-500 text-sm"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        autoClose: false,
-      }
-    );
-  };
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data);
     } catch (err) {
@@ -71,73 +40,71 @@ const UserManagement = () => {
     setLoading(false);
   };
 
-  const toggleSuspend = async (id, currentStatus) => {
-    
-    try {
-      await api.put(
-        `/admin/suspend/${id}`,
-        { isSuspended: !currentStatus },
-        {
-          headers: {
-            withCredentials: true,
-         "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      fetchUsers();
-    } catch (err) {
-      console.error("Error toggling suspension:", err);
-    }
-  };
-
   const updateRole = async (id, newRole) => {
     try {
       await api.put(
         `/admin/users/${id}/role`,
         { role: newRole },
-        {
-          headers: {
-            withCredentials: true,
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === id ? { ...user, role: newRole } : user
+        )
       );
       setEditingUserId(null);
-      fetchUsers();
     } catch (err) {
       console.error("Error updating role:", err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-
+  const toggleSuspend = async (id, currentStatus) => {
     try {
-      await axios.delete(`${API}/admin/users/${id}`, {
-        headers: {
-          withCredentials: true,
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUsers(users.filter((u) => u._id !== id));
+      await api.put(
+        `/admin/suspend/${id}`,
+        { isSuspended: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === id
+            ? { ...user, isSuspended: !currentStatus }
+            : user
+        )
+      );
     } catch (err) {
-      console.error("Error deleting user:", err);
+      console.error("Error toggling suspension:", err);
     }
   };
-  const handleResetConfirmed = async (id) => {
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/admin/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+      toast.success("User deleted");
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      toast.error("Failed to delete user.");
+    }
+  };
+
+  const handleResetPassword = async (id) => {
     try {
       await api.put(`/admin/users/${id}/resetPassword`, null, {
-        headers: {
-          withCredentials: true,
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Password has been reset to : 12345678");
+      toast.success("Password has been reset to: 12345678");
     } catch (err) {
       console.error("Error resetting password:", err);
       toast.error("Failed to reset password.");
     }
+  };
+
+  const openConfirmModal = ({ title, onConfirm }) => {
+    setModalData({ title, onConfirm });
+    setModalOpen(true);
   };
 
   const filteredUsers = users.filter(
@@ -173,7 +140,7 @@ const UserManagement = () => {
             >
               <div className="flex items-start md:items-center gap-4 flex-1 mb-4 md:mb-0">
                 <img
-                  src={user.profile || "/default-profile.png"}
+                  src={user.profilePic || "/default-profile.png"}
                   alt={user.firstName}
                   className="w-14 h-14 rounded-full object-cover shadow"
                 />
@@ -234,7 +201,9 @@ const UserManagement = () => {
                 )}
 
                 <button
-                  onClick={() => toggleSuspend(user._id, user.isSuspended)}
+                  onClick={() =>
+                    toggleSuspend(user._id, user.isSuspended)
+                  }
                   className={`transition-transform hover:scale-110 ${
                     user.isSuspended
                       ? "text-green-600 hover:text-green-800"
@@ -250,7 +219,12 @@ const UserManagement = () => {
                 </button>
 
                 <button
-                  onClick={() => handleDelete(user._id)}
+                  onClick={() =>
+                    openConfirmModal({
+                      title: "Are you sure you want to delete this user?",
+                      onConfirm: () => handleDelete(user._id),
+                    })
+                  }
                   className="text-red-600 hover:text-red-800 transition-transform hover:scale-110"
                   title="Delete User"
                 >
@@ -258,7 +232,13 @@ const UserManagement = () => {
                 </button>
 
                 <button
-                  onClick={() => confirmResetPassword(user._id)}
+                  onClick={() =>
+                    openConfirmModal({
+                      title:
+                        "Reset this user's password to default (12345678)?",
+                      onConfirm: () => handleResetPassword(user._id),
+                    })
+                  }
                   className="text-purple-600 hover:text-purple-800 transition-transform hover:scale-110"
                   title="Reset Password"
                 >
@@ -269,6 +249,35 @@ const UserManagement = () => {
           ))}
         </div>
       )}
+
+      {/* Confirm Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full text-center">
+            <p className="text-lg font-medium text-gray-800 mb-4">
+              {modalData.title}
+            </p>
+            <div className="flex justify-center gap-4 mt-4">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  modalData.onConfirm();
+                  setModalOpen(false);
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded text-sm"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );

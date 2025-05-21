@@ -7,8 +7,9 @@ const GroupManager = () => {
   const [groups, setGroups] = useState([]);
   const [editingGroup, setEditingGroup] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [profilePicPreview, setProfilePicPreview] = useState(null); // For image preview
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState(null);
 
   const token = useAuthStore.getState().token;
 
@@ -20,23 +21,26 @@ const GroupManager = () => {
         },
         withCredentials: true,
       });
-
       setGroups(Array.isArray(res.data.groups) ? res.data.groups : []);
     } catch (err) {
       console.error("Error fetching groups:", err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this group?")) return;
+  const confirmDelete = (id) => {
+    setConfirmDeleteGroupId(id);
+  };
+
+  const handleDeleteConfirmed = async () => {
     try {
-      await api.delete(`/groups/${id}`, {
+      await api.delete(`/groups/${confirmDeleteGroupId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         withCredentials: true,
       });
       fetchGroups();
+      setConfirmDeleteGroupId(null);
     } catch (err) {
       console.error("Error deleting group:", err);
     }
@@ -103,12 +107,12 @@ const GroupManager = () => {
           className="w-full p-2 border rounded"
         />
       </div>
+
+      {/* Edit Group Modal */}
       {editingGroup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Edit Group
-            </h3>
+            <h3 className="text-xl font-semibold mb-4 text-center">Edit Group</h3>
 
             {Object.entries(editingGroup).map(([key, value]) => {
               if (
@@ -191,17 +195,38 @@ const GroupManager = () => {
                 onClick={handleUpdate}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
               >
-                {" "}
                 {loading ? (
-                  <>
-                    <div className="flex justify-center items-center h-6">
-                      <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-6 h-6"></div>
-                      Update
-                    </div>
-                  </>
+                  <div className="flex justify-center items-center h-6 gap-2">
+                    <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-6 h-6"></div>
+                    Update
+                  </div>
                 ) : (
                   "Update"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteGroupId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+            <p className="mb-6">Are you sure you want to delete this group?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteGroupId(null)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirmed}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Delete
               </button>
             </div>
           </div>
@@ -242,11 +267,10 @@ const GroupManager = () => {
                   className="px-3 py-1 text-green-800 rounded"
                   title="Edit Group"
                 >
-                  <Pencil className="w-5 h-5" 
-                  />
+                  <Pencil className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => handleDelete(group._id)}
+                  onClick={() => confirmDelete(group._id)}
                   className="px-3 py-1 text-red-600 rounded"
                   title="Delete Group"
                 >

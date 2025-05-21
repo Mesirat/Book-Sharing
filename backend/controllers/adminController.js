@@ -6,13 +6,13 @@ import { News } from "../models/user/newsModel.js";
 import dotenv from "dotenv";
 import csv from "csv-parser";
 import fs from "fs";
-import { createUser, registerUser } from "./userController.js";
+
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import path from "path";
+
 import { Group } from "../models/groupModel.js";
 import cloudinary from 'cloudinary'; 
-
+import {UsernameCounter} from "../models/usernameCountModel.js";
+import useEmbedding from "../recommendationSystem/utils/useEmbedding.js";
 dotenv.config();
 
 function generatePassword(length = 8) {
@@ -32,7 +32,6 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
   const totalBooks = await Book.countDocuments();
   res.json({ totalUsers, totalBooks });
 });
-
 export const changeUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
 
@@ -52,8 +51,6 @@ export const deleteBook = asyncHandler(async (req, res) => {
   await Book.findByIdAndDelete(req.params.id);
   res.json({ message: "Book deleted" });
 });
-
-
 export const updateBook = asyncHandler(async (req, res) => {
   try {
     const { title, description, publisher, publishedYear } = req.body;
@@ -125,9 +122,6 @@ export const updateBook = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Internal server error. Could not update the book." });
   }
 });
-
-
-
 export const getAllReports = asyncHandler(async (req, res) => {
   const reports = await Report.find().populate("user", "firstName email");
   res.json(reports);
@@ -146,10 +140,10 @@ export const respondToReport = asyncHandler(async (req, res) => {
 
   res.json({ message: "Response submitted", report });
 });
-
 export const uploadUsers = asyncHandler(async (req, res) => {
   const users = [];
   const results = [];
+  const currentYear = new Date().getFullYear();
 
   try {
     await new Promise((resolve, reject) => {
@@ -160,36 +154,59 @@ export const uploadUsers = asyncHandler(async (req, res) => {
         .on("error", reject);
     });
 
+    users.sort((a, b) => a.name.localeCompare(b.name));
+
+    let counterDoc = await UsernameCounter.findOne({ year: currentYear });
+    if (!counterDoc) {
+      counterDoc = await UsernameCounter.create({ year: currentYear, counter: 0 });
+    }
+
     for (const user of users) {
       const password = generatePassword();
       const [firstName, ...rest] = user.name.trim().split(" ");
       const lastName = rest.join(" ") || "";
+      const username = `amcs/${counterDoc.counter + 1}/${currentYear}`;
+      const email = user.email;
 
-      const result = await createUser({
-        firstName: firstName,
-        lastName: lastName,
-        email: user.email,
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        results.push({
+          firstName,
+          lastName,
+          username:existingUser.username,
+          password: "skipped (already exists)",
+          email: existingUser.email,
+        });
+        continue;
+      }
+
+      
+     
+
+      const newUser = new User({
+        firstName,
+        lastName,
+        username,
         password,
+        email,
         mustChangePassword: true,
       });
 
-      if (result.exists) {
-        results.push({
-          firstName,
-          lastName,
-          email: user.email,
-          password: "skipped (already exists)",
-        });
-      } else {
-        results.push({
-          firstName,
-          lastName,
-          email: user.email,
-          password,
-        });
-      }
+      await newUser.save();
+
+     
+      counterDoc.counter++;
+
+      results.push({
+        firstName,
+        lastName,
+        username,
+        password,
+        email,
+      });
     }
 
+    await counterDoc.save();
     fs.unlinkSync(req.file.path);
 
     res.status(200).json({
@@ -234,9 +251,11 @@ export const UploadBook = asyncHandler(async (req, res) => {
       });
     }
 
+   
+    const embeddingArray = (await useEmbedding([description || ""]))[0];
+
     const thumbnailPath = req.files?.thumbnail?.[0]?.path;
     const pdfFile = req.files?.pdf?.[0];
-
     const pdfPublicId = pdfFile?.filename;
 
     const book = new Book({
@@ -248,6 +267,7 @@ export const UploadBook = asyncHandler(async (req, res) => {
       categories: categoriesArray,
       thumbnail: thumbnailPath,
       pdfLink: pdfPublicId,
+      embedding: embeddingArray,
     });
 
     await book.save();

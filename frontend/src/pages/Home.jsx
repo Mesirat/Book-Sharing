@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+
 import Navbar from "../components/headers/bars/NavBar";
 import SideBar from "../components/headers/bars/SideBar";
 
@@ -12,9 +12,10 @@ import Categories from "../components/Categories.jsx";
 import MostLikedBooks from "../components/MostLikedBooks.jsx";
 import ReportButton from "../components/ReportButton.jsx";
 import Recommendation from "./User/Recommendation.jsx";
+
 const Home = () => {
   const { isAuthenticated } = useAuthStore();
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,7 +33,8 @@ const Home = () => {
               </h1>
             </div>
             <p className="text-lg font-semibold mb-4">
-              A platform for students to find great reads and recommend them to others.
+              A platform for students to find great reads and recommend them to
+              others.
             </p>
             <p className="text-sm mt-2 text-gray-600">
               Join 1,200+ students sharing over 5,000 books.
@@ -55,27 +57,20 @@ const Home = () => {
         </section>
 
         <section className="w-full bg-white items-center px-6 md:px-20 mt-24 mb-12">
-          {isAuthenticated && 
-          <>
-          
-          <TopRead />
-          <Categories />
-          <MostLikedBooks />
-          <Recommendation user={user}/>
-          
-          </>
-          
-          
-          }
-         
+          {isAuthenticated && (
+            <>
+              <TopRead />
+              <Categories />
+              <MostLikedBooks />
+              <Recommendation user={user} />
+            </>
+          )}
         </section>
-       <ReportButton/>
+        <ReportButton />
         <Footer />
       </main>
-
-     
     </div>
   );
-}
+};
 
 export default Home;

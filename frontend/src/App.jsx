@@ -19,8 +19,7 @@ import LogOut from "./pages/Auth/LogOut.jsx";
 
 import Login from "./pages/Auth/Login.jsx";
 
-import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
-import ResetPassword from "./pages/Auth/ResetPassword.jsx";
+
 import BookDetail from "./pages/BookDetail.jsx";
 
 import { useAuthStore } from "./store/authStore.js";
@@ -37,6 +36,7 @@ import Report from "./pages/Admin/ReportManager.jsx";
 import ChangePassword from "./pages/Auth/ChangePassword.jsx";
 import UploadBlogs from "./pages/Admin/UploadBlogs.jsx";
 import GroupManager from "./pages/Admin/GroupManagement.jsx";
+import MyReports from "./pages/User/MyReports.jsx";
 
 
 
@@ -122,23 +122,7 @@ function InnerApp() {
           </ProtectedRoute>
         }
       />
-   
-      <Route
-        path="/forgotPassword"
-        element={
-          <RedirectAuthUser>
-            <ForgotPassword />
-          </RedirectAuthUser>
-        }
-      />
-      <Route
-        path="/resetPassword/:token"
-        element={
-          <RedirectAuthUser>
-            <ResetPassword />
-          </RedirectAuthUser>
-        }
-      />
+
       <Route path="/logout" element={<LogOut />} />
 
       <Route
@@ -166,6 +150,7 @@ function InnerApp() {
         <Route path="laterReads" element={<ReadLater />} />
         <Route path="likedBooks" element={<LikedBooks />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="myfeedbacks" element={<MyReports />} />
       </Route>
 
       <Route

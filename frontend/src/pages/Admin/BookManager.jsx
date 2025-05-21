@@ -500,56 +500,55 @@ const BookManager = () => {
         {filteredBooks.length ? (
           filteredBooks.map((book) => (
             <div
-              key={book._id}
-              className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-start gap-4 shadow hover:shadow-md transition-shadow"
-            >
+            key={book._id}
+            className="border p-3 rounded shadow flex flex-col sm:flex-row gap-4 items-start justify-between"
+          >
+            <div className="flex gap-4 items-start w-full sm:w-auto">
               <img
                 src={book.thumbnail || "/assets/default-thumbnail.jpg"}
                 alt={book.title}
-                className="w-28 h-40 object-cover rounded-md border"
+                className="w-28 h-36 object-cover rounded border"
               />
-              <div className="flex-1 space-y-2">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  {book.title}
-                </h3>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {book.description}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold break-words">{book.title}</h3>
+                <p className="break-words">
+                  <strong>Description:</strong> {book.description}
                 </p>
-                <div className="text-sm text-gray-500">
-                  <p>
-                    ⭐ <strong>{book.averageRating}</strong> (
-                    {book.ratingsCount} ratings)
-                  </p>
-                  <p>📖 Read Count: {book.readCount}</p>
-                </div>
+                <p>
+                  <strong>Rating:</strong> {book.averageRating} ({book.ratingsCount} ratings)
+                </p>
+                <p>
+                  <strong>Read Count:</strong> {book.readCount}
+                </p>
               </div>
-              <div className="flex flex-col gap-5 items-end mr-4">
+            </div>
+          
+            <div className="flex sm:flex-col gap-2 items-start sm:items-end w-full sm:w-auto">
+            
                 <button
                   onClick={() => handleEdit(book)}
-                  title="Edit Book"
-                  className="w-9 h-9 flex items-center justify-center hover:text-green-600 text-green-800"
+                  className="p-2 text-green-800 rounded hover:bg-green-100"
                 >
-                  <Pencil className="w-5 h-5 "/>
+                  <Pencil className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(book._id)}
-                  title="Delete Book"
-                  className="w-9 h-9 flex items-center justify-center hover:text-red-600 text-red-700"
+                  className="p-2 text-red-600 rounded hover:bg-red-100"
                 >
-                  <Trash2 className="w-5 h-5 " />
+                  <Trash2 className="w-5 h-5" />
                 </button>
-
-                {book.pdfLink && (
-                  <Link
-                    to={`/readbook/${book.bookId || book._id}`}
-                    title="Read this Book"
-                    className="mt-2 px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg shadow hover:bg-gray-600"
-                  >
-                    Read
-                  </Link>
-                )}
-              </div>
+             
+              {book.pdfLink && (
+                <Link
+                  to={`/readbook/${book.bookId || book._id}`}
+                  className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm"
+                >
+                  Read
+                </Link>
+              )}
             </div>
+          </div>
+          
           ))
         ) : (
           <p className="text-gray-600">No books found matching your search.</p>

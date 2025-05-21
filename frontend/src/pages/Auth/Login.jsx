@@ -101,12 +101,6 @@ const Login = () => {
               </div>
             </div>
 
-            <Link
-              to="/forgotPassword"
-              className="text-black hover:underline mb-4"
-            >
-              Forgot Password?
-            </Link>
 
             {error && (
               <p className="text-red-500 text-center font-semibold mb-4">
@@ -130,12 +124,7 @@ const Login = () => {
               )}
             </button>
 
-            {/* <p className="mt-6 text-sm text-gray-500">
-              Don't have an account?
-              <Link to="/signup" className="text-black font-bold hover:underline mx-2">
-                Sign Up
-              </Link>
-            </p> */}
+           
           </form>
         </div>
       </div>

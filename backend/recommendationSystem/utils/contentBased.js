@@ -1,11 +1,18 @@
 import * as tf from "@tensorflow/tfjs";
 import useEmbedding from "./useEmbedding.js";
 
-export function generateBookEmbeddings(books) {
+
+export async function generateBookEmbeddings(books) {
+ 
+  const hasPrecomputed = books.every(b => Array.isArray(b.embedding) && b.embedding.length > 0);
+  if (hasPrecomputed) {
+    return books.map(b => b.embedding);
+  }
 
   const descriptions = books.map((b) => b.description || "");
   return useEmbedding(descriptions);
 }
+
 
 export function recommendSimilarBooks(bookIndex, embeddings, topK = 5) {
   const bookEmbedding = embeddings[bookIndex];

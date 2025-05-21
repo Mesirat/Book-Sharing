@@ -64,7 +64,7 @@ const User = () => {
           className={`flex-1 py-3 px-4   ${
             location.pathname === "/user/chat"
               ? "ml-8"
-              : "ml-12 md:ml-16 lg:ml-16"
+              : "ml-2 md:ml-8 lg:ml-16"
           }`}
         >
           {location.pathname === "/user" && (

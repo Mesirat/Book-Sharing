@@ -33,7 +33,6 @@ const ReportManager = () => {
     fetchReports();
   };
 
-  // Close modal on ESC key
   const escFunction = useCallback((event) => {
     if (event.key === "Escape") {
       setModalImage(null);
@@ -47,8 +46,10 @@ const ReportManager = () => {
   }, [escFunction]);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">📋 User Reports</h2>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800">
+        📋 User Reports
+      </h2>
       {reports.length === 0 ? (
         <p className="text-gray-600">No reports submitted yet.</p>
       ) : (
@@ -56,10 +57,10 @@ const ReportManager = () => {
           {reports.map((report) => (
             <div
               key={report._id}
-              className="bg-white shadow-md border border-gray-200 rounded-lg p-5"
+              className="bg-white shadow-md border border-gray-200 rounded-lg p-4 sm:p-5"
             >
-              <div className="flex justify-between items-start">
-                <div className="mb-3 space-y-1 max-w-full">
+              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="space-y-1 flex-1">
                   <p>
                     <span className="font-semibold text-gray-700">
                       👤 User:
@@ -78,12 +79,13 @@ const ReportManager = () => {
                     </span>{" "}
                     {report.description}
                   </p>
+
                   {report.screenshotUrl && (
-                    <div className="mt-3 flex items-center space-x-4 max-w-full">
+                    <div className="mt-3">
                       <img
                         src={report.screenshotUrl}
                         alt="Report screenshot"
-                        className="max-w-xs max-h-60 rounded-md border border-gray-300 cursor-pointer"
+                        className="max-w-full sm:max-w-xs max-h-60 rounded-md border border-gray-300 cursor-pointer"
                         loading="lazy"
                         onClick={() => setModalImage(report.screenshotUrl)}
                         title="Click to view fullscreen"
@@ -100,13 +102,16 @@ const ReportManager = () => {
                     )}
                   </p>
                 </div>
+
                 {!report.response && selectedReport?._id !== report._id && (
-                  <button
-                    className="h-fit bg-gray-800 hover:bg-secondary text-white px-4 py-2 rounded-md"
-                    onClick={() => setSelectedReport(report)}
-                  >
-                    Respond
-                  </button>
+                  <div className="sm:self-start">
+                    <button
+                      className="w-full sm:w-auto bg-gray-800 hover:bg-secondary text-white px-4 py-2 rounded-md"
+                      onClick={() => setSelectedReport(report)}
+                    >
+                      Respond
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -119,7 +124,7 @@ const ReportManager = () => {
                     rows={4}
                     placeholder="Write your response here..."
                   />
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md"
                       onClick={() => setSelectedReport(null)}

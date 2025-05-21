@@ -4,6 +4,7 @@ import api from "../../Services/api";
 import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import TopRead from "../../components/TopRead";
 
 const UserReadingProgress = () => {
   const [progressData, setProgressData] = useState([]);
@@ -65,88 +66,139 @@ const UserReadingProgress = () => {
 
   return (
     <div className="p-4">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* In Progress Books */}
-        <div className="flex-1 space-y-4 h-auto md:h-[85vh] overflow-y-auto">
-          <h2 className="text-2xl font-semibold mb-6">What You're Reading</h2>
-          {inProgressBooks.length === 0 ? (
-            <p>No books currently being read. Start your journey now!</p>
-          ) : (
-            inProgressBooks.map((item) => {
-              const progressPercent = Math.floor(
-                (item.currentPage / item.totalPages) * 100
-              );
+    <div className="flex flex-col lg:flex-row gap-6">
+      
 
-              return (
-                <div
-                  key={item._id}
-                  className="flex flex-col md:flex-row gap-4 items-start p-4 shadow rounded bg-white"
-                >
-                  <img
-                    src={item.book?.thumbnail || "/default-book.png"}
-                    alt={`Cover of ${item.book?.title}`}
-                    className="w-16 h-24 object-cover rounded mx-auto md:mx-0"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-xl font-medium">{item.book?.title || "Untitled Book"}</h3>
-                    <div className="w-full bg-gray-200 h-3 rounded">
-                      <div
-                        className="h-3 bg-green-500 rounded-full"
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between items-end mt-4">
-                      <div>
-                        <p className="text-sm text-gray-900">
-                          <span className="text-sm font-medium text-gray-600 mr-1">
-                            Last Read:
-                          </span>
-                          {new Date(item.updatedAt).toLocaleString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "2-digit",
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          })}
-                        </p>
-                      </div>
-                      <Link
-                        to={`/readBook/${item.book?._id}`}
-                        className="text-sm px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-600"
-                      >
-                        {progressPercent === 100 ? "Finished" : "Continue"}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          
-        </div>
-
-        
-        <div className="flex-2 space-y-4 px-12 md:px-4 h-auto md:h-[89vh] overflow-y-auto scrollbar-track-gray-100 hide-scrollbar">
-          {Array.isArray(blogs) && blogs.length === 0 ? (
-            <p>No news or updates yet. Stay tuned!</p>
-          ) : (
-            blogs.map((blog, index) => (
+      <div className="w-full lg:w-1/2 space-y-4 overflow-auto">
+        <h2 className="text-2xl font-semibold mb-4">What You're Reading</h2>
+        {inProgressBooks.length === 0 ? (
+          <>
+            <p className="text-gray-600">No books currently being read. Start your journey now!</p>
+            <TopRead />
+          </>
+        ) : (
+          inProgressBooks.map((item) => {
+            const progressPercent = Math.floor((item.currentPage / item.totalPages) * 100);
+            return (
               <div
-                key={index}
-                className="p-2 rounded-lg border-2 text-center border-secondary mb-4"
+                key={item._id}
+                className="flex flex-col sm:flex-row gap-4 items-start p-4 shadow rounded bg-white"
               >
                 <img
-                  src={blog?.thumbnail || "/default-book.png"}
-                  alt={`Cover of ${blog.title}`}
-                  className="w-full h-56 object-cover mb-1"
+                  src={item.book?.thumbnail || "/default-book.png"}
+                  alt={`Cover of ${item.book?.title}`}
+                  className="w-20 h-auto object-cover rounded mx-auto sm:mx-0"
                 />
-                <h4 className="text-lg mb-2">{blog.title}</h4>
-                <div className="bg-blue-100 p-2 rounded-md">
-                  <p className="text-blue-500 mb-2">{blog.description}</p>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">{item.book?.title || "Untitled Book"}</h3>
+                  <div className="w-full bg-gray-200 h-3 rounded mt-2">
+                    <div
+                      className="h-3 bg-secondary rounded-full"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between items-end mt-4 flex-wrap gap-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium mr-1">Last Read:</span>
+                      {new Date(item.updatedAt).toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "2-digit",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                    <Link
+                      to={`/readBook/${item.book?._id}`}
+                      className="text-sm px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-600"
+                    >
+                      {progressPercent === 100 ? "Finished" : "Continue"}
+                    </Link>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400 text-end">
-                  {new Date(blog.date).toLocaleString("en-US", {
+              </div>
+            );
+          })
+        )}
+      </div>
+      <div className="w-full lg:w-1/2 space-y-6 overflow-auto hide-scrollbar max-h-[80vh] px-2">
+      <div className="w-full  space-y-6 overflow-auto hide-scrollbar">
+  <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">
+    📰 Latest News & Updates
+  </h2>
+
+  {Array.isArray(blogs) && blogs.length === 0 ? (
+    <p className="text-center text-gray-500 italic mt-10">
+      No news or updates yet. Stay tuned!
+    </p>
+  ) : (
+    blogs.map((blog, index) => (
+      <div
+        key={index}
+        className="flex gap-4 p-4 rounded-2xl border border-gray-200 bg-white shadow hover:shadow-md transition-transform duration-300 hover:-translate-y-1 cursor-pointer"
+      >
+        <img
+          src={blog?.thumbnail || "/default-book.png"}
+          alt={`Cover of ${blog.title}`}
+          className="w-32 h-32 object-cover rounded-xl flex-shrink-0"
+        />
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <h4 className="text-lg font-semibold text-gray-800 line-clamp-2 mb-1">
+              {blog.title}
+            </h4>
+            <div className="bg-blue-50 p-2 rounded-md border border-blue-100">
+              <p className="text-blue-700 text-sm leading-snug line-clamp-3">
+                {blog.description}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 text-right mt-2 font-mono">
+            {new Date(blog.date).toLocaleString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </p>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
+
+  {completedBooks.length > 0 && (
+    <section className="bg-gray-900 text-white rounded-lg p-6 mt-10 shadow-lg">
+      <h3 className="text-2xl font-bold text-center mb-6 tracking-wide">
+        Library of Completions
+      </h3>
+      {completedBooks.map((item) => (
+        <div
+          key={item._id}
+          onClick={() => navigate(`/readBook/${item.book._id}`)}
+          className="flex gap-5 items-start p-4 mb-3 bg-white rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+        >
+          <img
+            src={item.book?.thumbnail || "/default-book.png"}
+            alt={`Cover of ${item.book?.title}`}
+            className="w-16 h-12 object-cover rounded-md flex-shrink-0"
+          />
+          <div className="flex-1 flex flex-col justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 truncate">
+              {item.book?.title || "Untitled Book"}
+            </h3>
+            <div className="w-full bg-gray-300 h-4 rounded-full mt-3 overflow-hidden">
+              <div className="h-4 bg-green-500 rounded-full w-full"></div>
+            </div>
+            <div className="flex justify-between items-center mt-3 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <CircleCheck className="w-5 h-5 text-green-600" />
+                <time className="font-mono text-xs" dateTime={item.updatedAt}>
+                  {new Date(item.updatedAt).toLocaleString("en-US", {
                     year: "numeric",
                     month: "short",
                     day: "2-digit",
@@ -154,61 +206,19 @@ const UserReadingProgress = () => {
                     minute: "2-digit",
                     hour12: true,
                   })}
-                </p>
+                </time>
               </div>
-            ))
-          )}
-
-          {completedBooks.length !== 0 && (
-            <div className="bg-secondary rounded p-4">
-              <h3 className="text-xl text-white text-center font-semibold mb-6">Library of Completions</h3>
             </div>
-          )}
-
-          {completedBooks.length === 0 ? (
-            <p className="text-white px-4"></p>
-          ) : (
-            completedBooks.map((item) => (
-              <div
-                key={item._id}
-                onClick={() => navigate(`/readBook/${item.book._id}`)}
-                className="flex gap-4 items-start py-2 px-4 shadow rounded bg-white cursor-pointer hover:bg-gray-50 transition"
-              >
-                <img
-                  src={item.book?.thumbnail || "/default-book.png"}
-                  alt={`Cover of ${item.book?.title}`}
-                  className="w-12 h-16 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <h3 className="text-xl font-medium">{item.book?.title || "Untitled Book"}</h3>
-                  <div className="w-full bg-gray-200 h-3 rounded">
-                    <div
-                      className="h-3 bg-green-500 rounded-full"
-                      style={{ width: `100%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between items-end mt-2">
-                    <p className="text-sm text-gray-900 flex items-center gap-1">
-                      <CircleCheck className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-gray-600">
-                        {new Date(item.updatedAt).toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "2-digit",
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+          </div>
         </div>
-      </div>
+      ))}
+    </section>
+  )}
+</div>
+
     </div>
+  </div>
+  
   );
 };
 

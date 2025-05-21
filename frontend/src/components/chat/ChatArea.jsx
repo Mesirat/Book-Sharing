@@ -16,7 +16,7 @@ const ChatArea = ({ messages }) => {
           const senderId =
             typeof msg.sender === "object" ? msg.sender._id : msg.sender;
           const isCurrentUser = senderId?.toString() === currentUser?._id?.toString();
-
+console.log(messages);
           const senderName =
             typeof msg.sender === "object" ? msg.sender.firstName : "You";
 
@@ -35,7 +35,7 @@ const ChatArea = ({ messages }) => {
                 <div className="text-sm text-gray-600">
                   {!isCurrentUser && typeof msg.sender === "object" && (
                     <strong className="text-blue-500">
-                      {msg.sender.firstName}
+                      {senderName}
                     </strong>
                   )}
 

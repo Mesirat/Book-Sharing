@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../Services/api";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom";
-
+import Cards from "../components/Cards";
 const MostLikedBooks = () => {
   const [books, setBooks] = useState([]);
   const [error, setError] = useState("");
@@ -51,29 +51,7 @@ const MostLikedBooks = () => {
             <p className="text-center text-red-500 font-medium">{error}</p>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 mt-6 mb-8">
-            {books.map((book, index) => (
-              <div
-                key={index}
-                onClick={() => handleCardClick(book)}
-                className="flex flex-col items-center p-4 transition-transform duration-300 bg-white cursor-pointer rounded-md shadow"
-              >
-                <div className="w-full h-80 overflow-hidden rounded-md">
-                  <img
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
-                    src={book.thumbnail}
-                    alt={book.title}
-                  />
-                </div>
-                <h2 className="text-xl sm:text-2xl lg:text-2xl my-2 text-center">
-                  {book.title}
-                </h2>
-                <p className="text-sm text-gray-600 text-center">
-                  by <strong>{book.authors}</strong>
-                </p>
-              </div>
-            ))}
-          </div>
+          <Cards books={books} />
         </div>
       )}
     </>

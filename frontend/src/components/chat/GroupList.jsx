@@ -181,7 +181,8 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
 
       {groupsNotJoined.length > 0 ? (
         <div className="w-full overflow-x-auto hide-scrollbar">
-          <div className="flex w-max space-x-10 pb-4 px-1 hide-scrollbar">
+        <div className="flex w-max  space-x-10 pb-4 px-1 hide-scrollbar">
+
             {groupsNotJoined.map((group) => {
               const isMember = group.members?.includes(user._id);
               const memberCount = group.memberCount || 0;

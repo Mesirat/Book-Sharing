@@ -11,10 +11,15 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    username: {
+      type: String,
+     
+      unique: true,
+    },
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique:true,
     },
     password: {
       type: String,
@@ -26,8 +31,8 @@ const userSchema = mongoose.Schema(
     },
     phone: {
       type: String,
-     
-      unique: true,   
+     default:null,
+    
     },
     
     cloudinaryPublicId: {

@@ -37,7 +37,6 @@ export const getBookById = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
   try {
-    // Convert bookId to a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(bookId)) {
       return res.status(400).json({ message: "Invalid book ID" });
     }

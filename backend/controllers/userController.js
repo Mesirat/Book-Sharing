@@ -23,46 +23,7 @@ const validateFields = (fields) => {
   }
 };
 
-export const registerUser = async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
 
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User already exists" });
-    }
-
-    const user = new User({ firstName, lastName, email, password });
-    await user.save();
-
-    const token = generateToken(res, user._id);
-    const refreshToken = generateRefreshToken(res, user._id);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      user: {
-        _id: user._id,
-        name: user.firstName,
-        email: user.email,
-        role: user.role,
-      },
-      token,
-      refreshToken,
-    });
-  } catch (error) {
-    console.error("Register error:", error);
-    res.status(400).json({
-      success: false,
-      message: "User registration failed.",
-      error: error.message,
-    });
-  }
-};
 
 export const logIn = asyncHandler(async (req, res) => {
   const { email, password, isAdmin } = req.body;
@@ -110,6 +71,7 @@ export const logIn = asyncHandler(async (req, res) => {
         _id: user._id,
         firstName: user.firstName,
         lastName:user.lastName,
+        username:user.username,
         email: user.email,
         role: user.role,
         lastLogin: user.lastLogin,
@@ -491,7 +453,8 @@ export const changePassword = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Incorrect current password" });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword;
+    await user.save();
     user.mustChangePassword = false;
     await user.save();
 
@@ -604,30 +567,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const createUser = async ({
-  firstName,
-  lastName,
-  email,
-  password,
-  mustChangePassword,
-}) => {
-  const existingUser = await User.findOne({ email });
 
-  if (existingUser) {
-    return { exists: true };
-  }
-
-  const user = new User({
-    firstName,
-    lastName,
-    email,
-    password,
-    mustChangePassword,
-  });
-  await user.save();
-
-  return { exists: false, user };
-};
 export const submitReport = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id) {
     return res.status(401).json({ success: false, message: "Not authorized" });
@@ -657,4 +597,11 @@ export const submitReport = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Server error: " + error.message });
   }
 });
-
+export const getMyReports = async (req, res) => {
+  try {
+    const reports = await Report.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(reports);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch reports." });
+  }
+};
