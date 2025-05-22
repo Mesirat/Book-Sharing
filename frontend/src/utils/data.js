@@ -25,7 +25,7 @@ export const bookCategories = {
       text: "Celebrate creativity and elevate your everyday living."
     },
   ],
-  "Religious & Spiritual": [
+  "Spiritual": [
     {
       image: "https://i.pinimg.com/736x/6d/7f/ef/6d7fefa9701322fe904ea01a82b235db.jpg",
       text: "Explore faith, philosophy, and inner peace through sacred texts."
@@ -43,7 +43,7 @@ export const bookCategories = {
       text: "Gain real-world perspectives and explore true events."
     },
   ],
-  "Children & Young Readers": [
+  "Children & Young": [
     {
       image: "https://i.pinimg.com/736x/3b/05/03/3b05037113fd303b8d7b37be68be056f.jpg",
       text: "Spark imagination and learning with engaging kids’ stories."

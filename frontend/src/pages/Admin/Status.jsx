@@ -66,7 +66,7 @@ const Status = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Books On Everyone’s Shelf</h2>
-          <ul className="bg-white rounded-lg shadow-md p-4 space-y-3 max-h-[360px] overflow-y-auto">
+          <ul className="bg-white rounded-lg shadow-md p-4 space-y-3 max-h-[410px] overflow-y-auto">
             {stats.topBooks.map((book, i) => (
               <li
                 key={i}
@@ -87,7 +87,7 @@ const Status = () => {
         </div>
 
         <div className="mt-3 lg:mt-10">
-          <div className="bg-white rounded-lg shadow-md p-4 h-80">
+          <div className="bg-white rounded-lg shadow-md p-4 h-[410px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bookChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -108,7 +108,7 @@ const Status = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Most Engaged Communities</h2>
-          <ul className="bg-white rounded-lg shadow-md p-4 space-y-3 max-h-[360px] overflow-y-auto">
+          <ul className="bg-white rounded-lg shadow-md p-4 space-y-3 max-h-[410px] overflow-y-auto">
             {stats.topGroups.map((group, i) => (
               <li
                 key={i}
@@ -129,7 +129,7 @@ const Status = () => {
         </div>
 
         <div className="mt-4 lg:mt-10">
-          <div className="bg-white rounded-lg shadow-md p-4 h-80">
+          <div className="bg-white rounded-lg shadow-md p-4 h-[410px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={groupChartData}>
                 <CartesianGrid strokeDasharray="3 3" />

@@ -40,7 +40,7 @@ const TopRead = () => {
   if (error) return <div className="text-center text-red-500">{error}</div>;
 
   return (
-    <section className="w-full mx-auto p-4 md:p-10 mb-8 ">
+    <section className="w-full mx-auto p-4 md:p-10 mb-6 ">
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-sans">Top Read This Week</h1>
         <p className="text-lg mt-4 text-gray-600">
@@ -80,12 +80,15 @@ const TopRead = () => {
                       ? book.authors.join(", ")
                       : "Unknown"}
                   </p>
+                  <p className="text-sm text-gray-600 mt-4">
+                    {book.readCount} reads
+                  </p>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Link
                     to={`/readbook/${book._id}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-4 py-2 bg-secondary rounded hover:bg-gray-600"
+                    className="px-4 py-2 bg-secondary text-white rounded hover:bg-gray-600"
                   >
                     Read Now
                   </Link>

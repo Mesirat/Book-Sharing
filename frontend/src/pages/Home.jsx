@@ -59,8 +59,8 @@ const Home = () => {
         <section className="w-full bg-white items-center px-6 md:px-20 mt-24 mb-12">
           {isAuthenticated && (
             <>
-              <TopRead />
               <Categories />
+              <TopRead />
               <MostLikedBooks />
               <Recommendation user={user} />
             </>

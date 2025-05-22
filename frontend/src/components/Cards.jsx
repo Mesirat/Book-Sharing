@@ -11,7 +11,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
   };
 
   return (
-    <div className="w-full px-4 mt-8 mb-6 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+    <div className="w-full px-4 mt-8 mb-2 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
       {bookList.map((book) => {
         const thumbnail = book.thumbnail || "/fallback-image.jpg";
 
@@ -25,7 +25,7 @@ const Cards = ({ books = [], onLike, onRemove }) => {
         return (
           <div
             key={bookId}
-            className="relative w-full h-[80vh] overflow-hidden rounded-md"
+            className="relative w-full h-[70vh] overflow-hidden rounded-md"
           >
             <img
               src={thumbnail}

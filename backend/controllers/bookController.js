@@ -8,8 +8,6 @@ import { LikedBook } from "../models/user/likedBookModel.js";
 import { LaterRead } from "../models/user/laterReadModel.js";
 import { BookRead } from "../models/bookReadModel.js";
 
-const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
-
 export const getBooks = asyncHandler(async (req, res) => {
   const { title, author } = req.query;
 
@@ -167,7 +165,7 @@ export const ratingBooks = asyncHandler(async (req, res) => {
 
 export const bookSearch = asyncHandler(async (req, res) => {
   try {
-    const { query, category, page = 1, limit = 6 } = req.query;
+    const { query, category, page = 1, limit = 8 } = req.query; 
 
     const searchFilter = {};
 
@@ -180,14 +178,19 @@ export const bookSearch = asyncHandler(async (req, res) => {
     }
 
     if (category) {
-      const parts = category.split(",").map((p) => p.trim());
-      searchFilter.categories = { $all: parts };
+      const normalizedCategory = category.trim().toLowerCase();
+      if (!searchFilter.$or) {
+        searchFilter.$or = [];
+      }
+      searchFilter.$or.push({ categories: { $in: [normalizedCategory] } });
     }
 
-    const totalCount = await Book.countDocuments(searchFilter);
-    const books = await Book.find(searchFilter)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    const [totalCount, books] = await Promise.all([
+      Book.countDocuments(searchFilter),
+      Book.find(searchFilter)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+    ]);
 
     res.json({
       books,
@@ -199,6 +202,8 @@ export const bookSearch = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Failed to fetch books" });
   }
 });
+
+
 
 export const getLaterReads = asyncHandler(async (req, res) => {
   try {

@@ -238,7 +238,8 @@ export const UploadBook = asyncHandler(async (req, res) => {
     } = req.body;
 
     const authorsArray = authors?.split(",").map((a) => a.trim()) || [];
-    const categoriesArray = categories?.split(",").map((c) => c.trim()) || [];
+  const categoriesArray = categories?.split(",").map((c) => c.trim().toLowerCase()) || [];
+
 
     const existingBook = await Book.findOne({
       title: title.trim(),

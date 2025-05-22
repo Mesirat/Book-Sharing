@@ -188,17 +188,17 @@ const BookDetail = () => {
                   fill={isLiked ? "red" : "none"}
                   strokeWidth={1.5}
                 />
-                {isLiked ? "Liked" : ""}
+               
               </button>
 
               <button
                 onClick={handleLaterRead}
                 disabled={isProcessing}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
+                className={`flex items-center text-white gap-2 px-4 py-2 rounded-lg transition
                   ${
                     isLaterRead
-                      ? "bg-gray-100 text- border border-green-400 "
-                      : "bg-secondary  hover:bg-gray-700 hover:text-white"
+                      ? "bg-gray-100  border border-green-400 "
+                      : "bg-secondary  hover:bg-gray-700 "
                   } disabled:opacity-50 shadow-sm`}
               >
                 
@@ -207,7 +207,7 @@ const BookDetail = () => {
 
               <Link
                 to={`/readbook/${book.bookId ? book.bookId : book._id}`}
-                className="px-4 py-2 bg-secondary  rounded hover:bg-gray-600 hover:text-white"
+                className="px-4 py-2 bg-secondary  text-white rounded hover:bg-gray-600"
               >
                 Read Now
               </Link>

@@ -1,160 +1,157 @@
-import React, { useState, useCallback } from "react";
+
+import React, { useState, useCallback, useEffect } from "react";
 import { bookCategories } from "../utils/data";
 import api from "../Services/api";
-import { ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import Cards from "./Cards";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Categories = () => {
-  const [selectedCategory, setSelectedCategory] = useState({ category: null, grade: null });
+  const [selectedCategory, setSelectedCategory] = useState("Educational");
+  const [selectedGrade, setSelectedGrade] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const token = useAuthStore.getState().token;
 
-  const fetchBooks = useCallback(async (category) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchBooks = useCallback(
+    async (category, page = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get("/books/search", {
+          params: { category, page, limit: 8 }, 
+          headers: {
+            Authorization: `Bearer ${token}`,
+            withCredentials: true,
+          },
+        });
 
-      const response = await api.get("/books/search", {
-        params: { category },
-        headers: {
-          Authorization: `Bearer ${token}`,
-          withCredentials: true,
-        },
-      });
-
-      if (response.data?.length > 0) {
-        setBooks(response.data);
-      } else {
-        setBooks([]);
+        if (response.data?.books?.length > 0) {
+          setBooks(response.data.books);
+          setTotalPages(response.data.totalPages);
+        } else {
+          setBooks([]);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch books. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch books. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+    },
+    [token]
+  );
 
   const handleCategoryClick = (category) => {
-    setSelectedCategory(prevState => ({
-      ...prevState,
-      category,
-    }));
-    fetchBooks(category);
+    setSelectedCategory(category);
+    setSelectedGrade(null);
+    setCurrentPage(1);
+    fetchBooks(category, 1);
   };
 
-  const handleGradeSelect = (subcategory, grade) => {
-    setSelectedCategory(prevState => ({
-      ...prevState,
-      category: `${subcategory.parent},${grade}`,
-      grade
-    }));
-    fetchBooks(`${subcategory.parent},${grade}`);
+  const handleGradeSelect = (grade) => {
+    setSelectedGrade(grade);
+    setCurrentPage(1);
+    fetchBooks(`${selectedCategory}_${grade.toLowerCase()}`, 1);
   };
 
-  const handleToggleCategories = () => {
-    setShowAllCategories((prev) => !prev);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      fetchBooks(selectedCategory, newPage);
+    }
   };
 
-  const categoriesToDisplay = showAllCategories
-    ? Object.entries(bookCategories)
-    : Object.entries(bookCategories).slice(0, 4);
+  useEffect(() => {
+    fetchBooks(selectedCategory, currentPage);
+  }, [selectedCategory, currentPage, fetchBooks]);
 
   return (
-    <div className="mb-16 px-4 md:px-16 mt-12">
-      <h1 className="text-4xl md:text-5xl font-sans">Explore by Category</h1>
+    <div className="mb-6 px-4 md:px-16 mt-24 py-6">
+      <h1 className="text-4xl md:text-5xl font-sans ">Explore by Category</h1>
 
-      <div className="flex flex-col md:flex-row items-center justify-between mt-6">
-        <div className="text-xl mb-4 md:mb-0 text-center md:text-left">
-          <h1 className="mb-1">
-            Embark on thrilling adventures, uncover futuristic worlds, and ignite your curiosity with every page
-          </h1>
-        </div>
+ <div className="flex overflow-x-auto space-x-12 mt-4 scrollbar-hide">
+  {Object.keys(bookCategories).map((parent) => (
+    <button
+      key={parent}
+      className={`p-2 px-2 rounded-md cursor-pointer ${
+        selectedCategory === parent ? "bg-secondary text-white" : ""
+      }`}
+      onClick={() => handleCategoryClick(parent)}
+    >
+      {parent}
+    </button>
+  ))}
+</div>
 
-        <button
-          onClick={handleToggleCategories}
-          className="flex bg-secondary hover:bg-gray-500 flex-row items-center justify-center mx-2 rounded-lg shadow-md transition duration-300 px-8 py-2 text-lg font-medium"
-        >
-          {showAllCategories ? "Hide Categories" : "All Categories"}
-          {showAllCategories ? (
-            <ArrowLeft className="ml-1" />
-          ) : (
-            <ArrowRight className="ml-1" />
-          )}
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mt-6">
-        {categoriesToDisplay.map(([parent, subcategories]) => (
-          <div
-            key={parent}
-            className={`flex flex-col items-center rounded-2xl p-4 transition-transform duration-300 cursor-pointer ${
-              selectedCategory.category === parent ? "ring-2 ring-blue-500" : ""
-            }`}
-            onClick={() => handleCategoryClick(parent)}
-          >
-            <div className="w-full overflow-hidden h-80 rounded-md relative">
-              {subcategories.map((subcategory, index) => (
-                <div key={index} className="relative group w-full h-full">
-                  <img
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    src={subcategory.image}
-                    alt={`${parent} thumbnail ${index + 1}`}
-                  />
-                  <div className="absolute top-0 text-center left-0 w-full h-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex justify-center items-center text-white text-xl font-semibold">
-                    <span>{subcategory.text}</span>
-                  </div>
 
-                  {subcategory.grades && (
-                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-11/12">
-                      <select
-                        className="w-full px-3 py-2 bg-white rounded-md shadow focus:outline-none "
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => handleGradeSelect({ parent, subcategory }, e.target.value)}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>Grade</option>
-                        {subcategory.grades.map((grade) => (
-                          <option key={grade} value={grade}>
-                            {grade}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              ))}
+      {selectedCategory && (
+        <div className="mt-6">
+          {["Educational", "Reference"].includes(selectedCategory) && (
+            <div className=" mb-4">
+              <select
+                className="px-3 py-2 bg-white rounded-md shadow focus:outline-none"
+                onChange={(e) => handleGradeSelect(e.target.value)}
+                value={selectedGrade || ""}
+              >
+                <option value="" disabled>
+                  Select Grade
+                </option>
+                {["9", "10", "11", "12"].map((grade) => (
+                  <option key={grade} value={`grade${grade}`}>
+                    Grade {grade}
+                  </option>
+                ))}
+              </select>
             </div>
-            <h2 className="text-xl sm:text-2xl my-2">{parent}</h2>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      )}
 
-      <div className="w-full mt-10">
-        {loading && (
+      <div className="mt-6">
+        {loading ? (
           <div className="flex justify-center items-center h-full">
             <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16"></div>
           </div>
-        )}
-        {error && <p className="text-center text-red-500">{error}</p>}
-
-        {selectedCategory.category && !loading && !error && books.length === 0 && (
-          <p className="text-center text-lg text-gray-600 flex flex-col items-center">
-            📚 No books found in{" "}
-            <span className="font-semibold">{selectedCategory.category}</span>
-          </p>
-        )}
-
-        {selectedCategory.category && !loading && !error && books.length > 0 && (
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : selectedCategory && books.length === 0 ? (
+          <p className="text-center text-lg text-gray-600">No books found.</p>
+        ) : (
           <>
-            <h2 className="text-2xl sm:text-3xl text-center font-semibold mb-6">
-              Books in "{selectedCategory.category}" Category
-            </h2>
             <Cards books={books} />
+
+             {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <button
+                className={`px-4 py-2 mr-2 bg-secondary text-white rounded-md hover:bg-gray-600 ${
+                  currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
+                }`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft />
+              </button>
+
+              <span className="px-4 py-2">{`Page ${currentPage} of ${totalPages}`}</span>
+
+              <button
+                className={`px-4 py-2 ml-2 bg-secondary text-white rounded-md hover:bg-gray-600 ${
+                  currentPage === totalPages
+                    ? "cursor-not-allowed opacity-50"
+                    : ""
+                }`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight />
+              </button>
+            </div>
+             )}
           </>
         )}
       </div>
