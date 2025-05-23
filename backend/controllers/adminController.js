@@ -219,7 +219,7 @@ export const uploadUsers = asyncHandler(async (req, res) => {
   }
 });
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}, "firstName email role isSuspended");
+  const users = await User.find({}, "firstName email role isSuspended profileImage");
   res.json(users);
 });
 export const getAllBooks = asyncHandler(async (req, res) => {
