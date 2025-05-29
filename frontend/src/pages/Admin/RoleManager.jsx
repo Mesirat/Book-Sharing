@@ -140,7 +140,7 @@ const UserManagement = () => {
             >
               <div className="flex items-start md:items-center gap-4 flex-1 mb-4 md:mb-0">
                 <img
-                  src={user.profilePic || "/default-profile.png"}
+                  src={user.profileImage || "/default-profile.png"}
                   alt={user.firstName}
                   className="w-14 h-14 rounded-full object-cover shadow"
                 />

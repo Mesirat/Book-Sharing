@@ -36,7 +36,12 @@ const TopRead = () => {
     navigate(`/bookDetail`, { state: { book } });
   };
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (loading)
+    return (
+      <div className="text-center py-4">
+        <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16 mx-auto"></div>
+      </div>
+    );
   if (error) return <div className="text-center text-red-500">{error}</div>;
 
   return (

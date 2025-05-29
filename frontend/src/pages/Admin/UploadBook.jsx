@@ -84,7 +84,7 @@ const token = useAuthStore.getState().token;
         </h2>
 
         <div className="grid grid-cols-2 gap-4">
-          {["title", "authors", "publisher", "publishYear"].map((field) => (
+          {["title", "authors", "publisher", "publishedYear"].map((field) => (
             <input
               key={field}
               type="text"

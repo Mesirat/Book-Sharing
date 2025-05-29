@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { LikedBook } from "../models/user/likedBookModel.js";
 import { LaterRead } from "../models/user/laterReadModel.js";
 import { BookRead } from "../models/bookReadModel.js";
+import { SearchLog } from "../models/user/searchLogModel.js";
 
 export const getBooks = asyncHandler(async (req, res) => {
   const { title, author } = req.query;
@@ -165,9 +166,23 @@ export const ratingBooks = asyncHandler(async (req, res) => {
 
 export const bookSearch = asyncHandler(async (req, res) => {
   try {
-    const { query, category, page = 1, limit = 8 } = req.query; 
-
+    const { query, category, page = 1, limit = 8 } = req.query;
     const searchFilter = {};
+
+   
+    if (query?.trim() && req.user?._id) {
+      await SearchLog.findByIdAndUpdate(
+        req.user._id,
+        {
+          $push: {
+            logs: {
+              searchQuery: query.trim(),
+            },
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
 
     if (query) {
       searchFilter.$or = [
@@ -202,7 +217,6 @@ export const bookSearch = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Failed to fetch books" });
   }
 });
-
 
 
 export const getLaterReads = asyncHandler(async (req, res) => {

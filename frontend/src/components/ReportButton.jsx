@@ -47,7 +47,7 @@ const ReportButton = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 bg-secondary hover:bg-gray-400 text-red-800 px-4 py-4 font-bold rounded-full shadow-lg flex items-center space-x-2"
+        className="fixed bottom-5 right-5 z-40 bg-white hover:bg-red-800 hover:text-white text-red-800 px-4 py-4 font-bold rounded-full shadow-lg flex items-center space-x-2"
       >
         <Bug className="w-5 h-5" />
         <span>Report</span>

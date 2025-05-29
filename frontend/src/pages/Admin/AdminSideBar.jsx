@@ -29,7 +29,7 @@ const SideBar = () => {
     { to: "/admin/groupManagement", label: "Group Management", Icon: Users },
     { to: "/admin/uploadBook", label: "Book Upload", Icon: BookPlus },
     { to: "/admin/addUsers", label: "Add Users", Icon: UserPlus },
-    { to: "/admin/uploadBlog", label: "Announcement", Icon: Newspaper },
+    { to: "/admin/uploadBlog", label: "Blogs", Icon: Newspaper },
     { to: "/admin/report", label: "Support Center", Icon: ClipboardList },
     { to: "/logout", label: "Logout", Icon: LogOut },
   ];

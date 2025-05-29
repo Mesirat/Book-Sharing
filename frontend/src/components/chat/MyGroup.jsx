@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import GroupChat from "../../pages/GroupChat";
 import { useAuthStore } from "../../store/authStore";
 import GroupCreate from "./GroupCreate";
-import { Plus } from "lucide-react";
+import { Loader, Plus } from "lucide-react";
 const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,9 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    
+    setIsModalOpen(true);}
   const closeModal = () => setIsModalOpen(false);
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -89,14 +91,15 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
       alert("You need to join the group first to chat!");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16"></div>
+if (loading) {
+  return (
+    
+     <div className="text-center py-4">
+        <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16 mx-auto"></div>
       </div>
-    );
-  }
+  );
+}
+
 
   if (error) {
     return (
@@ -108,6 +111,15 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
 
   return (
     <div>
+       {isModalOpen && (
+         
+           <GroupCreate
+                  onClose={closeModal}
+                  isModalOpen={isModalOpen}
+                  fetchGroups={fetchGroups}
+                  searchTerm={searchTerm}
+                />
+          )}
       <div className="sticky flex justify-around top-0 text-text z-10  p-1">
         <input
           type="text"
@@ -117,11 +129,13 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
           className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full "
         />
           <button
+          title="Create Group" aria-label="Create Group"
           onClick={openModal}
-          className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:text-green-500 transition-all"
+          className="px-6 py-3 bg-white  rounded-lg hover:bg-secondary hover:text-white transition-all"
         >
         <Plus />
         </button>
+        
       </div>
 
       {filteredGroups.length === 0 ? (
@@ -136,7 +150,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
               onClick={() => handleGroupClick(group)}
               className={`w-full  min-h-16 px-4 py-2 border rounded-md shadow-md cursor-pointer  flex items-center ${
                 currentGroup && currentGroup._id === group._id
-                  ? "bg-secondary ring-2 ring-blue-200 outline-none"
+                  ? "bg-secondary ring-2 ring-blue-200 text-white outline-none"
                   : "hover:bg-gray-300 hover:bg-opacity-70"
               } `}
             >
@@ -160,12 +174,7 @@ const MyGroups = ({ userId, currentGroup, setCurrentGroup }) => {
               </div>
             </div>
           ))}
-           <GroupCreate
-                  onClose={closeModal}
-                  isModalOpen={isModalOpen}
-                  fetchGroups={fetchGroups}
-                  searchTerm={searchTerm}
-                />
+         
         </div>
       )}
     </div>

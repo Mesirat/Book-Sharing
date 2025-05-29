@@ -12,7 +12,7 @@ import bcrypt from "bcryptjs";
 import { Group } from "../models/groupModel.js";
 import cloudinary from 'cloudinary'; 
 import {UsernameCounter} from "../models/usernameCountModel.js";
-import useEmbedding from "../recommendationSystem/utils/useEmbedding.js";
+
 dotenv.config();
 
 function generatePassword(length = 8) {

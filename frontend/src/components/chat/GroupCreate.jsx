@@ -54,7 +54,7 @@ const GroupCreate = ({
     const formData = new FormData();
     formData.append("groupName", groupName);
     formData.append("creator", user?._id);
-    formData.append("profilePic", profilePic);
+    formData.append("thumbnail", profilePic);
 
     try {
       const response = await api.post("/groups/createGroup", formData, {

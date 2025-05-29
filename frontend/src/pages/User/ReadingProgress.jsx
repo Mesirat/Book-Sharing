@@ -5,6 +5,7 @@ import { CircleCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import TopRead from "../../components/TopRead";
+import MostLikedBooks from "../../components/MostLikedBooks";
 
 const UserReadingProgress = () => {
   const [progressData, setProgressData] = useState([]);
@@ -74,7 +75,7 @@ const UserReadingProgress = () => {
         {inProgressBooks.length === 0 ? (
           <>
             <p className="text-gray-600">No books currently being read. Start your journey now!</p>
-            <TopRead />
+          
           </>
         ) : (
           inProgressBooks.map((item) => {
@@ -122,7 +123,7 @@ const UserReadingProgress = () => {
           })
         )}
       </div>
-      <div className="w-full lg:w-1/2 space-y-6 overflow-auto hide-scrollbar max-h-[80vh] px-2">
+      <div className="w-full lg:w-1/2 space-y-6 overflow-auto hide-scrollbar max-h-[90vh] px-2">
       <div className="w-full  space-y-6 overflow-auto hide-scrollbar">
   <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">
     📰 Latest News & Updates

@@ -68,13 +68,13 @@ export const useAuthStore = create(
     }
   },
 
-  login: async (email, password, isAdmin = false) => {
+  login: async (username, password, isAdmin = false) => {
     set({ loading: true, message: null, error: null });
   
     try {
       const response = await axios.post(
         `${API_URL}/login`,
-        { email, password, isAdmin },
+        { username, password, isAdmin },
         { headers: { "Content-Type": "application/json" } }
       );
   

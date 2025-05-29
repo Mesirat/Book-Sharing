@@ -1,13 +1,13 @@
 import { Group } from "../models/groupModel.js";
 import mongoose from "mongoose";
-import multer from "multer";
+
 import path from "path";
 import { User } from "../models/userModel.js";
 
 import { fileURLToPath } from "url";
-import asyncHandler from "express-async-handler";
+
 import { v2 as cloudinary } from "cloudinary";
-import { Message } from "../models/messageModel.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -214,8 +214,8 @@ export const GetGroupDetails = async (req, res) => {
 
   try {
     const group = await Group.findById(groupId)
-      .populate("members", "_id firstName  email profilePic")
-      .populate("creator", "_id firstName email profilePic");
+      .populate("members", "_id firstName  email profileImage")
+      .populate("creator", "_id firstName email profileImage");
 
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
@@ -244,7 +244,7 @@ export const GetGroupDetails = async (req, res) => {
       _id: member._id,
       name: member.firstName,
       email: member.email,
-      profilePic: member.profilePic,
+      profilePic: member.profileImage,
     }));
 
     res.status(200).json({

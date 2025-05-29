@@ -144,3 +144,4 @@ export const markMessageAsSeen = async (req, res) => {
       .json({ message: "Error updating seen status", error: error.message });
   }
 };
+

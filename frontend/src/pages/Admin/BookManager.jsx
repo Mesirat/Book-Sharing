@@ -70,6 +70,7 @@ const BookManager = () => {
             "averageRating",
             "cloudinaryPublicId",
             "ratings",
+            "embedding",
           ].includes(key)
         )
           return;
@@ -154,6 +155,7 @@ const BookManager = () => {
                     "averageRating",
                     "cloudinaryPublicId",
                     "ratings",
+                    "embedding",
                   ].includes(key)
                 )
                   return null;

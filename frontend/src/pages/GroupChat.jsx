@@ -347,7 +347,6 @@ const GroupChat = () => {
 
   return (
     <div className="flex w-full h-[96vh] overflow-hidden mx-auto">
-     
       <div className="lg:w-1/3 w-full bg-gray-100 border-r max-h-[96vh] overflow-y-auto hide-scrollbar">
         <MyGroup
           userId={user._id}
@@ -355,7 +354,7 @@ const GroupChat = () => {
           setCurrentGroup={setCurrentGroup}
         />
       </div>
-           {showGroupDetails && currentGroup && (
+      {showGroupDetails && currentGroup && (
         <GroupInfo
           groupId={currentGroup._id}
           onClose={() => setShowGroupDetails(false)}
@@ -376,10 +375,9 @@ const GroupChat = () => {
               </p>
             </div>
 
-          
             {loading ? (
-              <div className="flex justify-center items-center h-full">
-                <Loader className="animate-spin" size={32} />
+              <div className="text-center py-4">
+                <div className="animate-spin border-t-4 border-blue-500 border-solid rounded-full w-16 h-16 mx-auto"></div>
               </div>
             ) : error ? (
               <div className="text-red-500 text-center mt-4">{error}</div>
@@ -395,7 +393,6 @@ const GroupChat = () => {
               </div>
             )}
 
-            
             <div className="relative">
               <MessageInput
                 onSendMessage={handleSendMessage}

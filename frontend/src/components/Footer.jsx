@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaGithub } from "react-icons/fa";
-import ReportButton from "./ReportButton";
+import { MdOutlineMail } from "react-icons/md";
 
 const Footer = () => {
   return (
@@ -63,10 +63,14 @@ const Footer = () => {
                 GitHub
               </a>
             </li>
+             <li className="flex items-center space-x-2">
+              <MdOutlineMail  className="w-5 h-5" />
+              <a href="https://mail.gmail.com" className="hover:text-white">
+               support@bookish.com
+              </a>
+            </li>
           </ul>
-          <p className="hover:text-white cursor-pointer">
-            Email: support@bookish.com
-          </p>
+        
         </div>
       </div>
 

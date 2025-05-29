@@ -80,7 +80,7 @@ const Status = () => {
                   />
                   <span className="text-lg font-medium">{book.title}</span>
                 </div>
-                <span className="text-gray-600 text-sm">{book.readers} readers</span>
+                <span className="text-gray-600 text-sm">{book.readers} reads</span>
               </li>
             ))}
           </ul>

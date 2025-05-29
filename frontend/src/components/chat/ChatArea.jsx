@@ -10,13 +10,13 @@ const ChatArea = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-1 hide-scrollbar">
+    <div className="flex-1 overflow-y-auto px-4  hide-scrollbar">
       <ul className="space-y-4">
         {messages.map((msg, index) => {
           const senderId =
             typeof msg.sender === "object" ? msg.sender._id : msg.sender;
           const isCurrentUser = senderId?.toString() === currentUser?._id?.toString();
-console.log(messages);
+
           const senderName =
             typeof msg.sender === "object" ? msg.sender.firstName : "You";
 

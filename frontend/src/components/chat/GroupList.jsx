@@ -170,6 +170,7 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
   );
 
   return (
+      groupsNotJoined.length > 0 && (
     <div className="bg-gray-100 w-[90vw] px-6">
       <div className=" mb-12">
         <h1 className="text-5xl mb-4">Groups You Might Like</h1>
@@ -179,7 +180,6 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
         </p>
       </div>
 
-      {groupsNotJoined.length > 0 ? (
         <div className="w-full overflow-x-auto hide-scrollbar">
         <div className="flex w-max  space-x-10 pb-4 px-1 hide-scrollbar">
 
@@ -234,12 +234,11 @@ const GroupList = ({ currentGroup, setCurrentGroup }) => {
             })}
           </div>
         </div>
-      ) : (
-        <p className="text-center text-gray-500">No groups found.</p>
-      )}
+      
 
       <ToastContainer />
     </div>
+      )
   );
 };
 

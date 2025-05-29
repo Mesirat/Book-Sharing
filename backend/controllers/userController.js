@@ -23,28 +23,26 @@ const validateFields = (fields) => {
   }
 };
 
-
-
 export const logIn = asyncHandler(async (req, res) => {
-  const { email, password, isAdmin } = req.body;
+  const { username, password, isAdmin } = req.body;
 
   try {
-    validateFields({ email, password });
+    validateFields({ username, password });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
 
     if (!user) {
-      console.error("Login failed: User not found for email:", email);
+     
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
     }
 
     if (isAdmin && user.role !== "admin") {
-      console.error("Login failed: User is not an admin:", email);
+     
       return res
         .status(403)
-        .json({ success: false, message: "Access denied: Admins only" });
+        .json({ success: false, message: "Access denied" });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -195,8 +193,6 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
-
 
 export const updateProfile = async (req, res) => {
   const { firstName, lastName, phone, email } = req.body;

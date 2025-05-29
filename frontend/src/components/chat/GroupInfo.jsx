@@ -77,13 +77,13 @@ const GroupInfo = ({ groupId, onClose }) => {
 
         <div>
           <div className="flex ">
-          <Users className="w-6 h-6 mr-3" />
+            <Users className="w-6 h-6 mr-3" />
             <h3 className="text-lg font-semibold mb-2">
               {members.length} Members{" "}
             </h3>
           </div>
 
-          <ul>{console.log(members)}
+          <ul>
             {members?.map((member) => (
               <li key={member._id} className="mb-2 flex items-center">
                 <img
@@ -92,12 +92,15 @@ const GroupInfo = ({ groupId, onClose }) => {
                   className="w-8 h-8 rounded-full mr-2 object-cover"
                 />
                 {member.name}
+                {group.creator?._id === member._id && (
+                  <span className="ml-48 text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                    Owner
+                  </span>
+                )}
               </li>
             ))}
           </ul>
         </div>
-
-
       </div>
     </div>
   );
