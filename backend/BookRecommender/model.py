@@ -87,7 +87,7 @@ def recommend(liked_books, search_terms, top_k=10, model_data=model_data):
     distances, indices = knn_model.kneighbors(combined_vector, n_neighbors=top_k + 5)
     recommendations = [index_to_book_id[i] for i in indices[0]]
 
-    print(f"🔍 Recommendations: {recommendations}")
+    
     return recommendations
 
 

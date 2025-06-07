@@ -1,8 +1,11 @@
+import os
 from pymongo import MongoClient
 from bson import ObjectId
+from dotenv import load_dotenv
+load_dotenv()
 
-MONGO_URI = "mongodb+srv://mesiratbelete216:mesiratbelete@cluster0.nw0r1pz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-DB_NAME = "test"
+MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = os.getenv("DB_NAME")
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
@@ -29,7 +32,7 @@ def get_user_liked_books(user_id):
         liked_books = user_doc["likedBooks"]
     else:
         liked_books = []
-    print(f"👍 get_user_liked_books({user_id}): {len(liked_books)} liked books found")
+    
     return liked_books
 
 def get_user_search_logs(user_id, limit=20):
@@ -52,5 +55,5 @@ def get_user_search_logs(user_id, limit=20):
     ]
     results = db["searchlogs"].aggregate(pipeline)
     search_queries = [doc["searchQuery"] for doc in results]
-    print(f"🔎 get_user_search_logs({user_id}): {len(search_queries)} search queries found")
+    
     return search_queries

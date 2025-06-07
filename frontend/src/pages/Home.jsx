@@ -66,7 +66,9 @@ const Home = () => {
             </>
           )}
         </section>
+         {isAuthenticated && (
         <ReportButton />
+         )}
         <Footer />
       </main>
     </div>

@@ -21,8 +21,7 @@ def recommend_route(user_id):
         liked_books = get_user_liked_books(user_id)
         search_terms = get_user_search_logs(user_id)
 
-        print(f"👍 User {user_id} liked books:", liked_books)
-        print(f"🔎 User {user_id} search logs:", search_terms)
+        
 
         liked_book_ids = [str(book.get("bookId")) for book in liked_books if "bookId" in book]
 

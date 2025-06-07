@@ -55,7 +55,7 @@ router.post("/createProgress", protect, createProgress);
 router.get("/getProgress/:bookId", protect, getProgress);
 router.put("/updateProgress/:bookId", protect, updateProgress);
 router.get("/getAllProgress", protect, getAllProgress);
-router.post("/report", uploadBookAssets.fields([{ name: "thumbnail", maxCount: 1 }]), protect,submitReport )
+router.post("/report", protect, uploadBookAssets.fields([{ name: "thumbnail", maxCount: 1 }]), protect,submitReport )
 router.get("/myreports",protect,getMyReports)
 router.get("/:id", protect, getUserById);
 
