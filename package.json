@@ -2,10 +2,14 @@
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
- "scripts": {
-  "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+"scripts": {
+  "start": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run recommender\"",
   "backend": "cd backend && npm start",
-  "frontend": "cd frontend && npm run dev"
+  "frontend": "cd frontend && npm run dev",
+ "recommender": "bash -c 'cd backend/BookRecommender && source venv/bin/activate && python app.py'"
+
+
 }
+
 
 }

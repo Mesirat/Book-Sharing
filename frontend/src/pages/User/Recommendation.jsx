@@ -28,7 +28,7 @@ const Recommendation = ({ user }) => {
           withCredentials: true,
         });
         setBooks(response.data);
-        setCurrentPage(1); // Reset page on new data
+        setCurrentPage(1); 
       } catch (err) {
         console.error(err);
         const errorMessage =
@@ -45,7 +45,7 @@ const Recommendation = ({ user }) => {
     }
   }, [user, token]);
 
-  // Pagination logic
+  
   const totalPages = Math.ceil(books.length / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const currentBooks = books.slice(startIndex, startIndex + PAGE_SIZE);

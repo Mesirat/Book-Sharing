@@ -1,10 +1,12 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from bson import ObjectId
-import model  # your ML model module
+import model  
 from database import get_all_books, get_user_liked_books, get_user_search_logs, db
 from watcher import start_watcher
-
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
 
@@ -30,7 +32,7 @@ def recommend_route(user_id):
             print("⚠️ No recommendations found.")
             return jsonify([])
 
-        # Remove liked books from the recommendations
+        
         recommended_ids = [bid for bid in recommended_ids if bid not in liked_book_ids]
 
         try:
@@ -74,4 +76,4 @@ if __name__ == "__main__":
         model.train_model(books)
 
     start_watcher()
-    app.run(host="127.0.0.1", port=8000, debug=True, use_reloader=False)
+    app.run(host="127.0.0.1", port=8000,  use_reloader=False)

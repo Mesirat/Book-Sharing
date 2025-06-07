@@ -101,6 +101,6 @@ def load_model():
     if os.path.exists(MODEL_PATH):
         with open(MODEL_PATH, "rb") as f:
             model_data = pickle.load(f)
-        print(f"✅ Loaded model with {model_data['embeddings_matrix'].shape[0]} books")
+        
     else:
         print("⚠️ Model file not found. Training required.")
